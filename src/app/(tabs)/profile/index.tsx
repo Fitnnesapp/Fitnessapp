@@ -1,4 +1,4 @@
-import { Alert, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,9 @@ import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
 import { Spacing } from '@/constants/theme';
+import { confirmAction } from '@/lib/confirm';
 import { useSettings, type UnitsPreference } from '@/lib/storage/settings-store';
+import { useWorkouts } from '@/lib/storage/workout-store';
 
 const UNITS: { value: UnitsPreference; label: string }[] = [
   { value: 'metric', label: 'Metrisch (kg, km)' },
@@ -14,17 +16,20 @@ const UNITS: { value: UnitsPreference; label: string }[] = [
 ];
 
 export default function ProfileScreen() {
-  const { displayName, units, setDisplayName, setUnits, reset } = useSettings();
+  const { displayName, units, setDisplayName, setUnits, reset: resetSettings } = useSettings();
+  const resetWorkouts = useWorkouts((state) => state.reset);
 
   function confirmReset() {
-    Alert.alert(
-      'Alle Daten löschen?',
-      'Name und Einstellungen werden von diesem Gerät gelöscht. Das lässt sich nicht rückgängig machen.',
-      [
-        { text: 'Abbrechen', style: 'cancel' },
-        { text: 'Löschen', style: 'destructive', onPress: reset },
-      ],
-    );
+    confirmAction({
+      title: 'Alle Daten löschen?',
+      message:
+        'Name, Einstellungen, Workouts und Vorlagen werden von diesem Gerät gelöscht. Das lässt sich nicht rückgängig machen.',
+      confirmLabel: 'Löschen',
+      onConfirm: () => {
+        resetSettings();
+        resetWorkouts();
+      },
+    });
   }
 
   return (

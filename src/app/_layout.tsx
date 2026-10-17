@@ -5,12 +5,15 @@ import { useEffect } from 'react';
 
 import { useTheme } from '@/hooks/use-theme';
 import { useSettings } from '@/lib/storage/settings-store';
+import { useWorkouts } from '@/lib/storage/workout-store';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const theme = useTheme();
-  const hydrated = useSettings((state) => state.hydrated);
+  const settingsReady = useSettings((state) => state.hydrated);
+  const workoutsReady = useWorkouts((state) => state.hydrated);
+  const hydrated = settingsReady && workoutsReady;
 
   useEffect(() => {
     if (hydrated) SplashScreen.hideAsync();

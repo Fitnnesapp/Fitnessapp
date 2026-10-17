@@ -5,7 +5,7 @@ All-in-One Fitness-App (Kraft, Home-Workouts, Running). Entwicklungsplan: `claud
 ## Stack
 - React Native + Expo (TypeScript, Expo Router)
 - **Offline-first, ohne Konto und ohne Server**: alle Daten bleiben lokal auf dem Gerät
-- Zustand mit AsyncStorage für Einstellungen; für Workouts ab Phase 1 `expo-sqlite`
+- Zustand mit AsyncStorage für Einstellungen und Workouts (jede Änderung wird sofort gespeichert, `src/lib/storage`)
 - Keine Netzwerkzugriffe einbauen (kein Supabase, kein Login, keine Cloud-Dienste), außer der Nutzer entscheidet es ausdrücklich anders
 
 ## Konventionen
@@ -24,7 +24,7 @@ All-in-One Fitness-App (Kraft, Home-Workouts, Running). Entwicklungsplan: `claud
 
 ## Regeln für Claude Code
 - Immer nur EIN Feature pro Prompt umsetzen
-- Nach jeder Änderung `npm run typecheck` und `npx eslint src` ausführen und Fehler beheben
+- Nach jeder Änderung `npm run typecheck` und `npx eslint src` und `npm test` ausführen und Fehler beheben
 - Bei Änderungen am lokalen Datenmodell: versionierte Migration im Storage-Layer anlegen, damit bestehende Geräte-Daten erhalten bleiben
 - Neue Expo-Pakete immer mit `npx expo install <paket>` installieren (SDK-kompatible Versionen)
 - Expo ändert sich pro SDK stark: bei Expo-/RN-APIs zuerst die Doku zur installierten Version prüfen

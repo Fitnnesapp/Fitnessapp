@@ -13,6 +13,13 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
 - Expo-Projekt (TypeScript, Expo Router) mit Dunkel-/Hell-Design
 - Tab-Navigation: Training, Verlauf, Profil, mit Platzhalter-Screens für die kommenden Phasen
 - Profil mit Name und Einheiten, lokal gespeichert; Löschen aller Daten
+- **Phase 1 (Kraft-Logger):**
+  - Übungsbibliothek mit 57 Übungen, Suche, Filter nach Muskelgruppe und Equipment, Detailansicht mit Anleitung
+  - Workout-Flow: Übungen hinzufügen, Sätze mit Gewicht, Wiederholungen und RPE, Aufwärmsätze, Ruhezeit-Timer
+  - Autosave: ein laufendes Workout übersteht App-Neustarts
+  - Zusammenfassung (Dauer, Volumen, Sätze, Rekorde), Verlauf nach Datum, Fortschrittsgrafik pro Übung
+  - Rekord-Erkennung (🏆) für Höchstgewicht und Wiederholungen bei gleichem Gewicht
+  - Vorlagen: Workout als Vorlage speichern und daraus starten
 
 ## Starten
 
@@ -26,4 +33,5 @@ npm start        # Dev-Server, dann w für den Browser (localhost:8081) oder mit
 ```bash
 npm run typecheck    # TypeScript prüfen
 npx eslint src       # Lint
+npm test             # Unit-Tests der Logik (Rekorde, Volumen, Einheiten)
 ```

@@ -5,6 +5,10 @@ export default function TrainingLayout() {
     <Stack screenOptions={{ headerShadowVisible: false }}>
       <Stack.Screen name="index" options={{ title: 'Training' }} />
       <Stack.Screen name="strength" options={{ title: 'Kraft' }} />
+      <Stack.Screen name="exercises" options={{ title: 'Übungen' }} />
+      <Stack.Screen name="exercise/[id]" options={{ title: 'Übung' }} />
+      <Stack.Screen name="workout" options={{ title: 'Workout', headerBackVisible: false, gestureEnabled: false }} />
+      <Stack.Screen name="summary/[id]" options={{ title: 'Zusammenfassung', headerBackVisible: false, gestureEnabled: false }} />
       <Stack.Screen name="home" options={{ title: 'Home-Workout' }} />
       <Stack.Screen name="running" options={{ title: 'Running' }} />
     </Stack>
