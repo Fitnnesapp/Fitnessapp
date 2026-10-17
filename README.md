@@ -20,6 +20,14 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - Zusammenfassung (Dauer, Volumen, Sätze, Rekorde), Verlauf nach Datum, Fortschrittsgrafik pro Übung
   - Rekord-Erkennung (🏆) für Höchstgewicht und Wiederholungen bei gleichem Gewicht
   - Vorlagen: Workout als Vorlage speichern und daraus starten
+- **Phase 2 (Home-Workouts):**
+  - 8 Programme (HIIT, Core, Mobility, Ganzkörper) mit Filter nach Kategorie, Dauer und Schwierigkeit
+  - Workout-Player: Vorbereitung, Übungen und Pausen im Wechsel, Countdown-Signaltöne, Pause, Beenden, Fortschrittsanzeige (Übung 3 von 8)
+  - Zeit wird aus Zeitstempeln berechnet, bleibt also bei gesperrtem Bildschirm korrekt; Bildschirm bleibt während des Trainings an
+  - Zusammenfassung mit Dauer, geschätzten Kalorien (MET-Formel, Körpergewicht im Profil) und optionaler Anstrengung (1 bis 10)
+  - Erscheint gemeinsam mit den Kraft-Workouts im Verlauf
+
+Signaltöne neu erzeugen: `node scripts/generate-sounds.js`
 
 ## Starten
 

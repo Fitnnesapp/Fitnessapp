@@ -7,14 +7,17 @@ export type UnitsPreference = 'metric' | 'imperial';
 type SettingsState = {
   displayName: string;
   units: UnitsPreference;
+  /** Körpergewicht in kg für die Kalorienschätzung, null = Standardwert */
+  bodyWeightKg: number | null;
   /** true, sobald der Speicher vom Gerät geladen wurde */
   hydrated: boolean;
   setDisplayName: (name: string) => void;
   setUnits: (units: UnitsPreference) => void;
+  setBodyWeightKg: (kg: number | null) => void;
   reset: () => void;
 };
 
-const DEFAULTS = { displayName: '', units: 'metric' as UnitsPreference };
+const DEFAULTS = { displayName: '', units: 'metric' as UnitsPreference, bodyWeightKg: null as number | null };
 
 /** Alle Einstellungen liegen ausschließlich lokal auf dem Gerät, es gibt keine Netzwerkzugriffe. */
 export const useSettings = create<SettingsState>()(
@@ -24,12 +27,13 @@ export const useSettings = create<SettingsState>()(
       hydrated: false,
       setDisplayName: (displayName) => set({ displayName }),
       setUnits: (units) => set({ units }),
+      setBodyWeightKg: (bodyWeightKg) => set({ bodyWeightKg }),
       reset: () => set(DEFAULTS),
     }),
     {
       name: 'fitnessapp-settings',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: ({ displayName, units }) => ({ displayName, units }),
+      partialize: ({ displayName, units, bodyWeightKg }) => ({ displayName, units, bodyWeightKg }),
       onRehydrateStorage: () => () => useSettings.setState({ hydrated: true }),
     },
   ),

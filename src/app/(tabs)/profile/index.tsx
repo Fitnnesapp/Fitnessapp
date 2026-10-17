@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
@@ -7,6 +8,8 @@ import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
 import { Spacing } from '@/constants/theme';
 import { confirmAction } from '@/lib/confirm';
+import { kgToDisplay, displayToKg, parseNumber, weightUnitLabel } from '@/lib/logic/units';
+import { useHomeSessions } from '@/lib/storage/home-store';
 import { useSettings, type UnitsPreference } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
@@ -16,18 +19,31 @@ const UNITS: { value: UnitsPreference; label: string }[] = [
 ];
 
 export default function ProfileScreen() {
-  const { displayName, units, setDisplayName, setUnits, reset: resetSettings } = useSettings();
+  const { displayName, units, bodyWeightKg, setDisplayName, setUnits, setBodyWeightKg, reset: resetSettings } = useSettings();
+  const resetHome = useHomeSessions((state) => state.reset);
+
+  // Eingabe bleibt Text, damit Zwischenstände wie "72," tippbar sind
+  const [weightText, setWeightText] = useState(
+    bodyWeightKg !== null ? String(kgToDisplay(bodyWeightKg, units)).replace('.', ',') : '',
+  );
+
+  function changeWeight(text: string) {
+    setWeightText(text);
+    const value = parseNumber(text);
+    setBodyWeightKg(value !== null && value > 0 ? displayToKg(value, units) : null);
+  }
   const resetWorkouts = useWorkouts((state) => state.reset);
 
   function confirmReset() {
     confirmAction({
       title: 'Alle Daten löschen?',
       message:
-        'Name, Einstellungen, Workouts und Vorlagen werden von diesem Gerät gelöscht. Das lässt sich nicht rückgängig machen.',
+        'Name, Einstellungen, Workouts, Home-Workouts und Vorlagen werden von diesem Gerät gelöscht. Das lässt sich nicht rückgängig machen.',
       confirmLabel: 'Löschen',
       onConfirm: () => {
         resetSettings();
         resetWorkouts();
+        resetHome();
       },
     });
   }
@@ -42,6 +58,14 @@ export default function ProfileScreen() {
         autoComplete="name"
       />
 
+      <TextField
+        label={`Körpergewicht in ${weightUnitLabel(units)} (optional)`}
+        value={weightText}
+        onChangeText={changeWeight}
+        placeholder="Für genauere Kalorienwerte"
+        keyboardType="decimal-pad"
+      />
+
       <View style={styles.units}>
         <AppText variant="label" color="textSecondary">
           Einheiten
@@ -51,7 +75,13 @@ export default function ProfileScreen() {
             key={option.value}
             title={option.label}
             variant={units === option.value ? 'primary' : 'secondary'}
-            onPress={() => setUnits(option.value)}
+            onPress={() => {
+              setUnits(option.value);
+              // Anzeige des Körpergewichts auf die neue Einheit umrechnen
+              setWeightText(
+                bodyWeightKg !== null ? String(kgToDisplay(bodyWeightKg, option.value)).replace('.', ',') : '',
+              );
+            }}
           />
         ))}
       </View>

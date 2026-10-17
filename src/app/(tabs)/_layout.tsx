@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router';
 
 import { useTheme } from '@/hooks/use-theme';
 
-export const unstable_settings = { initialRouteName: 'training' };
+export const unstable_settings = { anchor: 'training' };
 
 export default function TabsLayout() {
   const theme = useTheme();
