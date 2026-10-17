@@ -1,42 +1,69 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
-import { useProfile } from '@/hooks/use-profile';
-import { authErrorMessage } from '@/lib/logic/auth-errors';
-import { signOut } from '@/lib/supabase/auth';
+import { TextField } from '@/components/ui/text-field';
+import { Spacing } from '@/constants/theme';
+import { useSettings, type UnitsPreference } from '@/lib/storage/settings-store';
+
+const UNITS: { value: UnitsPreference; label: string }[] = [
+  { value: 'metric', label: 'Metrisch (kg, km)' },
+  { value: 'imperial', label: 'Imperial (lb, mi)' },
+];
 
 export default function ProfileScreen() {
-  const router = useRouter();
-  const { data: profile } = useProfile();
-  const [error, setError] = useState<string | null>(null);
+  const { displayName, units, setDisplayName, setUnits, reset } = useSettings();
 
-  async function handleSignOut() {
-    try {
-      await signOut();
-    } catch (e) {
-      setError(authErrorMessage(e));
-    }
+  function confirmReset() {
+    Alert.alert(
+      'Alle Daten löschen?',
+      'Name und Einstellungen werden von diesem Gerät gelöscht. Das lässt sich nicht rückgängig machen.',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        { text: 'Löschen', style: 'destructive', onPress: reset },
+      ],
+    );
   }
 
   return (
     <Screen>
+      <TextField
+        label="Name"
+        value={displayName}
+        onChangeText={setDisplayName}
+        placeholder="Wie sollen wir dich nennen?"
+        autoComplete="name"
+      />
+
+      <View style={styles.units}>
+        <AppText variant="label" color="textSecondary">
+          Einheiten
+        </AppText>
+        {UNITS.map((option) => (
+          <Button
+            key={option.value}
+            title={option.label}
+            variant={units === option.value ? 'primary' : 'secondary'}
+            onPress={() => setUnits(option.value)}
+          />
+        ))}
+      </View>
+
       <Card>
-        <AppText variant="title">{profile?.display_name || 'Dein Profil'}</AppText>
-        <AppText color="textSecondary">{profile?.email}</AppText>
+        <AppText variant="heading">Deine Daten bleiben bei dir</AppText>
+        <AppText color="textSecondary">
+          Die App arbeitet komplett offline. Alles wird nur auf diesem Gerät gespeichert, es gibt kein Konto und keine
+          Verbindung zu einem Server.
+        </AppText>
       </Card>
 
-      <Button title="Datenschutz und Einwilligungen" variant="secondary" onPress={() => router.push('/profile/privacy')} />
-
-      {error ? (
-        <AppText color="danger" accessibilityRole="alert">
-          {error}
-        </AppText>
-      ) : null}
-      <Button title="Abmelden" variant="ghost" onPress={handleSignOut} />
+      <Button title="Alle Daten löschen" variant="danger" onPress={confirmReset} />
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  units: { gap: Spacing.two },
+});

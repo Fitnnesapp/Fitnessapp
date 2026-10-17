@@ -3,6 +3,8 @@ import { Tabs } from 'expo-router';
 
 import { useTheme } from '@/hooks/use-theme';
 
+export const unstable_settings = { initialRouteName: 'training' };
+
 export default function TabsLayout() {
   const theme = useTheme();
 
@@ -15,7 +17,7 @@ export default function TabsLayout() {
         tabBarStyle: { backgroundColor: theme.surface, borderTopColor: theme.border },
       }}>
       <Tabs.Screen
-        name="(training)"
+        name="training"
         options={{
           title: 'Training',
           tabBarIcon: ({ focused, size }) => <Ionicons name="barbell-outline" color={focused ? theme.accent : theme.textSecondary} size={size} />,

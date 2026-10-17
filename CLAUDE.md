@@ -4,13 +4,14 @@ All-in-One Fitness-App (Kraft, Home-Workouts, Running). Entwicklungsplan: `claud
 
 ## Stack
 - React Native + Expo (TypeScript, Expo Router)
-- Supabase (Auth, Postgres, Storage)
-- Zustand für lokalen State, React Query für Server-State
+- **Offline-first, ohne Konto und ohne Server**: alle Daten bleiben lokal auf dem Gerät
+- Zustand mit AsyncStorage für Einstellungen; für Workouts ab Phase 1 `expo-sqlite`
+- Keine Netzwerkzugriffe einbauen (kein Supabase, kein Login, keine Cloud-Dienste), außer der Nutzer entscheidet es ausdrücklich anders
 
 ## Konventionen
 - Code liegt unter `src/` (Expo-Standard der aktuellen Vorlage): Routen in `src/app`, Rest daneben.
 - Komponenten in PascalCase, eine Datei pro Komponente (Dateinamen kebab-case, wie von der Vorlage vorgegeben)
-- Alle Supabase-Queries über `src/lib/supabase` mit typisierten Funktionen, nie inline in Components
+- Alle Zugriffe auf lokalen Speicher über `src/lib/storage` mit typisierten Funktionen, nie inline in Components
 - Screens unter `src/app` (Expo Router Dateikonvention)
 - Gemeinsame UI-Komponenten unter `src/components/ui`
 - Geschäftslogik (z.B. PR-Erkennung, Streak-Berechnung) in `src/lib/logic`, testbar und UI-unabhängig
@@ -23,10 +24,8 @@ All-in-One Fitness-App (Kraft, Home-Workouts, Running). Entwicklungsplan: `claud
 
 ## Regeln für Claude Code
 - Immer nur EIN Feature pro Prompt umsetzen
-- Nach jeder Änderung `npm run typecheck` und `npx expo lint` ausführen und Fehler beheben
-- Keine Secrets/API-Keys in den Code schreiben, nur über `.env` (Vorlage: `.env.example`)
-- Bei DB-Änderungen: Migration-Datei in `supabase/migrations` anlegen, nicht nur im Supabase-Dashboard
-- Row-Level-Security-Policy bei jeder neuen Tabelle sofort mit anlegen, nicht nachträglich
+- Nach jeder Änderung `npm run typecheck` und `npx eslint src` ausführen und Fehler beheben
+- Bei Änderungen am lokalen Datenmodell: versionierte Migration im Storage-Layer anlegen, damit bestehende Geräte-Daten erhalten bleiben
 - Neue Expo-Pakete immer mit `npx expo install <paket>` installieren (SDK-kompatible Versionen)
 - Expo ändert sich pro SDK stark: bei Expo-/RN-APIs zuerst die Doku zur installierten Version prüfen
   (`https://docs.expo.dev/versions/v58.0.0/`, Index: `https://docs.expo.dev/llms.txt`)

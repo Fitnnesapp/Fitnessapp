@@ -9,8 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/images/icon.png",
-      "bundleIdentifier": "com.fitnnesapp.fitnessapp",
-      "usesAppleSignIn": true
+      "bundleIdentifier": "com.fitnnesapp.fitnessapp"
     },
     "android": {
       "package": "com.fitnnesapp.fitnessapp",
@@ -23,7 +22,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -35,10 +34,7 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ],
-      "expo-secure-store",
-      "expo-web-browser",
-      "expo-apple-authentication"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

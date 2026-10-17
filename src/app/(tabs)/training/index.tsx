@@ -16,9 +16,9 @@ type Option = {
 };
 
 const OPTIONS: Option[] = [
-  { href: '/strength', title: 'Kraft', description: 'Sätze, Gewichte und Rekorde loggen', icon: 'barbell-outline' },
-  { href: '/home', title: 'Home-Workout', description: 'Geführte Einheiten ohne Equipment', icon: 'home-outline' },
-  { href: '/running', title: 'Running', description: 'Laufen mit GPS-Tracking', icon: 'walk-outline' },
+  { href: '/training/strength', title: 'Kraft', description: 'Sätze, Gewichte und Rekorde loggen', icon: 'barbell-outline' },
+  { href: '/training/home', title: 'Home-Workout', description: 'Geführte Einheiten ohne Equipment', icon: 'home-outline' },
+  { href: '/training/running', title: 'Running', description: 'Laufen mit GPS-Tracking', icon: 'walk-outline' },
 ];
 
 export default function TrainingScreen() {
