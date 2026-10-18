@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
@@ -22,6 +23,7 @@ const UNITS: { value: UnitsPreference; label: string }[] = [
 ];
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { displayName, units, bodyWeightKg, setDisplayName, setUnits, setBodyWeightKg, reset: resetSettings } = useSettings();
   const resetHome = useHomeSessions((state) => state.reset);
   const resetRuns = useRunStore((state) => state.reset);
@@ -127,6 +129,8 @@ export default function ProfileScreen() {
           ) : null}
         </View>
       ) : null}
+
+      <Button title="Premium" variant="secondary" onPress={() => router.push('/profile/premium')} />
 
       <Card>
         <AppText variant="heading">Deine Daten bleiben bei dir</AppText>

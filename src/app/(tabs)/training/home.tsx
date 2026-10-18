@@ -6,7 +6,8 @@ import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Spacing } from '@/constants/theme';
-import { CATEGORIES, PROGRAMS } from '@/data/programs';
+import { CATEGORIES, isFreeProgram, PROGRAMS } from '@/data/programs';
+import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
 import { programMinutes } from '@/lib/logic/timeline';
 import type { ProgramCategory, ProgramDifficulty } from '@/types/home';
@@ -24,6 +25,7 @@ const DIFFICULTIES: ProgramDifficulty[] = ['Einsteiger', 'Fortgeschritten'];
 export default function HomeProgramsScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { isPremium } = useSubscription();
 
   const [category, setCategory] = useState<ProgramCategory | null>(null);
   const [duration, setDuration] = useState<DurationFilter | null>(null);
@@ -72,6 +74,7 @@ export default function HomeProgramsScreen() {
         <Card onPress={() => router.push({ pathname: '/training/program/[id]', params: { id: item.id } })}>
           <AppText variant="label" color="accent">
             {item.category.toUpperCase()}
+            {!isPremium && !isFreeProgram(item.id) ? '  ·  🔒 PREMIUM' : ''}
           </AppText>
           <AppText variant="heading">{item.name}</AppText>
           <AppText color="textSecondary">{item.description}</AppText>

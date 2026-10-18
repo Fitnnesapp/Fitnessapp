@@ -26,6 +26,10 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - Zeit wird aus Zeitstempeln berechnet, bleibt also bei gesperrtem Bildschirm korrekt; Bildschirm bleibt während des Trainings an
   - Zusammenfassung mit Dauer, geschätzten Kalorien (MET-Formel, Körpergewicht im Profil) und optionaler Anstrengung (1 bis 10)
   - Erscheint gemeinsam mit den Kraft-Workouts im Verlauf
+- **Phase 7 (Monetarisierung), Grundgerüst:**
+  - Zentrales Gating über `useSubscription()`; Free: 3 Home-Programme, 30 Tage Verlauf; Premium: alle Programme, voller Verlauf, Muskelgruppen-Analyse
+  - Paywall mit 7-Tage-Testversion (einmalig), Plänen, Käufe wiederherstellen und Abo verwalten; Ablauf wird automatisch erkannt
+  - **Echte Käufe sind noch nicht angebunden:** nur ein Test-Anbieter in Entwicklungs-Builds, in Release-Builds sind Käufe gesperrt. Anleitung: [docs/premium.md](docs/premium.md)
 - **Phase 6 (Gamification):**
   - Serie mit Freeze: pro Monat 2 Freezes, die einen Tag ohne Training überbrücken; die Serie wird immer aus dem Verlauf berechnet
   - 10 Abzeichen (Workout-Meilensteine, 5 und 10 km, erster Rekord, Serien, Allrounder), jedes wird nur einmal vergeben

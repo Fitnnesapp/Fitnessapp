@@ -4,6 +4,7 @@ export default function ProfileLayout() {
   return (
     <Stack screenOptions={{ headerShadowVisible: false }}>
       <Stack.Screen name="index" options={{ title: 'Profil' }} />
+      <Stack.Screen name="premium" options={{ title: 'Premium' }} />
     </Stack>
   );
 }

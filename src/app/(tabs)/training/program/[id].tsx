@@ -4,13 +4,16 @@ import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
-import { getProgram } from '@/data/programs';
+import { PremiumPrompt } from '@/components/premium-prompt';
+import { getProgram, isFreeProgram } from '@/data/programs';
+import { useSubscription } from '@/hooks/use-subscription';
 import { exerciseCount, programMinutes } from '@/lib/logic/timeline';
 
 export default function ProgramDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const program = getProgram(id);
+  const { isPremium } = useSubscription();
 
   if (!program) {
     return (
@@ -35,10 +38,17 @@ export default function ProgramDetailScreen() {
         {program.rounds > 1 ? `, ${program.rounds} Runden` : ''}. Du hörst Signaltöne bei jedem Wechsel.
       </AppText>
 
-      <Button
-        title="Starten"
-        onPress={() => router.push({ pathname: '/training/player/[id]', params: { id: program.id } })}
-      />
+      {isPremium || isFreeProgram(program.id) ? (
+        <Button
+          title="Starten"
+          onPress={() => router.push({ pathname: '/training/player/[id]', params: { id: program.id } })}
+        />
+      ) : (
+        <PremiumPrompt
+          title="Premium-Programm"
+          text="Dieses Programm gehört zur vollen Bibliothek. Mit Premium stehen dir alle Programme offen, dazu gibt es eine kostenlose Testwoche."
+        />
+      )}
 
       <AppText variant="heading">Übungen</AppText>
       {program.steps.map((step, index) => (

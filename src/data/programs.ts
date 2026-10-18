@@ -166,3 +166,8 @@ const BY_ID = new Map(PROGRAMS.map((program) => [program.id, program]));
 export function getProgram(id: string | undefined): Program | undefined {
   return id ? BY_ID.get(id) : undefined;
 }
+
+/** Im kostenlosen Zugang enthaltene Programme. Alle weiteren brauchen Premium. */
+export const FREE_PROGRAM_IDS: readonly string[] = ['hiit-express', 'core-basics', 'mobility-morgen'];
+
+export const isFreeProgram = (id: string): boolean => FREE_PROGRAM_IDS.includes(id);

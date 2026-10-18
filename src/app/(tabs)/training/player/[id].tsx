@@ -1,5 +1,5 @@
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Vibration, View } from 'react-native';
 
@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Radius, Spacing } from '@/constants/theme';
-import { getProgram } from '@/data/programs';
+import { getProgram, isFreeProgram } from '@/data/programs';
+import { useSubscription } from '@/hooks/use-subscription';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { confirmAction } from '@/lib/confirm';
@@ -22,6 +23,7 @@ import { useSettings } from '@/lib/storage/settings-store';
 export default function PlayerScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const program = getProgram(id);
+  const { isPremium } = useSubscription();
   const router = useRouter();
   const theme = useTheme();
   const sounds = useCountdownSounds();
@@ -114,6 +116,10 @@ export default function PlayerScreen() {
     // sounds ist stabil, position wird über segmentIndex und secondsLeft abgedeckt
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [segmentIndex, secondsLeft, running]);
+
+  if (program && !isPremium && !isFreeProgram(program.id)) {
+    return <Redirect href={{ pathname: '/training/program/[id]', params: { id: program.id } }} />;
+  }
 
   if (!program) {
     return (

@@ -3,20 +3,25 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { PremiumPrompt } from '@/components/premium-prompt';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Radius, Spacing } from '@/constants/theme';
 import { useActivities } from '@/hooks/use-activities';
+import { getExercise } from '@/data/exercises';
 import { useNow } from '@/hooks/use-now';
+import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
 import { FREEZES_PER_MONTH, streaks, weekStart, weekStats } from '@/lib/logic/activity';
+import { muscleVolume } from '@/lib/logic/analytics';
 import { BADGES } from '@/lib/logic/badges';
 import { formatDuration } from '@/lib/logic/format';
-import { formatDistance } from '@/lib/logic/units';
+import { formatDistance, formatWeight } from '@/lib/logic/units';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useSettings } from '@/lib/storage/settings-store';
+import { useWorkouts } from '@/lib/storage/workout-store';
 
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
@@ -27,12 +32,19 @@ export default function DashboardScreen() {
   const name = useSettings((state) => state.displayName).trim();
   const activities = useActivities();
   const now = useNow(60_000);
+  const { isPremium } = useSubscription();
+  const strengthHistory = useWorkouts((state) => state.history);
   const earned = useGamification((state) => state.earned);
   const unseen = useGamification((state) => state.unseen);
   const markSeen = useGamification((state) => state.markSeen);
 
   const week = useMemo(() => weekStats(activities, weekStart(now)), [activities, now]);
   const streak = useMemo(() => streaks(activities, now), [activities, now]);
+  const muscles = useMemo(
+    () => muscleVolume(strengthHistory, 30, now, (id) => getExercise(id)?.muscleGroup),
+    [strengthHistory, now],
+  );
+  const maxVolume = Math.max(1, ...muscles.map((m) => m.volumeKg));
   const today = (new Date(now).getDay() + 6) % 7;
 
   return (
@@ -112,6 +124,34 @@ export default function DashboardScreen() {
         </AppText>
       </Card>
 
+      <AppText variant="heading">Muskelgruppen (30 Tage)</AppText>
+      {isPremium ? (
+        <Card>
+          {muscles.length === 0 ? (
+            <AppText color="textSecondary">Noch kein Krafttraining in den letzten 30 Tagen.</AppText>
+          ) : (
+            muscles.map((m) => (
+              <View key={m.group} style={styles.muscleRow}>
+                <AppText style={styles.muscleName}>{m.group}</AppText>
+                <View style={[styles.barTrack, { backgroundColor: theme.surfaceAlt }]}>
+                  <View
+                    style={[styles.barFill, { backgroundColor: theme.accent, width: `${Math.round((m.volumeKg / maxVolume) * 100)}%` }]}
+                  />
+                </View>
+                <AppText variant="caption" color="textSecondary" style={styles.muscleValue}>
+                  {formatWeight(m.volumeKg, units)}
+                </AppText>
+              </View>
+            ))
+          )}
+        </Card>
+      ) : (
+        <PremiumPrompt
+          title="Muskelgruppen-Analyse"
+          text="Sieh, welche Muskelgruppen du in den letzten 30 Tagen wie stark trainiert hast."
+        />
+      )}
+
       <Card onPress={() => router.push('/dashboard/badges')}>
         <AppText variant="heading">Abzeichen</AppText>
         <AppText color="textSecondary">
@@ -140,6 +180,11 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', gap: Spacing.two },
   stat: { flex: 1, padding: Spacing.three, gap: Spacing.one },
   days: { flexDirection: 'row', justifyContent: 'space-between' },
+  muscleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  muscleName: { width: 84 },
+  barTrack: { flex: 1, height: 10, borderRadius: Radius.pill, overflow: 'hidden' },
+  barFill: { height: '100%', borderRadius: Radius.pill },
+  muscleValue: { width: 64, textAlign: 'right' },
   day: { alignItems: 'center', gap: Spacing.one },
   dot: {
     width: 36,

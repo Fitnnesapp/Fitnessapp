@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { GamificationSync } from '@/components/gamification-sync';
 import { useTheme } from '@/hooks/use-theme';
 import '@/lib/location/background-task';
+import { useEntitlementStore } from '@/lib/storage/entitlement-store';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { useRunStore } from '@/lib/storage/run-store';
@@ -21,7 +22,8 @@ export default function RootLayout() {
   const homeReady = useHomeSessions((state) => state.hydrated);
   const runsReady = useRunStore((state) => state.hydrated);
   const gamificationReady = useGamification((state) => state.hydrated);
-  const hydrated = settingsReady && workoutsReady && homeReady && runsReady && gamificationReady;
+  const entitlementReady = useEntitlementStore((state) => state.hydrated);
+  const hydrated = settingsReady && workoutsReady && homeReady && runsReady && gamificationReady && entitlementReady;
 
   useEffect(() => {
     if (hydrated) SplashScreen.hideAsync();
