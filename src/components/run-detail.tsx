@@ -2,14 +2,14 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { DetailHeader, StatGrid } from '@/components/detail-layout';
 import { RouteMap } from '@/components/route-map';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
-import { Spacing } from '@/constants/theme';
 import { confirmAction } from '@/lib/confirm';
-import { formatClock, formatDate, formatTime } from '@/lib/logic/format';
+import { formatClock } from '@/lib/logic/format';
 import { findRunRecords, kmSplits, paceSecPerKm } from '@/lib/logic/run-stats';
 import { formatDistance, formatElevation, formatPace, paceUnitLabel } from '@/lib/logic/units';
 import { useRunStore } from '@/lib/storage/run-store';
@@ -68,10 +68,7 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
 
   return (
     <Screen>
-      <AppText variant="label" color="textSecondary">
-        {formatDate(run.startedAt).toUpperCase()} · {formatTime(run.startedAt)}
-      </AppText>
-      <AppText variant="title">{justFinished ? 'Stark gelaufen!' : 'Lauf'}</AppText>
+      <DetailHeader startedAt={run.startedAt} title={justFinished ? 'Stark gelaufen!' : 'Lauf'} />
 
       {earned.length > 0 ? (
         <Card>
@@ -85,13 +82,15 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
 
       <RouteMap points={run.points} />
 
-      <View style={styles.stats}>
-        <Stat label="Distanz" value={formatDistance(run.distanceM, units)} />
-        <Stat label="Zeit" value={formatClock(run.durationSeconds * 1000)} />
-        <Stat label="Ø Pace" value={formatPace(avgPace, units)} unit={paceUnitLabel(units)} />
-        <Stat label="Bester Kilometer" value={formatPace(fastest, units)} unit={paceUnitLabel(units)} />
-        <Stat label="Höhenmeter" value={formatElevation(run.elevationGainM, units)} />
-      </View>
+      <StatGrid
+        items={[
+          { label: 'Distanz', value: formatDistance(run.distanceM, units) },
+          { label: 'Zeit', value: formatClock(run.durationSeconds * 1000) },
+          { label: 'Ø Pace', value: formatPace(avgPace, units), unit: paceUnitLabel(units) },
+          { label: 'Bester Kilometer', value: formatPace(fastest, units), unit: paceUnitLabel(units) },
+          { label: 'Höhenmeter', value: formatElevation(run.elevationGainM, units) },
+        ]}
+      />
 
       {splits.length > 0 ? (
         <Card>
@@ -116,24 +115,6 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
   );
 }
 
-function Stat({ label, value, unit }: { label: string; value: string; unit?: string }) {
-  return (
-    <Card style={styles.stat}>
-      <AppText variant="label" color="textSecondary">
-        {label.toUpperCase()}
-      </AppText>
-      <AppText variant="heading">{value}</AppText>
-      {unit ? (
-        <AppText variant="caption" color="textSecondary">
-          {unit}
-        </AppText>
-      ) : null}
-    </Card>
-  );
-}
-
 const styles = StyleSheet.create({
-  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  stat: { flexGrow: 1, flexBasis: '45%', padding: Spacing.three, gap: Spacing.one },
   splitRow: { flexDirection: 'row', justifyContent: 'space-between' },
 });

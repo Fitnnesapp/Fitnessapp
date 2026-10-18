@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { DetailHeader, StatGrid } from '@/components/detail-layout';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,7 +10,7 @@ import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
 import { getProgram } from '@/data/programs';
 import { confirmAction } from '@/lib/confirm';
-import { formatClock, formatDate, formatTime } from '@/lib/logic/format';
+import { formatClock } from '@/lib/logic/format';
 import { useHomeSessions } from '@/lib/storage/home-store';
 
 type HomeSessionDetailProps = {
@@ -49,32 +50,18 @@ export function HomeSessionDetail({ sessionId, justFinished = false }: HomeSessi
 
   return (
     <Screen>
-      <AppText variant="label" color="textSecondary">
-        {formatDate(session.startedAt).toUpperCase()} · {formatTime(session.startedAt)}
-      </AppText>
-      <AppText variant="title">
-        {justFinished ? (session.completed ? 'Geschafft! Workout abgeschlossen.' : 'Workout beendet.') : 'Home-Workout'}
-      </AppText>
-      <AppText color="textSecondary">
-        {program?.name ?? 'Programm'}
-        {program ? ` · ${program.category}` : ''}
-        {!session.completed ? ' · vorzeitig beendet' : ''}
-      </AppText>
+      <DetailHeader
+        startedAt={session.startedAt}
+        title={justFinished ? (session.completed ? 'Geschafft! Workout abgeschlossen.' : 'Workout beendet.') : 'Home-Workout'}
+        subtitle={`${program?.name ?? 'Programm'}${program ? ` · ${program.category}` : ''}${!session.completed ? ' · vorzeitig beendet' : ''}`}
+      />
 
-      <View style={styles.stats}>
-        <Card style={styles.stat}>
-          <AppText variant="label" color="textSecondary">
-            DAUER
-          </AppText>
-          <AppText variant="heading">{formatClock(session.activeSeconds * 1000)} Min</AppText>
-        </Card>
-        <Card style={styles.stat}>
-          <AppText variant="label" color="textSecondary">
-            KALORIEN (SCHÄTZUNG)
-          </AppText>
-          <AppText variant="heading">ca. {session.caloriesEstimate} kcal</AppText>
-        </Card>
-      </View>
+      <StatGrid
+        items={[
+          { label: 'Dauer', value: `${formatClock(session.activeSeconds * 1000)} Min` },
+          { label: 'Kalorien (Schätzung)', value: `ca. ${session.caloriesEstimate} kcal` },
+        ]}
+      />
 
       <Card>
         <AppText variant="heading">Wie anstrengend war es?</AppText>
@@ -104,7 +91,5 @@ export function HomeSessionDetail({ sessionId, justFinished = false }: HomeSessi
 }
 
 const styles = StyleSheet.create({
-  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  stat: { flexGrow: 1, flexBasis: '45%', padding: Spacing.three, gap: Spacing.one },
   efforts: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginTop: Spacing.two },
 });

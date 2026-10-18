@@ -1,7 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 
+import { MonthCalendar } from '@/components/month-calendar';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
 import { Spacing } from '@/constants/theme';
@@ -27,6 +29,22 @@ type Entry =
 
 type Section = { key: string; title: string; data: Entry[] };
 
+const TYPE_ICON = {
+  strength: 'barbell-outline',
+  home: 'home-outline',
+  run: 'walk-outline',
+} as const;
+
+function TypeTitle({ kind, label }: { kind: Entry['kind']; label: string }) {
+  const theme = useTheme();
+  return (
+    <View style={styles.titleRow}>
+      <Ionicons name={TYPE_ICON[kind]} size={22} color={theme.accent} />
+      <AppText variant="heading">{label}</AppText>
+    </View>
+  );
+}
+
 export default function HistoryScreen() {
   const router = useRouter();
   const theme = useTheme();
@@ -34,6 +52,7 @@ export default function HistoryScreen() {
   const history = useWorkouts((state) => state.history);
   const sessions = useHomeSessions((state) => state.sessions);
   const runs = useRunStore((state) => state.history);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   // Alle Trainingsarten gemeinsam, neueste zuerst, gruppiert nach Kalendertag
   const sections = useMemo(() => {
@@ -53,16 +72,20 @@ export default function HistoryScreen() {
     return [...byDay.values()];
   }, [history, sessions, runs]);
 
+  const counts = useMemo(() => new Map(sections.map((s) => [s.key, s.data.length])), [sections]);
+  const visible = selectedDay ? sections.filter((s) => s.key === selectedDay) : sections;
+
   return (
     <SectionList
       style={{ backgroundColor: theme.background }}
       contentContainerStyle={styles.content}
-      sections={sections}
+      sections={visible}
+      ListHeaderComponent={<MonthCalendar counts={counts} selected={selectedDay} onSelect={setSelectedDay} />}
       keyExtractor={(entry) => (entry.kind === 'strength' ? entry.workout.id : entry.kind === 'home' ? entry.session.id : entry.run.id)}
       stickySectionHeadersEnabled={false}
       ListEmptyComponent={
         <Card>
-          <AppText variant="heading">Noch keine Workouts</AppText>
+          <AppText variant="heading">{selectedDay ? 'Kein Workout an diesem Tag' : 'Noch keine Workouts'}</AppText>
           <AppText color="textSecondary">Sobald du ein Workout beendest, erscheint es hier.</AppText>
         </Card>
       }
@@ -78,7 +101,7 @@ export default function HistoryScreen() {
           return (
             <Card onPress={() => router.push({ pathname: '/history/[id]', params: { id: run.id } })}>
               <View style={styles.row}>
-                <AppText variant="heading">Lauf</AppText>
+                <TypeTitle kind="run" label="Lauf" />
                 <AppText color="textSecondary">{formatTime(run.startedAt)}</AppText>
               </View>
               <AppText variant="caption">
@@ -96,7 +119,7 @@ export default function HistoryScreen() {
           return (
             <Card onPress={() => router.push({ pathname: '/history/[id]', params: { id: session.id } })}>
               <View style={styles.row}>
-                <AppText variant="heading">Home-Workout</AppText>
+                <TypeTitle kind="home" label="Home-Workout" />
                 <AppText color="textSecondary">{formatTime(session.startedAt)}</AppText>
               </View>
               <AppText variant="caption" color="textSecondary">
@@ -117,7 +140,7 @@ export default function HistoryScreen() {
         return (
           <Card onPress={() => router.push({ pathname: '/history/[id]', params: { id: workout.id } })}>
             <View style={styles.row}>
-              <AppText variant="heading">Kraft</AppText>
+              <TypeTitle kind="strength" label="Kraft" />
               <AppText color="textSecondary">{formatTime(workout.startedAt)}</AppText>
             </View>
             <AppText variant="caption" color="textSecondary" numberOfLines={2}>
@@ -139,5 +162,6 @@ const styles = StyleSheet.create({
   content: { padding: Spacing.three, paddingBottom: Spacing.six },
   sectionHeader: { marginTop: Spacing.three, marginBottom: Spacing.two },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   separator: { height: Spacing.two },
 });

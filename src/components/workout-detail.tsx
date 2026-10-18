@@ -1,16 +1,15 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
 
+import { DetailHeader, StatGrid } from '@/components/detail-layout';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
-import { Spacing } from '@/constants/theme';
 import { getExercise } from '@/data/exercises';
 import { confirmAction } from '@/lib/confirm';
-import { formatDate, formatDuration, formatTime } from '@/lib/logic/format';
+import { formatDuration } from '@/lib/logic/format';
 import { findRecords } from '@/lib/logic/personal-records';
 import { formatWeight } from '@/lib/logic/units';
 import { summarizeWorkout } from '@/lib/logic/workout-stats';
@@ -65,17 +64,16 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
 
   return (
     <Screen>
-      <AppText variant="label" color="textSecondary">
-        {formatDate(workout.startedAt).toUpperCase()} · {formatTime(workout.startedAt)}
-      </AppText>
-      <AppText variant="title">{justFinished ? 'Stark! Workout abgeschlossen.' : 'Kraft-Workout'}</AppText>
+      <DetailHeader startedAt={workout.startedAt} title={justFinished ? 'Stark! Workout abgeschlossen.' : 'Kraft-Workout'} />
 
-      <View style={styles.stats}>
-        <Stat label="Dauer" value={formatDuration(summary.durationMs)} />
-        <Stat label="Volumen" value={formatWeight(summary.volumeKg, units)} />
-        <Stat label="Sätze" value={String(summary.workingSets)} />
-        <Stat label="Rekorde" value={String(recordCount)} />
-      </View>
+      <StatGrid
+        items={[
+          { label: 'Dauer', value: formatDuration(summary.durationMs) },
+          { label: 'Volumen', value: formatWeight(summary.volumeKg, units) },
+          { label: 'Sätze', value: String(summary.workingSets) },
+          { label: 'Rekorde', value: String(recordCount) },
+        ]}
+      />
 
       {summary.muscleGroups.length > 0 ? (
         <AppText color="textSecondary">Trainiert: {summary.muscleGroups.join(', ')}</AppText>
@@ -138,18 +136,3 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <Card style={styles.stat}>
-      <AppText variant="label" color="textSecondary">
-        {label.toUpperCase()}
-      </AppText>
-      <AppText variant="heading">{value}</AppText>
-    </Card>
-  );
-}
-
-const styles = StyleSheet.create({
-  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  stat: { flexGrow: 1, flexBasis: '45%', padding: Spacing.three, gap: Spacing.one },
-});

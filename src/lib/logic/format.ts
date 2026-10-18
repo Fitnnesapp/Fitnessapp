@@ -22,8 +22,4 @@ const TIME_FORMAT = new Intl.DateTimeFormat('de-DE', { hour: '2-digit', minute: 
 export const formatDate = (at: number) => DATE_FORMAT.format(at);
 export const formatTime = (at: number) => TIME_FORMAT.format(at);
 
-/** Schlüssel zum Gruppieren nach Kalendertag (lokale Zeit). */
-export function dayKey(at: number): string {
-  const d = new Date(at);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+export { dayKey } from './activity.ts';

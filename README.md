@@ -26,6 +26,10 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - Zeit wird aus Zeitstempeln berechnet, bleibt also bei gesperrtem Bildschirm korrekt; Bildschirm bleibt während des Trainings an
   - Zusammenfassung mit Dauer, geschätzten Kalorien (MET-Formel, Körpergewicht im Profil) und optionaler Anstrengung (1 bis 10)
   - Erscheint gemeinsam mit den Kraft-Workouts im Verlauf
+- **Phase 4 (Vereinheitlichung):**
+  - Start-Tab mit Wochenübersicht (Workouts, Zeit, Distanz, Tage mit Training) und Serie aufeinanderfolgender Trainingstage
+  - Verlauf mit Monatskalender, Tagesfilter und Icons je Trainingsart, alle drei Arten gemeinsam chronologisch
+  - Alle Detailansichten nutzen denselben Kopf und dasselbe Kennzahlen-Raster
 - **Phase 3 (Running):**
   - GPS-Tracking mit Start, Pause und Ende, Live-Anzeige von Zeit, Distanz, aktueller und durchschnittlicher Pace
   - Standortberechtigung erst beim Start mit Erklärung; Hintergrund-Aufzeichnung (Vordergrunddienst auf Android) mit Fallback auf Vordergrund

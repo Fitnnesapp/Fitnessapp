@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router';
 
 import { useTheme } from '@/hooks/use-theme';
 
-export const unstable_settings = { anchor: 'training' };
+export const unstable_settings = { anchor: 'dashboard' };
 
 export default function TabsLayout() {
   const theme = useTheme();
@@ -16,6 +16,13 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: theme.textSecondary,
         tabBarStyle: { backgroundColor: theme.surface, borderTopColor: theme.border },
       }}>
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: 'Start',
+          tabBarIcon: ({ focused, size }) => <Ionicons name="home-outline" color={focused ? theme.accent : theme.textSecondary} size={size} />,
+        }}
+      />
       <Tabs.Screen
         name="training"
         options={{
