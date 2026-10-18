@@ -26,6 +26,13 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - Zeit wird aus Zeitstempeln berechnet, bleibt also bei gesperrtem Bildschirm korrekt; Bildschirm bleibt während des Trainings an
   - Zusammenfassung mit Dauer, geschätzten Kalorien (MET-Formel, Körpergewicht im Profil) und optionaler Anstrengung (1 bis 10)
   - Erscheint gemeinsam mit den Kraft-Workouts im Verlauf
+- **Phase 3 (Running):**
+  - GPS-Tracking mit Start, Pause und Ende, Live-Anzeige von Zeit, Distanz, aktueller und durchschnittlicher Pace
+  - Standortberechtigung erst beim Start mit Erklärung; Hintergrund-Aufzeichnung (Vordergrunddienst auf Android) mit Fallback auf Vordergrund
+  - Punktefilter gegen ungenaue Messungen und GPS-Sprünge, Lücken werden in der Strecke gestrichelt gezeigt
+  - Zusammenfassung mit Streckenansicht, Kilometerzeiten, Höhenmetern und Rekorden (längster Lauf, schnellster km, 5 km und 10 km)
+  - Die Strecke wird ohne Kartenhintergrund gezeichnet, weil Kartenkacheln Internet bräuchten
+  - Testplan für das Gerät (gesperrter Bildschirm, Akku): [docs/running-testplan.md](docs/running-testplan.md)
 
 Signaltöne neu erzeugen: `node scripts/generate-sounds.js`
 
@@ -41,5 +48,5 @@ npm start        # Dev-Server, dann w für den Browser (localhost:8081) oder mit
 ```bash
 npm run typecheck    # TypeScript prüfen
 npx eslint src       # Lint
-npm test             # Unit-Tests der Logik (Rekorde, Volumen, Einheiten)
+npm test             # Unit-Tests der Logik (Rekorde, Volumen, Einheiten, Lauf-Auswertung)
 ```

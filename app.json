@@ -35,7 +35,17 @@
           "imageWidth": 76
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Die App zeichnet deine Laufstrecke auf, solange du läufst.",
+          "locationAlwaysAndWhenInUsePermission": "Die App zeichnet deine Laufstrecke auch bei gesperrtem Bildschirm auf.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

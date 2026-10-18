@@ -10,6 +10,7 @@ import { Spacing } from '@/constants/theme';
 import { confirmAction } from '@/lib/confirm';
 import { kgToDisplay, displayToKg, parseNumber, weightUnitLabel } from '@/lib/logic/units';
 import { useHomeSessions } from '@/lib/storage/home-store';
+import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings, type UnitsPreference } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
@@ -21,6 +22,7 @@ const UNITS: { value: UnitsPreference; label: string }[] = [
 export default function ProfileScreen() {
   const { displayName, units, bodyWeightKg, setDisplayName, setUnits, setBodyWeightKg, reset: resetSettings } = useSettings();
   const resetHome = useHomeSessions((state) => state.reset);
+  const resetRuns = useRunStore((state) => state.reset);
 
   // Eingabe bleibt Text, damit Zwischenstände wie "72," tippbar sind
   const [weightText, setWeightText] = useState(
@@ -38,12 +40,13 @@ export default function ProfileScreen() {
     confirmAction({
       title: 'Alle Daten löschen?',
       message:
-        'Name, Einstellungen, Workouts, Home-Workouts und Vorlagen werden von diesem Gerät gelöscht. Das lässt sich nicht rückgängig machen.',
+        'Name, Einstellungen, Workouts, Home-Workouts, Läufe und Vorlagen werden von diesem Gerät gelöscht. Das lässt sich nicht rückgängig machen.',
       confirmLabel: 'Löschen',
       onConfirm: () => {
         resetSettings();
         resetWorkouts();
         resetHome();
+        resetRuns();
       },
     });
   }

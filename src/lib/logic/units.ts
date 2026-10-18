@@ -32,3 +32,24 @@ export function formatWeight(kg: number, units: Units): string {
   const text = Number.isInteger(value) ? String(value) : String(round2(value)).replace('.', ',');
   return `${text} ${weightUnitLabel(units)}`;
 }
+
+const M_PER_MILE = 1609.344;
+
+/** Distanz in km bzw. Meilen mit zwei Nachkommastellen. */
+export function formatDistance(meters: number, units: Units): string {
+  const value = units === 'metric' ? meters / 1000 : meters / M_PER_MILE;
+  return `${value.toFixed(2).replace('.', ',')} ${units === 'metric' ? 'km' : 'mi'}`;
+}
+
+/** Pace als m:ss pro km bzw. Meile. null ergibt einen Platzhalter. */
+export function formatPace(secPerKm: number | null, units: Units): string {
+  if (secPerKm === null || !Number.isFinite(secPerKm)) return '–:––';
+  const seconds = Math.round(units === 'metric' ? secPerKm : secPerKm * (M_PER_MILE / 1000));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+export const paceUnitLabel = (units: Units) => (units === 'metric' ? 'min/km' : 'min/mi');
+
+export function formatElevation(meters: number, units: Units): string {
+  return units === 'metric' ? `${meters} m` : `${Math.round(meters * 3.28084)} ft`;
+}

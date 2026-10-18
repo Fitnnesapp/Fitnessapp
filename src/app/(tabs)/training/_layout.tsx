@@ -23,6 +23,11 @@ export default function TrainingLayout() {
         options={{ title: 'Zusammenfassung', headerBackVisible: false, gestureEnabled: false }}
       />
       <Stack.Screen name="running" options={{ title: 'Running' }} />
+      <Stack.Screen name="run" options={{ title: 'Lauf', headerBackVisible: false, gestureEnabled: false }} />
+      <Stack.Screen
+        name="run-summary/[id]"
+        options={{ title: 'Zusammenfassung', headerBackVisible: false, gestureEnabled: false }}
+      />
     </Stack>
   );
 }

@@ -4,7 +4,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
 import { useTheme } from '@/hooks/use-theme';
+import '@/lib/location/background-task';
 import { useHomeSessions } from '@/lib/storage/home-store';
+import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
@@ -15,7 +17,8 @@ export default function RootLayout() {
   const settingsReady = useSettings((state) => state.hydrated);
   const workoutsReady = useWorkouts((state) => state.hydrated);
   const homeReady = useHomeSessions((state) => state.hydrated);
-  const hydrated = settingsReady && workoutsReady && homeReady;
+  const runsReady = useRunStore((state) => state.hydrated);
+  const hydrated = settingsReady && workoutsReady && homeReady && runsReady;
 
   useEffect(() => {
     if (hydrated) SplashScreen.hideAsync();

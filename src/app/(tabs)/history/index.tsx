@@ -8,18 +8,22 @@ import { Spacing } from '@/constants/theme';
 import { getProgram } from '@/data/programs';
 import { getExercise } from '@/data/exercises';
 import { useTheme } from '@/hooks/use-theme';
-import { dayKey, formatDate, formatDuration, formatTime } from '@/lib/logic/format';
-import { formatWeight } from '@/lib/logic/units';
+import { dayKey, formatClock, formatDate, formatDuration, formatTime } from '@/lib/logic/format';
+import { paceSecPerKm } from '@/lib/logic/run-stats';
+import { formatDistance, formatPace, formatWeight, paceUnitLabel } from '@/lib/logic/units';
 import { summarizeWorkout } from '@/lib/logic/workout-stats';
 import { useHomeSessions } from '@/lib/storage/home-store';
+import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 import type { HomeSession } from '@/types/home';
+import type { RunSession } from '@/types/running';
 import type { StrengthWorkout } from '@/types/workout';
 
 type Entry =
   | { kind: 'strength'; startedAt: number; workout: StrengthWorkout }
-  | { kind: 'home'; startedAt: number; session: HomeSession };
+  | { kind: 'home'; startedAt: number; session: HomeSession }
+  | { kind: 'run'; startedAt: number; run: RunSession };
 
 type Section = { key: string; title: string; data: Entry[] };
 
@@ -29,12 +33,14 @@ export default function HistoryScreen() {
   const units = useSettings((state) => state.units);
   const history = useWorkouts((state) => state.history);
   const sessions = useHomeSessions((state) => state.sessions);
+  const runs = useRunStore((state) => state.history);
 
   // Alle Trainingsarten gemeinsam, neueste zuerst, gruppiert nach Kalendertag
   const sections = useMemo(() => {
     const entries: Entry[] = [
       ...history.map((workout): Entry => ({ kind: 'strength', startedAt: workout.startedAt, workout })),
       ...sessions.map((session): Entry => ({ kind: 'home', startedAt: session.startedAt, session })),
+      ...runs.map((run): Entry => ({ kind: 'run', startedAt: run.startedAt, run })),
     ].sort((a, b) => b.startedAt - a.startedAt);
 
     const byDay = new Map<string, Section>();
@@ -45,14 +51,14 @@ export default function HistoryScreen() {
       byDay.set(key, section);
     }
     return [...byDay.values()];
-  }, [history, sessions]);
+  }, [history, sessions, runs]);
 
   return (
     <SectionList
       style={{ backgroundColor: theme.background }}
       contentContainerStyle={styles.content}
       sections={sections}
-      keyExtractor={(entry) => (entry.kind === 'strength' ? entry.workout.id : entry.session.id)}
+      keyExtractor={(entry) => (entry.kind === 'strength' ? entry.workout.id : entry.kind === 'home' ? entry.session.id : entry.run.id)}
       stickySectionHeadersEnabled={false}
       ListEmptyComponent={
         <Card>
@@ -66,6 +72,23 @@ export default function HistoryScreen() {
         </AppText>
       )}
       renderItem={({ item }) => {
+        if (item.kind === 'run') {
+          const { run } = item;
+
+          return (
+            <Card onPress={() => router.push({ pathname: '/history/[id]', params: { id: run.id } })}>
+              <View style={styles.row}>
+                <AppText variant="heading">Lauf</AppText>
+                <AppText color="textSecondary">{formatTime(run.startedAt)}</AppText>
+              </View>
+              <AppText variant="caption">
+                {formatDistance(run.distanceM, units)} · {formatClock(run.durationSeconds * 1000)} ·{' '}
+                {formatPace(paceSecPerKm(run.distanceM, run.durationSeconds), units)} {paceUnitLabel(units)}
+              </AppText>
+            </Card>
+          );
+        }
+
         if (item.kind === 'home') {
           const { session } = item;
           const program = getProgram(session.programId);
