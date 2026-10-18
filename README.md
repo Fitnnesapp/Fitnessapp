@@ -26,6 +26,10 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - Zeit wird aus Zeitstempeln berechnet, bleibt also bei gesperrtem Bildschirm korrekt; Bildschirm bleibt während des Trainings an
   - Zusammenfassung mit Dauer, geschätzten Kalorien (MET-Formel, Körpergewicht im Profil) und optionaler Anstrengung (1 bis 10)
   - Erscheint gemeinsam mit den Kraft-Workouts im Verlauf
+- **Phase 8 (Ausbau):**
+  - Jahresrückblick (Start-Tab): Workouts, Zeit, Distanz, Volumen, Rekorde, längste Serie, stärkster Monat, Lieblingstag und -übung, wählbares Jahr
+  - Vorschlag für heute aus einfachen, nachvollziehbaren Regeln (keine KI); führt nie zu einem Premium-Programm
+  - **Health-Sync ist nicht umgesetzt** (nur mit Development Build und Gerät prüfbar), Vorgehen: [docs/health-sync.md](docs/health-sync.md)
 - **Phase 7 (Monetarisierung), Grundgerüst:**
   - Zentrales Gating über `useSubscription()`; Free: 3 Home-Programme, 30 Tage Verlauf; Premium: alle Programme, voller Verlauf, Muskelgruppen-Analyse
   - Paywall mit 7-Tage-Testversion (einmalig), Plänen, Käufe wiederherstellen und Abo verwalten; Ablauf wird automatisch erkannt

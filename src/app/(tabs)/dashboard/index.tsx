@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Radius, Spacing } from '@/constants/theme';
+import type { Href } from 'expo-router';
 import { useActivities } from '@/hooks/use-activities';
 import { getExercise } from '@/data/exercises';
 import { useNow } from '@/hooks/use-now';
@@ -16,12 +17,19 @@ import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
 import { FREEZES_PER_MONTH, streaks, weekStart, weekStats } from '@/lib/logic/activity';
 import { muscleVolume } from '@/lib/logic/analytics';
+import { suggestWorkout, type SuggestionTarget } from '@/lib/logic/suggestions';
 import { BADGES } from '@/lib/logic/badges';
 import { formatDuration } from '@/lib/logic/format';
 import { formatDistance, formatWeight } from '@/lib/logic/units';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
+
+function hrefFor(target: SuggestionTarget): Href {
+  if (target.kind === 'strength') return '/training/strength';
+  if (target.kind === 'run') return '/training/running';
+  return { pathname: '/training/program/[id]', params: { id: target.programId } };
+}
 
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
@@ -45,11 +53,31 @@ export default function DashboardScreen() {
     [strengthHistory, now],
   );
   const maxVolume = Math.max(1, ...muscles.map((m) => m.volumeKg));
+  const suggestion = useMemo(
+    () => suggestWorkout({ activities, strength: strengthHistory, now, muscleGroupOf: (id) => getExercise(id)?.muscleGroup }),
+    [activities, strengthHistory, now],
+  );
   const today = (new Date(now).getDay() + 6) % 7;
 
   return (
     <Screen>
       <AppText variant="display">{name ? `Hallo, ${name}.` : 'Hallo.'}</AppText>
+
+      <Card
+        onPress={
+          suggestion.target ? () => router.push(hrefFor(suggestion.target as SuggestionTarget)) : undefined
+        }>
+        <AppText variant="label" color="accent">
+          VORSCHLAG FÜR HEUTE
+        </AppText>
+        <AppText variant="heading">{suggestion.title}</AppText>
+        <AppText color="textSecondary">{suggestion.reason}</AppText>
+        {suggestion.target ? (
+          <AppText variant="caption" color="textSecondary">
+            Einfache Regeln aus deinem Verlauf, keine KI.
+          </AppText>
+        ) : null}
+      </Card>
 
       <Card>
         <View style={styles.streakRow}>
@@ -151,6 +179,11 @@ export default function DashboardScreen() {
           text="Sieh, welche Muskelgruppen du in den letzten 30 Tagen wie stark trainiert hast."
         />
       )}
+
+      <Card onPress={() => router.push('/dashboard/year')}>
+        <AppText variant="heading">Jahresrückblick</AppText>
+        <AppText color="textSecondary">Dein Jahr in Zahlen</AppText>
+      </Card>
 
       <Card onPress={() => router.push('/dashboard/badges')}>
         <AppText variant="heading">Abzeichen</AppText>
