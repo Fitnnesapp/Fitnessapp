@@ -6,7 +6,7 @@ All-in-One Fitness-App (Kraft, Home-Workouts, Running) mit React Native und Expo
 Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [CLAUDE.md](CLAUDE.md)
 
 > Der Plan sieht ursprünglich Supabase, Login und Social-Funktionen vor. Diese Teile entfallen,
-> weil die App rein lokal arbeiten soll (Phase 5 Social und Teile von Phase 7 sind damit nicht umsetzbar).
+> weil die App rein lokal arbeiten soll. Phase 5 (Social) und Teile von Phase 7 (Abo-Abgleich) entfallen deshalb.
 
 ## Status
 
@@ -26,6 +26,10 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - Zeit wird aus Zeitstempeln berechnet, bleibt also bei gesperrtem Bildschirm korrekt; Bildschirm bleibt während des Trainings an
   - Zusammenfassung mit Dauer, geschätzten Kalorien (MET-Formel, Körpergewicht im Profil) und optionaler Anstrengung (1 bis 10)
   - Erscheint gemeinsam mit den Kraft-Workouts im Verlauf
+- **Phase 6 (Gamification):**
+  - Serie mit Freeze: pro Monat 2 Freezes, die einen Tag ohne Training überbrücken; die Serie wird immer aus dem Verlauf berechnet
+  - 10 Abzeichen (Workout-Meilensteine, 5 und 10 km, erster Rekord, Serien, Allrounder), jedes wird nur einmal vergeben
+  - Optionale Erinnerung um 19 Uhr bei drohendem Serienverlust, höchstens einmal täglich, nur auf dem Handy und nur mit Erlaubnis
 - **Phase 4 (Vereinheitlichung):**
   - Start-Tab mit Wochenübersicht (Workouts, Zeit, Distanz, Tage mit Training) und Serie aufeinanderfolgender Trainingstage
   - Verlauf mit Monatskalender, Tagesfilter und Icons je Trainingsart, alle drei Arten gemeinsam chronologisch

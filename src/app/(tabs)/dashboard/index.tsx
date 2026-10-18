@@ -11,9 +11,11 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useActivities } from '@/hooks/use-activities';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
-import { streaks, weekStart, weekStats } from '@/lib/logic/activity';
+import { FREEZES_PER_MONTH, streaks, weekStart, weekStats } from '@/lib/logic/activity';
+import { BADGES } from '@/lib/logic/badges';
 import { formatDuration } from '@/lib/logic/format';
 import { formatDistance } from '@/lib/logic/units';
+import { useGamification } from '@/lib/storage/gamification-store';
 import { useSettings } from '@/lib/storage/settings-store';
 
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -25,6 +27,9 @@ export default function DashboardScreen() {
   const name = useSettings((state) => state.displayName).trim();
   const activities = useActivities();
   const now = useNow(60_000);
+  const earned = useGamification((state) => state.earned);
+  const unseen = useGamification((state) => state.unseen);
+  const markSeen = useGamification((state) => state.markSeen);
 
   const week = useMemo(() => weekStats(activities, weekStart(now)), [activities, now]);
   const streak = useMemo(() => streaks(activities, now), [activities, now]);
@@ -46,7 +51,30 @@ export default function DashboardScreen() {
             </AppText>
           </View>
         </View>
+        <AppText variant="caption" color="textSecondary">
+          Freezes diesen Monat: {streak.freezesLeft} von {FREEZES_PER_MONTH}. Ein Freeze rettet die Serie an einem
+          Tag ohne Training.
+        </AppText>
+        {streak.atRisk ? (
+          <AppText variant="caption" color="accent">
+            Heute noch trainieren, um die Serie zu verlängern.
+          </AppText>
+        ) : null}
       </Card>
+
+      {unseen.length > 0 ? (
+        <Card>
+          <AppText variant="label" color="accent">
+            NEUES ABZEICHEN
+          </AppText>
+          {unseen.map((key) => (
+            <AppText key={key} variant="heading">
+              {BADGES.find((b) => b.key === key)?.name ?? key}
+            </AppText>
+          ))}
+          <Button title="Super!" variant="secondary" onPress={markSeen} />
+        </Card>
+      ) : null}
 
       <AppText variant="heading">Diese Woche</AppText>
       <View style={styles.stats}>
@@ -81,6 +109,13 @@ export default function DashboardScreen() {
         </View>
         <AppText variant="caption" color="textSecondary">
           Kraft {week.byType.strength} · Home {week.byType.home} · Laufen {week.byType.running}
+        </AppText>
+      </Card>
+
+      <Card onPress={() => router.push('/dashboard/badges')}>
+        <AppText variant="heading">Abzeichen</AppText>
+        <AppText color="textSecondary">
+          {Object.keys(earned).length} von {BADGES.length} erreicht
         </AppText>
       </Card>
 

@@ -3,8 +3,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { GamificationSync } from '@/components/gamification-sync';
 import { useTheme } from '@/hooks/use-theme';
 import '@/lib/location/background-task';
+import { useGamification } from '@/lib/storage/gamification-store';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
@@ -18,7 +20,8 @@ export default function RootLayout() {
   const workoutsReady = useWorkouts((state) => state.hydrated);
   const homeReady = useHomeSessions((state) => state.hydrated);
   const runsReady = useRunStore((state) => state.hydrated);
-  const hydrated = settingsReady && workoutsReady && homeReady && runsReady;
+  const gamificationReady = useGamification((state) => state.hydrated);
+  const hydrated = settingsReady && workoutsReady && homeReady && runsReady && gamificationReady;
 
   useEffect(() => {
     if (hydrated) SplashScreen.hideAsync();
@@ -41,6 +44,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={navigationTheme}>
+      <GamificationSync />
       <StatusBar style={theme.scheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }} />
     </ThemeProvider>

@@ -47,28 +47,61 @@ test('Serie: aufeinanderfolgende Tage zählen, mehrere Workouts am Tag nur einma
     [act('a', at(2026, 10, 16)), act('b', at(2026, 10, 17, 8)), act('c', at(2026, 10, 17, 20)), act('d', at(2026, 10, 18))],
     now,
   );
-  assert.deepEqual(result, { current: 3, longest: 3 });
+  assert.equal(result.current, 3);
+  assert.equal(result.longest, 3);
+  assert.equal(result.trainedToday, true);
+  assert.equal(result.atRisk, false);
 });
 
-test('Serie: ein noch fehlendes Workout heute unterbricht sie nicht', () => {
+test('Serie: ein noch fehlendes Workout heute unterbricht sie nicht, ist aber gefährdet', () => {
   const now = at(2026, 10, 18);
-  assert.equal(streaks([act('a', at(2026, 10, 16)), act('b', at(2026, 10, 17))], now).current, 2);
+  const result = streaks([act('a', at(2026, 10, 16)), act('b', at(2026, 10, 17))], now);
+  assert.equal(result.current, 2);
+  assert.equal(result.atRisk, true);
 });
 
-test('Serie: ab zwei Tagen Pause ist die aktuelle Serie 0, die längste bleibt', () => {
+test('Freeze rettet einen verpassten Tag, der Tag zählt aber nicht mit', () => {
   const now = at(2026, 10, 18);
-  const result = streaks([act('a', at(2026, 10, 10)), act('b', at(2026, 10, 11)), act('c', at(2026, 10, 12))], now);
-  assert.deepEqual(result, { current: 0, longest: 3 });
+  const result = streaks([act('a', at(2026, 10, 15)), act('b', at(2026, 10, 17)), act('c', at(2026, 10, 18))], now);
+  assert.equal(result.current, 3);
+  assert.deepEqual(result.frozenDays, ['2026-10-16']);
+  assert.equal(result.freezesLeft, 1);
+});
+
+test('Serie reißt, wenn die Freezes des Monats aufgebraucht sind', () => {
+  const now = at(2026, 10, 18);
+  // 11. aktiv, 12.-15. frei: zwei Freezes (12., 13.), am 14. reißt die Serie, ab dem 16. beginnt eine neue.
+  const result = streaks([act('a', at(2026, 10, 11)), act('b', at(2026, 10, 16)), act('c', at(2026, 10, 17)), act('d', at(2026, 10, 18))], now);
+  assert.equal(result.current, 3);
+  assert.equal(result.longest, 3);
+  assert.equal(result.freezesLeft, 0);
+});
+
+test('Freezes gelten pro Monat und werden zum Monatswechsel erneuert', () => {
+  const now = at(2026, 11, 3);
+  // 30.10. aktiv, 31.10. verpasst (Okt-Freeze), 1.11. verpasst (Nov-Freeze), 2.11. aktiv
+  const result = streaks([act('a', at(2026, 10, 30)), act('b', at(2026, 11, 2)), act('c', at(2026, 11, 3))], now);
+  assert.equal(result.current, 3);
+  assert.equal(result.freezesLeft, 1);
+});
+
+test('ohne verfügbare Freezes reißt die Serie bei jedem verpassten Tag', () => {
+  const now = at(2026, 10, 18);
+  const result = streaks([act('a', at(2026, 10, 15)), act('b', at(2026, 10, 17)), act('c', at(2026, 10, 18))], now, 0);
+  assert.equal(result.current, 2);
 });
 
 test('Serie ohne Workouts', () => {
-  assert.deepEqual(streaks([], Date.now()), { current: 0, longest: 0 });
+  const result = streaks([], at(2026, 10, 18));
+  assert.equal(result.current, 0);
+  assert.equal(result.longest, 0);
+  assert.equal(result.atRisk, false);
 });
 
-test('Serie über Monats- und Zeitumstellungsgrenze', () => {
-  const now = at(2026, 11, 2);
-  const result = streaks([act('a', at(2026, 10, 30)), act('b', at(2026, 10, 31)), act('c', at(2026, 11, 1)), act('d', at(2026, 11, 2))], now);
-  assert.equal(result.current, 4);
-  // Zeitumstellung 25.10.2026
+test('Zeitumstellung und Monatsgrenze brechen die Serie nicht', () => {
   assert.equal(streaks([act('a', at(2026, 10, 24)), act('b', at(2026, 10, 25)), act('c', at(2026, 10, 26))], at(2026, 10, 26)).current, 3);
+  assert.equal(
+    streaks([act('a', at(2026, 10, 30)), act('b', at(2026, 10, 31)), act('c', at(2026, 11, 1)), act('d', at(2026, 11, 2))], at(2026, 11, 2)).current,
+    4,
+  );
 });
