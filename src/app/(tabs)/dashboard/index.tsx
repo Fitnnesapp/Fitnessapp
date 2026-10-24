@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, type ComponentProps } from 'react';
-import { Pressable, StyleSheet, View, type ImageSourcePropType } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ChallengeCard } from '@/components/challenge-card';
 import { HeroRings } from '@/components/illustrations/hero-rings';
@@ -11,12 +11,10 @@ import { PremiumPrompt } from '@/components/premium-prompt';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Photo } from '@/components/ui/photo';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Screen } from '@/components/ui/screen';
 import { Radius, Spacing } from '@/constants/theme';
 import { getExercise } from '@/data/exercises';
-import { PHOTOS } from '@/data/photos';
 import { useActivities } from '@/hooks/use-activities';
 import { useBadgeContext } from '@/hooks/use-badge-context';
 import { useChallenges } from '@/hooks/use-challenges';
@@ -41,15 +39,7 @@ import { useWorkouts } from '@/lib/storage/workout-store';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
-type Hero = { label: string; title: string; text: string; href: Href | null; note: string; photo: ImageSourcePropType | null };
-
-/** Foto passend zur Trainingsart der heutigen Einheit (null, solange es noch keins gibt). */
-function photoFor(kind: 'strength' | 'run' | 'program' | null): ImageSourcePropType | null {
-  if (kind === 'strength') return PHOTOS['hero-kraft'];
-  if (kind === 'run') return PHOTOS['hero-lauf'];
-  if (kind === 'program') return PHOTOS['hero-home'];
-  return null;
-}
+type Hero = { label: string; title: string; text: string; href: Href | null; note: string };
 
 function hrefFor(target: SuggestionTarget): Href {
   if (target.kind === 'strength') return '/training/strength';
@@ -129,7 +119,6 @@ export default function DashboardScreen() {
         text: suggestion.reason,
         href: suggestion.target ? hrefFor(suggestion.target) : null,
         note: 'Aus einfachen Regeln, keine KI',
-        photo: photoFor(suggestion.target?.kind ?? null),
       };
     }
     const [session, extra] = sessionsForDay(plan, now);
@@ -147,7 +136,6 @@ export default function DashboardScreen() {
           : comeback
             ? `${session.minutes} Minuten, die zählen`
             : 'Dein Plan, deine Zeit',
-        photo: photoFor(session.kind),
       };
     }
     const upcomingSession = nextSession(plan, now);
@@ -162,10 +150,8 @@ export default function DashboardScreen() {
       text: upcomingSession ? `${when}: ${upcomingSession.session.title}` : 'Erholung gehört zum Training.',
       href: null,
       note: 'Erholung gehört zum Training.',
-      photo: null,
     };
   }, [plan, suggestion, now, streak.trainedToday, activities]);
-  const heroPhoto = hero.href ? hero.photo : null;
 
   return (
     <Screen topInset>
@@ -228,44 +214,35 @@ export default function DashboardScreen() {
         </Card>
       ) : null}
 
-      {/* Der nächste Schritt: eine klare Handlung statt vieler Optionen. Mit Foto als Vollbild-Karte. */}
+      {/* Der nächste Schritt: eine klare Handlung statt vieler Optionen */}
       <Pressable
         accessibilityRole="button"
         disabled={!hero.href && !plan}
         onPress={hero.href ? () => router.push(hero.href as Href) : () => router.push('/plan')}
         style={({ pressed }) => [
           styles.hero,
-          heroPhoto ? styles.heroPhoto : null,
           { backgroundColor: hero.href ? theme.accent : theme.surface, borderColor: hero.href ? theme.accent : theme.border },
           pressed && styles.pressed,
         ]}>
-        {heroPhoto ? (
-          <Photo source={heroPhoto} scrim={1} style={StyleSheet.absoluteFill} fallback={null} />
-        ) : hero.href ? (
-          <HeroRings color={theme.onAccent} />
-        ) : null}
-        <AppText variant="label" style={{ color: heroPhoto ? theme.accent : hero.href ? theme.onAccent : theme.accent, opacity: heroPhoto ? 1 : 0.8 }}>
+        {hero.href ? <HeroRings color={theme.onAccent} /> : null}
+        <AppText variant="label" style={{ color: hero.href ? theme.onAccent : theme.accent, opacity: 0.8 }}>
           {hero.label}
         </AppText>
-        <AppText variant="title" style={{ color: heroPhoto ? '#FFFFFF' : hero.href ? theme.onAccent : theme.text }}>
+        <AppText variant="title" style={{ color: hero.href ? theme.onAccent : theme.text }}>
           {hero.title}
         </AppText>
-        <AppText
-          style={{
-            color: heroPhoto ? '#FFFFFF' : hero.href ? theme.onAccent : theme.textSecondary,
-            opacity: heroPhoto || hero.href ? 0.85 : 1,
-          }}>
+        <AppText style={{ color: hero.href ? theme.onAccent : theme.textSecondary, opacity: hero.href ? 0.85 : 1 }}>
           {hero.text}
         </AppText>
         {hero.href ? (
           <View style={styles.heroFooter}>
-            <View style={[styles.playButton, { backgroundColor: heroPhoto ? theme.accent : theme.onAccent }]}>
-              <Ionicons name="play" size={18} color={heroPhoto ? '#0B0D10' : theme.accent} />
-              <AppText variant="heading" style={{ color: heroPhoto ? '#0B0D10' : theme.accent }}>
+            <View style={[styles.playButton, { backgroundColor: theme.onAccent }]}>
+              <Ionicons name="play" size={18} color={theme.accent} />
+              <AppText variant="heading" style={{ color: theme.accent }}>
                 Los geht&apos;s
               </AppText>
             </View>
-            <AppText variant="caption" style={[styles.flex, { color: heroPhoto ? '#FFFFFF' : theme.onAccent, opacity: 0.75 }]}>
+            <AppText variant="caption" style={[styles.flex, { color: theme.onAccent, opacity: 0.7 }]}>
               {hero.note}
             </AppText>
           </View>
@@ -545,7 +522,6 @@ const styles = StyleSheet.create({
   badgeIcon: { width: 56, height: 56, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
 
   hero: { padding: Spacing.four, borderRadius: Radius.large, borderWidth: 1, gap: Spacing.two, overflow: 'hidden' },
-  heroPhoto: { minHeight: 300, justifyContent: 'flex-end', borderWidth: 0 },
   heroFooter: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginTop: Spacing.two },
   playButton: {
     flexDirection: 'row',

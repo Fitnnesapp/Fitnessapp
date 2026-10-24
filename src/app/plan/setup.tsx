@@ -11,7 +11,6 @@ import { OptionCard } from '@/components/ui/option-card';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
 import { Radius, Spacing } from '@/constants/theme';
-import { PHOTOS } from '@/data/photos';
 import { FREE_PROGRAM_IDS, PROGRAMS } from '@/data/programs';
 import { useNow } from '@/hooks/use-now';
 import { useSubscription } from '@/hooks/use-subscription';
@@ -285,7 +284,6 @@ export default function PlanSetupScreen() {
                   title={GOAL_LABELS[g.value]}
                   hint={g.hint}
                   icon={g.icon}
-                  image={PHOTOS[`goal-${g.value}`]}
                   selected={position >= 0}
                   tag={position === 0 && goals.length > 1 ? 'Schwerpunkt' : position === 1 ? 'Dazu' : undefined}
                   onPress={() => {
