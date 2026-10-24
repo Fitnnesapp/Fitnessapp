@@ -1,0 +1,138 @@
+import type { SearchItem } from '../lib/logic/search.ts';
+
+export type FeatureItem = SearchItem & { kind: 'funktion'; href: string };
+
+/**
+ * Alle Funktionen der App für die Suche. Keywords enthalten typische Fragen in Alltagssprache.
+ * Bei neuen Screens hier einen Eintrag ergänzen.
+ */
+export const FEATURES: readonly FeatureItem[] = [
+  {
+    id: 'plan',
+    kind: 'funktion',
+    title: 'Mein Plan',
+    subtitle: 'Trainingsplan der Woche ansehen, Tage selbst belegen',
+    keywords: ['Wochenplan', 'heute trainieren', 'was steht an', 'Plan ändern', 'Tag ändern', 'Ruhetag'],
+    href: '/plan',
+  },
+  {
+    id: 'plan-setup',
+    kind: 'funktion',
+    title: 'Plan neu erstellen',
+    subtitle: 'Fragebogen zu Ziel, Orten, Tagen und Zeit',
+    keywords: ['Fragebogen', 'anderes Ziel', 'neu anfangen', 'personalisieren', 'individuell', 'Ziele kombinieren'],
+    href: '/plan/setup',
+  },
+  {
+    id: 'strength',
+    kind: 'funktion',
+    title: 'Krafttraining starten',
+    subtitle: 'Sätze, Gewichte und Wiederholungen loggen',
+    keywords: ['Workout starten', 'Gewichte', 'Sätze', 'Wiederholungen', 'Fitnessstudio', 'Gym', 'tracken'],
+    href: '/training/strength',
+  },
+  {
+    id: 'exercises',
+    kind: 'funktion',
+    title: 'Übungsbibliothek',
+    subtitle: '57 Übungen mit Anleitung, nach Muskelgruppe filtern',
+    keywords: ['Übungen', 'Anleitung', 'Technik', 'Muskelgruppe', 'Equipment'],
+    href: '/training/exercises',
+  },
+  {
+    id: 'home',
+    kind: 'funktion',
+    title: 'Home-Workouts',
+    subtitle: 'Geführte Programme ohne Geräte',
+    keywords: ['zu Hause', 'ohne Geräte', 'HIIT', 'Core', 'Mobility', 'Programme', 'Wohnzimmer'],
+    href: '/training/home',
+  },
+  {
+    id: 'running',
+    kind: 'funktion',
+    title: 'Lauf starten',
+    subtitle: 'Laufen mit GPS, Pace und Strecke',
+    keywords: ['Joggen', 'GPS', 'Pace', 'Strecke', 'Kilometer', 'draußen'],
+    href: '/training/running',
+  },
+  {
+    id: 'history',
+    kind: 'funktion',
+    title: 'Verlauf',
+    subtitle: 'Alle Workouts im Kalender',
+    keywords: ['vergangene Workouts', 'Kalender', 'letzte Woche', 'Fortschritt', 'Historie'],
+    href: '/history',
+  },
+  {
+    id: 'badges',
+    kind: 'funktion',
+    title: 'Abzeichen',
+    subtitle: 'Erreichte und offene Auszeichnungen',
+    keywords: ['Badges', 'Erfolge', 'Medaillen', 'Belohnung'],
+    href: '/dashboard/badges',
+  },
+  {
+    id: 'year',
+    kind: 'funktion',
+    title: 'Jahresrückblick',
+    subtitle: 'Dein Jahr in Zahlen',
+    keywords: ['Statistik', 'Jahr', 'Zusammenfassung', 'Rekorde'],
+    href: '/dashboard/year',
+  },
+  {
+    id: 'discover',
+    kind: 'funktion',
+    title: 'Challenges und Events',
+    subtitle: 'Winter Arc, Läufe und Wettkämpfe',
+    keywords: ['Wettbewerb', 'Winter Arc', 'Marathon', 'mitmachen', 'Herausforderung', 'Veranstaltungen'],
+    href: '/discover',
+  },
+  {
+    id: 'profile',
+    kind: 'funktion',
+    title: 'Profil und Einstellungen',
+    subtitle: 'Name, Einheiten, Körpergewicht',
+    keywords: ['Name ändern', 'Einstellungen', 'kg', 'Meilen', 'metrisch', 'imperial', 'Körpergewicht'],
+    href: '/profile',
+  },
+  {
+    id: 'reminder',
+    kind: 'funktion',
+    title: 'Erinnerung einstellen',
+    subtitle: 'Benachrichtigung bei drohendem Serienverlust',
+    keywords: ['Benachrichtigung', 'Push', 'Erinnerung an', 'Erinnerung aus', 'Serie'],
+    href: '/profile',
+  },
+  {
+    id: 'health',
+    kind: 'funktion',
+    title: 'Gesundheitsangaben',
+    subtitle: 'Einwilligung, Alter und Beschwerden verwalten',
+    keywords: ['Einwilligung widerrufen', 'Beschwerden', 'Knie', 'Rücken', 'Datenschutz', 'Alter'],
+    href: '/profile',
+  },
+  {
+    id: 'delete',
+    kind: 'funktion',
+    title: 'Alle Daten löschen',
+    subtitle: 'Profil > ganz unten',
+    keywords: ['Daten löschen', 'zurücksetzen', 'Reset', 'alles entfernen', 'Konto löschen', 'Datenschutz'],
+    href: '/profile',
+  },
+  {
+    id: 'premium',
+    kind: 'funktion',
+    title: 'Premium',
+    subtitle: 'Alle Programme, voller Verlauf, Testversion',
+    keywords: ['Abo', 'kaufen', 'Preis', 'Testversion', 'kündigen', 'Käufe wiederherstellen'],
+    href: '/profile/premium',
+  },
+  {
+    id: 'streak',
+    kind: 'funktion',
+    title: 'Serie und Freezes',
+    subtitle: 'Trainingstage in Folge auf dem Start-Bildschirm',
+    keywords: ['Streak', 'Flamme', 'Freeze', 'Tage in Folge', 'Wochenziel'],
+    href: '/dashboard',
+  },
+];

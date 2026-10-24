@@ -176,6 +176,19 @@ export default function DashboardScreen() {
         ) : null}
       </View>
 
+      {/* Suche: jede Funktion in einem Schritt erreichbar */}
+      <Pressable
+        accessibilityRole="search"
+        accessibilityLabel="Suche öffnen"
+        onPress={() => router.push('/search')}
+        style={({ pressed }) => [styles.searchBar, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}>
+        <Ionicons name="sparkles" size={18} color={theme.accent} />
+        <AppText color="textSecondary" style={styles.flex} numberOfLines={1}>
+          Suchen oder fragen …
+        </AppText>
+        <Ionicons name="search" size={18} color={theme.textSecondary} />
+      </Pressable>
+
       {/* Belohnung zuerst, wenn es etwas zu feiern gibt */}
       {unseen.length > 0 ? (
         <Card style={[styles.celebrate, { borderColor: theme.accent }]}>
@@ -545,6 +558,15 @@ const styles = StyleSheet.create({
   linkTile: { flex: 1, padding: Spacing.three, gap: Spacing.one },
   planInvite: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   sectionRow: { flexDirection: 'row', alignItems: 'center' },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    minHeight: 48,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
 
   muscleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   muscleName: { width: 84 },

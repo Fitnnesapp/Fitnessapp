@@ -57,7 +57,9 @@ export default function RootLayout() {
     <ThemeProvider value={navigationTheme}>
       <GamificationSync />
       <StatusBar style={theme.scheme === 'dark' ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="search" options={{ presentation: 'modal', animation: 'fade_from_bottom' }} />
+      </Stack>
     </ThemeProvider>
   );
 }
