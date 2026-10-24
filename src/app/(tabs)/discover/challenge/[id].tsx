@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { ChallengeArt, artVariantFor } from '@/components/illustrations/challenge-art';
+import { ImageCard } from '@/components/ui/image-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { ProgressRing } from '@/components/ui/progress-ring';
 import { Screen } from '@/components/ui/screen';
 import { Radius, Spacing } from '@/constants/theme';
 import { getChallenge } from '@/data/challenges';
+import { sceneForChallenge } from '@/data/images';
 import { useActivities } from '@/hooks/use-activities';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
@@ -70,15 +71,14 @@ export default function ChallengeScreen() {
 
   return (
     <Screen>
-      <ChallengeArt variant={artVariantFor(challenge.id)} height={180} />
-      <View style={styles.head}>
-        <AppText variant="label" color="accent">
+      <ImageCard source={sceneForChallenge(challenge.id)} height={260}>
+        <AppText variant="label" style={{ color: theme.accent }}>
           {challenge.tagline.toUpperCase()}
         </AppText>
-        <AppText variant="title" style={styles.center}>
+        <AppText variant="hero" style={styles.onImage}>
           {challenge.name}
         </AppText>
-      </View>
+      </ImageCard>
 
       {progress && joined ? (
         <Card style={styles.progressCard}>
@@ -158,8 +158,8 @@ export default function ChallengeScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
+  onImage: { color: '#FFFFFF' },
   tabular: { fontVariant: ['tabular-nums'] },
-  head: { alignItems: 'center', gap: Spacing.two, paddingTop: Spacing.two },
   progressCard: { alignItems: 'center', gap: Spacing.three },
   stageRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingVertical: Spacing.one },
   stageDot: { width: 28, height: 28, borderRadius: Radius.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },

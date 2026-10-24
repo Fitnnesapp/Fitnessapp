@@ -4,16 +4,17 @@ import { useEffect, useMemo, type ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ChallengeCard } from '@/components/challenge-card';
-import { HeroRings } from '@/components/illustrations/hero-rings';
 import { EventCard } from '@/components/event-card';
 import { PremiumPrompt } from '@/components/premium-prompt';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ImageCard } from '@/components/ui/image-card';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Screen } from '@/components/ui/screen';
 import { Radius, Spacing } from '@/constants/theme';
 import { getExercise } from '@/data/exercises';
+import { sceneForKind } from '@/data/images';
 import { useActivities } from '@/hooks/use-activities';
 import { useBadgeContext } from '@/hooks/use-badge-context';
 import { useChallenges } from '@/hooks/use-challenges';
@@ -38,7 +39,7 @@ import { useWorkouts } from '@/lib/storage/workout-store';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
-type Hero = { label: string; title: string; text: string; href: Href | null; note: string };
+type Hero = { label: string; title: string; text: string; href: Href | null; note: string; kind: 'strength' | 'run' | 'program' | 'rest' };
 
 function hrefFor(target: SuggestionTarget): Href {
   if (target.kind === 'strength') return '/training/strength';
@@ -118,6 +119,7 @@ export default function DashboardScreen() {
         text: suggestion.reason,
         href: suggestion.target ? hrefFor(suggestion.target) : null,
         note: 'Aus einfachen Regeln, keine KI',
+        kind: suggestion.target?.kind ?? 'rest',
       };
     }
     const [session, extra] = sessionsForDay(plan, now);
@@ -135,6 +137,7 @@ export default function DashboardScreen() {
           : comeback
             ? `${session.minutes} Minuten, die zählen`
             : 'Dein Plan, deine Zeit',
+        kind: session.kind,
       };
     }
     const upcomingSession = nextSession(plan, now);
@@ -149,6 +152,7 @@ export default function DashboardScreen() {
       text: upcomingSession ? `${when}: ${upcomingSession.session.title}` : 'Erholung gehört zum Training.',
       href: null,
       note: 'Erholung gehört zum Training.',
+      kind: 'rest',
     };
   }, [plan, suggestion, now, streak.trainedToday, activities]);
 
@@ -208,47 +212,42 @@ export default function DashboardScreen() {
         </Card>
       ) : null}
 
-      {/* Der nächste Schritt: eine klare Handlung statt vieler Optionen */}
-      <Pressable
-        accessibilityRole="button"
-        disabled={!hero.href && !plan}
-        onPress={hero.href ? () => router.push(hero.href as Href) : () => router.push('/plan')}
-        style={({ pressed }) => [
-          styles.hero,
-          { backgroundColor: hero.href ? theme.accent : theme.surface, borderColor: hero.href ? theme.accent : theme.border },
-          pressed && styles.pressed,
-        ]}>
-        {hero.href ? <HeroRings color={theme.onAccent} /> : null}
-        <AppText variant="label" style={{ color: hero.href ? theme.onAccent : theme.accent, opacity: 0.8 }}>
+      {/* Der nächste Schritt als große Bildkarte (wie bei Nike Training Club): eine klare Handlung */}
+      <ImageCard
+        source={sceneForKind(hero.kind)}
+        height={hero.href ? 340 : 240}
+        accessibilityLabel={`${hero.label}: ${hero.title}`}
+        onPress={hero.href ? () => router.push(hero.href as Href) : plan ? () => router.push('/plan') : undefined}>
+        <AppText variant="label" style={{ color: theme.accent }}>
           {hero.label}
         </AppText>
-        <AppText variant="title" style={{ color: hero.href ? theme.onAccent : theme.text }}>
+        <AppText variant="hero" style={styles.onImage}>
           {hero.title}
         </AppText>
-        <AppText style={{ color: hero.href ? theme.onAccent : theme.textSecondary, opacity: hero.href ? 0.85 : 1 }}>
+        <AppText style={styles.onImageSoft} numberOfLines={3}>
           {hero.text}
         </AppText>
         {hero.href ? (
           <View style={styles.heroFooter}>
-            <View style={[styles.playButton, { backgroundColor: theme.onAccent }]}>
-              <Ionicons name="play" size={18} color={theme.accent} />
-              <AppText variant="heading" style={{ color: theme.accent }}>
+            <View style={[styles.playButton, { backgroundColor: theme.accent }]}>
+              <Ionicons name="play" size={18} color="#0B0D10" />
+              <AppText variant="heading" style={styles.onAccentFixed}>
                 Los geht&apos;s
               </AppText>
             </View>
-            <AppText variant="caption" style={[styles.flex, { color: theme.onAccent, opacity: 0.7 }]}>
+            <AppText variant="caption" style={[styles.flex, styles.onImageSoft]}>
               {hero.note}
             </AppText>
           </View>
         ) : (
           <View style={styles.heroFooter}>
             <Ionicons name="checkmark-circle" size={22} color={theme.accent} />
-            <AppText variant="caption" color="textSecondary">
+            <AppText variant="caption" style={styles.onImageSoft}>
               {hero.note}
             </AppText>
           </View>
         )}
-      </Pressable>
+      </ImageCard>
 
       {/* Ohne Plan: Einladung, einen zu erstellen (Wenn-Dann-Pläne erhöhen die Umsetzung) */}
       {plan ? null : (
@@ -515,7 +514,9 @@ const styles = StyleSheet.create({
   celebrate: { alignItems: 'center', borderWidth: 2 },
   badgeIcon: { width: 56, height: 56, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
 
-  hero: { padding: Spacing.four, borderRadius: Radius.large, borderWidth: 1, gap: Spacing.two, overflow: 'hidden' },
+  onImage: { color: '#FFFFFF' },
+  onImageSoft: { color: '#FFFFFF', opacity: 0.82 },
+  onAccentFixed: { color: '#0B0D10' },
   heroFooter: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginTop: Spacing.two },
   playButton: {
     flexDirection: 'row',

@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
-import { ChallengeArt, artVariantFor } from '@/components/illustrations/challenge-art';
+import { sceneForChallenge } from '@/data/images';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
 import { Radius, Spacing } from '@/constants/theme';
@@ -43,7 +43,7 @@ export function ChallengeCard({ challenge, joined, progress, now, onPress, featu
 
   return (
     <Card onPress={onPress}>
-      {featured ? <ChallengeArt variant={artVariantFor(challenge.id)} height={128} /> : null}
+      {featured ? <Image source={sceneForChallenge(challenge.id)} style={styles.cover} resizeMode="cover" accessibilityIgnoresInvertColors /> : null}
       <View style={styles.row}>
         <View style={[styles.icon, { backgroundColor: joined ? theme.accent : theme.accentSoft }]}>
           <Ionicons
@@ -96,6 +96,7 @@ export function ChallengeCard({ challenge, joined, progress, now, onPress, featu
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  cover: { height: 150, width: '100%', borderRadius: Radius.medium },
   tabular: { fontVariant: ['tabular-nums'] },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   icon: { width: 48, height: 48, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center' },

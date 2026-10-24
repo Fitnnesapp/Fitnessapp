@@ -1,10 +1,12 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo } from 'react';
+import { ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 
-import { ChallengeCard } from '@/components/challenge-card';
+import { ChallengeTile } from '@/components/challenge-tile';
 import { EventCard } from '@/components/event-card';
 import { AppText } from '@/components/ui/app-text';
 import { Screen } from '@/components/ui/screen';
+import { Spacing } from '@/constants/theme';
 import { useChallenges } from '@/hooks/use-challenges';
 import { upcomingEvents } from '@/lib/logic/events';
 import { useEvents, useEventsStore } from '@/lib/storage/events-store';
@@ -16,6 +18,9 @@ export default function DiscoverScreen() {
   const events = useEvents();
   const refresh = useEventsStore((state) => state.refresh);
   const upcoming = useMemo(() => upcomingEvents(events, now, 20), [events, now]);
+  const { width } = useWindowDimensions();
+  // Kachel so breit, dass die nächste angeschnitten sichtbar bleibt und zum Wischen einlädt
+  const tileWidth = Math.min(300, Math.round(width * 0.72));
 
   useEffect(() => {
     void refresh();
@@ -29,17 +34,25 @@ export default function DiscoverScreen() {
       <AppText variant="caption" color="textSecondary">
         Zeitlich begrenzte Ziele mit Etappen. Dein Fortschritt kommt automatisch aus deinen Workouts.
       </AppText>
-      {entries.map((entry, i) => (
-        <ChallengeCard
-          key={entry.challenge.id}
-          featured={i === 0}
-          challenge={entry.challenge}
-          joined={entry.joined}
-          progress={entry.progress}
-          now={now}
-          onPress={() => router.push({ pathname: '/discover/challenge/[id]', params: { id: entry.challenge.id } })}
-        />
-      ))}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={tileWidth + Spacing.three}
+        decelerationRate="fast"
+        style={styles.carousel}
+        contentContainerStyle={styles.carouselContent}>
+        {entries.map((entry) => (
+          <ChallengeTile
+            key={entry.challenge.id}
+            challenge={entry.challenge}
+            joined={entry.joined}
+            progress={entry.progress}
+            now={now}
+            width={tileWidth}
+            onPress={() => router.push({ pathname: '/discover/challenge/[id]', params: { id: entry.challenge.id } })}
+          />
+        ))}
+      </ScrollView>
 
       <AppText variant="heading">Events</AppText>
       <AppText variant="caption" color="textSecondary">
@@ -54,3 +67,9 @@ export default function DiscoverScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  // Karussell bis an den Bildschirmrand, Inhalt mit dem normalen Seitenabstand
+  carousel: { marginHorizontal: -Spacing.four },
+  carouselContent: { paddingHorizontal: Spacing.four, gap: Spacing.three },
+});
