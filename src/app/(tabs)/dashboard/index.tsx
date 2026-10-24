@@ -5,7 +5,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ChallengeCard } from '@/components/challenge-card';
 import { HeroRings } from '@/components/illustrations/hero-rings';
-import { Medal3D } from '@/components/three/medal-3d';
 import { EventCard } from '@/components/event-card';
 import { PremiumPrompt } from '@/components/premium-prompt';
 import { AppText } from '@/components/ui/app-text';
@@ -194,14 +193,9 @@ export default function DashboardScreen() {
       {/* Belohnung zuerst, wenn es etwas zu feiern gibt */}
       {unseen.length > 0 ? (
         <Card style={[styles.celebrate, { borderColor: theme.accent }]}>
-          <Medal3D
-            size={160}
-            fallback={
-              <View style={[styles.badgeIcon, { backgroundColor: theme.accent }]}>
-                <Ionicons name="trophy" size={26} color={theme.onAccent} />
-              </View>
-            }
-          />
+          <View style={[styles.badgeIcon, { backgroundColor: theme.accent }]}>
+            <Ionicons name="trophy" size={26} color={theme.onAccent} />
+          </View>
           <AppText variant="label" color="accent">
             {unseen.length === 1 ? 'NEUES ABZEICHEN' : `${unseen.length} NEUE ABZEICHEN`}
           </AppText>

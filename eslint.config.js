@@ -7,9 +7,4 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*'],
   },
-  {
-    // three.js-Elemente (<mesh position={...}>) sind keine DOM-Elemente, die Regel kennt ihre Props nicht
-    files: ['src/components/three/**'],
-    rules: { 'react/no-unknown-property': 'off' },
-  },
 ]);
