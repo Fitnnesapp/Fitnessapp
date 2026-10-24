@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ChallengeArt, artVariantFor } from '@/components/illustrations/challenge-art';
+import { ChallengeCover } from '@/components/challenge-cover';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
 import { Radius, Spacing } from '@/constants/theme';
@@ -43,7 +43,7 @@ export function ChallengeCard({ challenge, joined, progress, now, onPress, featu
 
   return (
     <Card onPress={onPress}>
-      {featured ? <ChallengeArt variant={artVariantFor(challenge.id)} height={128} /> : null}
+      {featured ? <ChallengeCover challengeId={challenge.id} height={128} /> : null}
       <View style={styles.row}>
         <View style={[styles.icon, { backgroundColor: joined ? theme.accent : theme.accentSoft }]}>
           <Ionicons

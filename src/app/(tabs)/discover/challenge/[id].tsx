@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { ChallengeArt, artVariantFor } from '@/components/illustrations/challenge-art';
+import { ChallengeCover } from '@/components/challenge-cover';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -70,7 +70,7 @@ export default function ChallengeScreen() {
 
   return (
     <Screen>
-      <ChallengeArt variant={artVariantFor(challenge.id)} height={180} />
+      <ChallengeCover challengeId={challenge.id} height={200} />
       <View style={styles.head}>
         <AppText variant="label" color="accent">
           {challenge.tagline.toUpperCase()}

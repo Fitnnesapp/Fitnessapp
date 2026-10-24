@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View, type ImageSourcePropType } from 'react-native';
 
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -11,6 +11,8 @@ type OptionCardProps = {
   title: string;
   hint?: string;
   icon?: ComponentProps<typeof Ionicons>['name'];
+  /** Foto statt Icon, falls vorhanden */
+  image?: ImageSourcePropType | null;
   selected: boolean;
   /** Kleines Etikett wie "Empfohlen" */
   tag?: string;
@@ -18,7 +20,7 @@ type OptionCardProps = {
 };
 
 /** Große, gut treffbare Auswahlkarte für Fragen mit wenigen Antworten. */
-export function OptionCard({ title, hint, icon, selected, tag, onPress }: OptionCardProps) {
+export function OptionCard({ title, hint, icon, image, selected, tag, onPress }: OptionCardProps) {
   const theme = useTheme();
 
   return (
@@ -34,7 +36,9 @@ export function OptionCard({ title, hint, icon, selected, tag, onPress }: Option
         },
         pressed && styles.pressed,
       ]}>
-      {icon ? (
+      {image ? (
+        <Image source={image} style={styles.image} resizeMode="cover" />
+      ) : icon ? (
         <View style={[styles.icon, { backgroundColor: selected ? theme.accent : theme.surfaceAlt }]}>
           <Ionicons name={icon} size={22} color={selected ? theme.onAccent : theme.text} />
         </View>
@@ -76,6 +80,7 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.8 },
   icon: { width: 44, height: 44, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center' },
+  image: { width: 64, height: 64, borderRadius: Radius.medium },
   text: { flex: 1, gap: 2 },
   titleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.two },
   tag: { borderWidth: 1, borderRadius: Radius.pill, paddingHorizontal: Spacing.two },
