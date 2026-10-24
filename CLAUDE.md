@@ -7,6 +7,9 @@ All-in-One Fitness-App (Kraft, Home-Workouts, Running). Entwicklungsplan: `claud
 - **Offline-first, ohne Konto und ohne Server**: alle Daten bleiben lokal auf dem Gerät
 - Zustand mit AsyncStorage für Einstellungen und Workouts (jede Änderung wird sofort gespeichert, `src/lib/storage`)
 - Keine Netzwerkzugriffe einbauen (kein Supabase, kein Login, keine Cloud-Dienste), außer der Nutzer entscheidet es ausdrücklich anders
+- Ausnahme (vom Nutzer entschieden): Die Event-Liste wird lesend aus dem Repo geladen (`src/data/events.json` auf `main`,
+  über raw.githubusercontent.com), mit Cache und mitgelieferter Fassung als Rückfall. Es werden keine Nutzerdaten gesendet.
+  Geladene Daten immer mit `parseEvents` prüfen, nie ungeprüft anzeigen oder öffnen.
 
 ## Konventionen
 - Code liegt unter `src/` (Expo-Standard der aktuellen Vorlage): Routen in `src/app`, Rest daneben.

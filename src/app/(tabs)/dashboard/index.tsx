@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, type Href } from 'expo-router';
-import { useMemo, type ComponentProps } from 'react';
+import { useEffect, useMemo, type ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ChallengeCard } from '@/components/challenge-card';
+import { EventCard } from '@/components/event-card';
 import { PremiumPrompt } from '@/components/premium-prompt';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
 import { FREEZES_PER_MONTH, streaks, weekStart, weekStats } from '@/lib/logic/activity';
 import { muscleVolume } from '@/lib/logic/analytics';
+import { daysUntilEvent, upcomingEvents } from '@/lib/logic/events';
 import { BADGES } from '@/lib/logic/badges';
 import { formatDuration } from '@/lib/logic/format';
 import { dayHeading, greeting, nextBadge, WEEKLY_GOAL_DAYS, weeklyGoal } from '@/lib/logic/motivation';
@@ -27,6 +29,7 @@ import { missedLastPlanned, nextSession, plannedDaysThisWeek, sessionForDay, WEE
 import { suggestWorkout, type SuggestionTarget } from '@/lib/logic/suggestions';
 import { formatDistance, formatWeight } from '@/lib/logic/units';
 import { hrefForSession } from '@/lib/plan-href';
+import { useEvents, useEventsStore } from '@/lib/storage/events-store';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
 import { useSettings } from '@/lib/storage/settings-store';
@@ -70,6 +73,16 @@ export default function DashboardScreen() {
   const badgeContext = useBadgeContext();
   const plan = usePlanStore((state) => state.plan);
   const { entries: challengeEntries } = useChallenges();
+  const events = useEvents();
+  const refreshEvents = useEventsStore((state) => state.refresh);
+  useEffect(() => {
+    void refreshEvents();
+  }, [refreshEvents]);
+  // Ankündigung: das nächste Event der kommenden zwei Wochen
+  const nextEvent = useMemo(
+    () => upcomingEvents(events, now, 1).find((e) => daysUntilEvent(e, now) <= 14),
+    [events, now],
+  );
   // Eine Challenge auf dem Start-Bildschirm: die eigene, sonst eine laufende als Einladung
   const featuredChallenge =
     challengeEntries.find((e) => e.joined && !e.progress?.completed) ??
@@ -327,6 +340,20 @@ export default function DashboardScreen() {
         />
       ) : null}
 
+      {nextEvent ? (
+        <>
+          <View style={styles.sectionRow}>
+            <AppText variant="heading" style={styles.flex}>
+              Demnächst
+            </AppText>
+            <AppText variant="label" color="accent" onPress={() => router.push('/discover')}>
+              Alle Events
+            </AppText>
+          </View>
+          <EventCard event={nextEvent} now={now} compact />
+        </>
+      ) : null}
+
       {/* Nächstes Abzeichen: ein konkretes, nahes Ziel (Zielgradient-Effekt) */}
       {upcoming && upcomingBadge ? (
         <Card onPress={() => router.push('/dashboard/badges')}>
@@ -513,6 +540,7 @@ const styles = StyleSheet.create({
   },
   linkTile: { flex: 1, padding: Spacing.three, gap: Spacing.one },
   planInvite: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  sectionRow: { flexDirection: 'row', alignItems: 'center' },
 
   muscleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   muscleName: { width: 84 },

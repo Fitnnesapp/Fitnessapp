@@ -157,8 +157,8 @@ export default function ProfileScreen() {
       <Card>
         <AppText variant="heading">Deine Daten bleiben bei dir</AppText>
         <AppText color="textSecondary">
-          Die App arbeitet komplett offline. Alles wird nur auf diesem Gerät gespeichert, es gibt kein Konto und keine
-          Verbindung zu einem Server.
+          Alles, was du trainierst, wird nur auf diesem Gerät gespeichert. Es gibt kein Konto. Die App lädt nur die
+          öffentliche Event-Liste aus dem Internet und sendet dabei keine Daten über dich.
         </AppText>
       </Card>
 
