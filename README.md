@@ -1,7 +1,7 @@
 # Fitnessapp
 
 All-in-One Fitness-App (Kraft, Home-Workouts, Running) mit React Native und Expo.
-**Läuft komplett offline**: kein Konto, kein Login, keine Internetverbindung nötig. Alle Daten bleiben auf dem Gerät.
+**Läuft offline**: kein Konto, kein Login. Alle Trainingsdaten bleiben auf dem Gerät. Einzige Verbindung: die öffentliche Event-Liste wird gelesen, ohne Nutzerdaten zu senden.
 
 Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [CLAUDE.md](CLAUDE.md)
 
@@ -26,6 +26,10 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - Zeit wird aus Zeitstempeln berechnet, bleibt also bei gesperrtem Bildschirm korrekt; Bildschirm bleibt während des Trainings an
   - Zusammenfassung mit Dauer, geschätzten Kalorien (MET-Formel, Körpergewicht im Profil) und optionaler Anstrengung (1 bis 10)
   - Erscheint gemeinsam mit den Kraft-Workouts im Verlauf
+- **Persönlicher Trainingsplan:** Einstieg beim ersten Öffnen und im Profil (Ziel, Erfahrung, Ort, Tage, Zeit, Start), Wochenplan mit Wenn-Dann-Sätzen, heutige Einheit auf dem Start-Bildschirm
+- **Challenges (offline):** Winter Arc 2026, 100 km im November, Neustart 2027, 30 Tage Gewohnheit; Fortschritt aus dem Verlauf, Etappen, faire Ziele für Spät-Einsteiger
+- **Events:** große Läufe und Fitness-Wettkämpfe im Tab „Entdecken“, live aus `src/data/events.json` auf `main` geladen, offline aus dem Cache
+- **Design-Begründung mit Studien:** [docs/design-psychologie.md](docs/design-psychologie.md)
 - **Phase 8 (Ausbau):**
   - Jahresrückblick (Start-Tab): Workouts, Zeit, Distanz, Volumen, Rekorde, längste Serie, stärkster Monat, Lieblingstag und -übung, wählbares Jahr
   - Vorschlag für heute aus einfachen, nachvollziehbaren Regeln (keine KI); führt nie zu einem Premium-Programm
