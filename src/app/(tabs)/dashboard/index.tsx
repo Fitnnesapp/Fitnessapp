@@ -20,14 +20,19 @@ import { FREEZES_PER_MONTH, streaks, weekStart, weekStats } from '@/lib/logic/ac
 import { muscleVolume } from '@/lib/logic/analytics';
 import { BADGES } from '@/lib/logic/badges';
 import { formatDuration } from '@/lib/logic/format';
-import { dayHeading, greeting, nextBadge, weeklyGoal } from '@/lib/logic/motivation';
+import { dayHeading, greeting, nextBadge, WEEKLY_GOAL_DAYS, weeklyGoal } from '@/lib/logic/motivation';
+import { missedLastPlanned, nextSession, plannedDaysThisWeek, sessionForDay, WEEKDAY_NAMES } from '@/lib/logic/plan';
 import { suggestWorkout, type SuggestionTarget } from '@/lib/logic/suggestions';
 import { formatDistance, formatWeight } from '@/lib/logic/units';
+import { hrefForSession } from '@/lib/plan-href';
 import { useGamification } from '@/lib/storage/gamification-store';
+import { usePlanStore } from '@/lib/storage/plan-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
+
+type Hero = { label: string; title: string; text: string; href: Href | null; note: string };
 
 function hrefFor(target: SuggestionTarget): Href {
   if (target.kind === 'strength') return '/training/strength';
@@ -61,9 +66,13 @@ export default function DashboardScreen() {
   const unseen = useGamification((state) => state.unseen);
   const markSeen = useGamification((state) => state.markSeen);
   const badgeContext = useBadgeContext();
+  const plan = usePlanStore((state) => state.plan);
 
   const week = useMemo(() => weekStats(activities, weekStart(now)), [activities, now]);
-  const goal = useMemo(() => weeklyGoal(week.perDay), [week]);
+  const goal = useMemo(
+    () => weeklyGoal(week.perDay, plan ? Math.max(1, plannedDaysThisWeek(plan, weekStart(now))) : WEEKLY_GOAL_DAYS),
+    [week, plan, now],
+  );
   const streak = useMemo(() => streaks(activities, now), [activities, now]);
   const upcoming = useMemo(() => nextBadge(badgeContext, earned), [badgeContext, earned]);
   const upcomingBadge = upcoming ? BADGES.find((b) => b.key === upcoming.key) : undefined;
@@ -78,6 +87,45 @@ export default function DashboardScreen() {
   );
   const today = (new Date(now).getDay() + 6) % 7;
   const earnedCount = Object.keys(earned).length;
+
+  // Was die große Karte oben zeigt: mit Plan die heutige Einheit, sonst den regelbasierten Vorschlag
+  const hero = useMemo((): Hero => {
+    if (!plan) {
+      return {
+        label: 'HEUTE FÜR DICH',
+        title: suggestion.title,
+        text: suggestion.reason,
+        href: suggestion.target ? hrefFor(suggestion.target) : null,
+        note: 'Aus einfachen Regeln, keine KI',
+      };
+    }
+    const session = sessionForDay(plan, now);
+    if (session && !streak.trainedToday) {
+      const comeback = missedLastPlanned(plan, activities, now);
+      return {
+        label: comeback ? 'COMEBACK-TAG' : `HEUTE IN DEINEM PLAN · ${session.minutes} MIN`,
+        title: session.title,
+        text: comeback
+          ? 'Die letzte Einheit ist ausgefallen. Kein Problem: Entscheidend ist, dass du heute wieder einsteigst.'
+          : session.detail,
+        href: hrefForSession(session),
+        note: comeback ? `${session.minutes} Minuten, die zählen` : 'Dein Plan, deine Zeit',
+      };
+    }
+    const upcomingSession = nextSession(plan, now);
+    const when = upcomingSession
+      ? upcomingSession.inDays === 1
+        ? 'Morgen'
+        : WEEKDAY_NAMES[upcomingSession.session.day]
+      : null;
+    return {
+      label: session ? 'HEUTE ERLEDIGT' : now < plan.startsAt ? 'DEIN PLAN STARTET BALD' : 'RUHETAG LAUT PLAN',
+      title: session ? 'Stark, Einheit geschafft' : now < plan.startsAt ? `Start am ${dayHeading(plan.startsAt)}` : 'Heute ist Erholung dran',
+      text: upcomingSession ? `${when}: ${upcomingSession.session.title}` : 'Erholung gehört zum Training.',
+      href: null,
+      note: 'Erholung gehört zum Training.',
+    };
+  }, [plan, suggestion, now, streak.trainedToday, activities]);
 
   return (
     <Screen topInset>
@@ -125,23 +173,23 @@ export default function DashboardScreen() {
       {/* Der nächste Schritt: eine klare Handlung statt vieler Optionen */}
       <Pressable
         accessibilityRole="button"
-        disabled={!suggestion.target}
-        onPress={suggestion.target ? () => router.push(hrefFor(suggestion.target as SuggestionTarget)) : undefined}
+        disabled={!hero.href && !plan}
+        onPress={hero.href ? () => router.push(hero.href as Href) : () => router.push('/plan')}
         style={({ pressed }) => [
           styles.hero,
-          { backgroundColor: suggestion.target ? theme.accent : theme.surface, borderColor: suggestion.target ? theme.accent : theme.border },
+          { backgroundColor: hero.href ? theme.accent : theme.surface, borderColor: hero.href ? theme.accent : theme.border },
           pressed && styles.pressed,
         ]}>
-        <AppText variant="label" style={{ color: suggestion.target ? theme.onAccent : theme.accent, opacity: 0.8 }}>
-          HEUTE FÜR DICH
+        <AppText variant="label" style={{ color: hero.href ? theme.onAccent : theme.accent, opacity: 0.8 }}>
+          {hero.label}
         </AppText>
-        <AppText variant="title" style={{ color: suggestion.target ? theme.onAccent : theme.text }}>
-          {suggestion.title}
+        <AppText variant="title" style={{ color: hero.href ? theme.onAccent : theme.text }}>
+          {hero.title}
         </AppText>
-        <AppText style={{ color: suggestion.target ? theme.onAccent : theme.textSecondary, opacity: suggestion.target ? 0.85 : 1 }}>
-          {suggestion.reason}
+        <AppText style={{ color: hero.href ? theme.onAccent : theme.textSecondary, opacity: hero.href ? 0.85 : 1 }}>
+          {hero.text}
         </AppText>
-        {suggestion.target ? (
+        {hero.href ? (
           <View style={styles.heroFooter}>
             <View style={[styles.playButton, { backgroundColor: theme.onAccent }]}>
               <Ionicons name="play" size={18} color={theme.accent} />
@@ -150,18 +198,34 @@ export default function DashboardScreen() {
               </AppText>
             </View>
             <AppText variant="caption" style={[styles.flex, { color: theme.onAccent, opacity: 0.7 }]}>
-              Aus einfachen Regeln, keine KI
+              {hero.note}
             </AppText>
           </View>
         ) : (
           <View style={styles.heroFooter}>
             <Ionicons name="checkmark-circle" size={22} color={theme.accent} />
             <AppText variant="caption" color="textSecondary">
-              Erholung gehört zum Training.
+              {hero.note}
             </AppText>
           </View>
         )}
       </Pressable>
+
+      {/* Ohne Plan: Einladung, einen zu erstellen (Wenn-Dann-Pläne erhöhen die Umsetzung) */}
+      {plan ? null : (
+        <Card onPress={() => router.push('/plan/setup')} style={styles.planInvite}>
+          <View style={[styles.flameBox, { backgroundColor: theme.accentSoft }]}>
+            <Ionicons name="calendar" size={24} color={theme.accent} />
+          </View>
+          <View style={styles.flex}>
+            <AppText variant="heading">Dein persönlicher Plan</AppText>
+            <AppText variant="caption" color="textSecondary">
+              In einer Minute: Ziel, Tage und Zeit wählen, fertig ist dein Wochenplan.
+            </AppText>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+        </Card>
+      )}
 
       {/* Wochenziel als Ring: sichtbarer Fortschritt motiviert, ein kleines Ziel ist erreichbar */}
       <Card>
@@ -176,7 +240,7 @@ export default function DashboardScreen() {
           </ProgressRing>
           <View style={styles.goalText}>
             <AppText variant="label" color="accent">
-              {goal.reached ? 'WOCHENZIEL ERREICHT' : 'WOCHENZIEL'}
+              {goal.reached ? 'WOCHENZIEL ERREICHT' : plan ? 'WOCHENZIEL LAUT PLAN' : 'WOCHENZIEL'}
             </AppText>
             <AppText variant="heading">{goal.message}</AppText>
             <View style={styles.miniStats}>
@@ -429,6 +493,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.one,
   },
   linkTile: { flex: 1, padding: Spacing.three, gap: Spacing.one },
+  planInvite: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
 
   muscleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   muscleName: { width: 84 },

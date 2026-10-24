@@ -29,7 +29,7 @@ export function weeklyGoal(perDay: number[], goal = WEEKLY_GOAL_DAYS): WeeklyGoa
   const reached = remaining === 0;
 
   let message: string;
-  if (activeDays === 0) message = `${goal} Trainingstage diese Woche. Der erste ist der wichtigste.`;
+  if (activeDays === 0) message = `${goal} ${goal === 1 ? 'Trainingstag' : 'Trainingstage'} diese Woche. Der erste ist der wichtigste.`;
   else if (reached && activeDays > goal) message = `Ziel übertroffen: ${activeDays} Trainingstage. Stark!`;
   else if (reached) message = 'Wochenziel geschafft. Alles ab jetzt ist Bonus.';
   else if (remaining === 1) message = 'Nur noch 1 Tag bis zu deinem Wochenziel.';
