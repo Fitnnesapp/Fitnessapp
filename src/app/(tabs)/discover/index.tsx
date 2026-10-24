@@ -29,9 +29,10 @@ export default function DiscoverScreen() {
       <AppText variant="caption" color="textSecondary">
         Zeitlich begrenzte Ziele mit Etappen. Dein Fortschritt kommt automatisch aus deinen Workouts.
       </AppText>
-      {entries.map((entry) => (
+      {entries.map((entry, i) => (
         <ChallengeCard
           key={entry.challenge.id}
+          featured={i === 0}
           challenge={entry.challenge}
           joined={entry.joined}
           progress={entry.progress}

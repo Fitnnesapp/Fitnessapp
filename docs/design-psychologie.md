@@ -15,7 +15,17 @@ gestaltet sind. Leitlinie aus dem Entwicklungsplan: motivieren ohne künstlichen
 | **Nunes & Drèze (2006)**, Endowed-Progress-Effekt | Eine Stempelkarte mit 2 von 10 geschenkten Stempeln wurde deutlich häufiger vollendet (34 % gegenüber 19 % bei 8 nötigen Stempeln ohne Vorsprung). | Der Fortschrittsbalken im Plan-Einstieg zeigt beim Öffnen schon einen Abschnitt. In Challenges zählen Workouts seit dem Start sofort mit, wer spät einsteigt, sieht seinen echten Vorsprung. |
 | **Mazéas et al. (2022)**, Meta-Analyse zu Gamification und Bewegung (16 RCTs, 2.407 Teilnehmende) | Kleiner bis mittlerer Effekt (g ≈ 0,42), etwa 1.600 Schritte mehr pro Tag; die Wirkung nimmt nach Programmende ab, die Studienqualität ist gemischt. | Gamification (Abzeichen, Etappen, Serie) ist Ergänzung, nicht Kern. Der Kern ist der persönliche Plan. |
 
+## Weitere Gestaltungsentscheidungen
+
+- **Wahlfreiheit statt Vorgabe:** Ziele und Orte lassen sich kombinieren, jeder Tag lässt sich selbst belegen. Wer seinen Plan mitgestaltet, hält ihn eher durch.
+- **Wenige Optionen pro Frage:** höchstens fünf Antworten, mit markierter Empfehlung, damit die Entscheidung leicht fällt.
+- **Ein Ziel pro Bildschirm:** Der Start-Bildschirm zeigt zuerst genau eine nächste Handlung („Los geht's“), dann den Fortschritt.
+- **Suche statt Menü-Labyrinth:** Jede Funktion ist über die Suche mit Alltagssprache erreichbar.
+- **Belohnungsmomente:** Nach dem Erstellen des Plans und bei neuen Abzeichen gibt es einen sichtbaren Erfolgsmoment.
+
 ## Bewusst vermieden
+
+- Keine Mechaniken, die auf Sucht zielen (endloses Scrollen, Verlustangst, zufällige Belohnungen nach Spielautomaten-Prinzip). Ziel ist eine Gewohnheit, die Menschen guttut, nicht maximale Bildschirmzeit.
 
 - Keine künstliche Dringlichkeit oder Countdowns mit Verlustangst, keine Schuldgefühle bei Pausen.
 - Keine erfundenen Zahlen über andere Nutzer (die App hat keinen Server und keine Ranglisten).

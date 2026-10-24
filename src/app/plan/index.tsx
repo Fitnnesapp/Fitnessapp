@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { KettlebellHero } from '@/components/illustrations/kettlebell-hero';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -56,10 +57,13 @@ export default function PlanScreen() {
   return (
     <Screen>
       {neu ? (
-        <View style={[styles.banner, { backgroundColor: theme.accent }]}>
-          <Ionicons name="sparkles" size={22} color={theme.onAccent} />
-          <AppText variant="heading" style={[styles.flex, { color: theme.onAccent }]}>
-            Dein Plan steht. Der wichtigste Schritt ist geschafft.
+        <View style={styles.celebrate}>
+          <KettlebellHero size={150} />
+          <AppText variant="title" style={styles.center}>
+            Dein Plan steht.
+          </AppText>
+          <AppText color="textSecondary" style={styles.center}>
+            Der wichtigste Schritt ist geschafft. Ab jetzt weißt du jeden Tag, was dran ist.
           </AppText>
         </View>
       ) : null}
@@ -173,7 +177,8 @@ export default function PlanScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  banner: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, padding: Spacing.three, borderRadius: Radius.large },
+  celebrate: { alignItems: 'center', gap: Spacing.two },
+  center: { textAlign: 'center' },
   headerBlock: { gap: Spacing.one },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   dayBadge: { width: 40, height: 40, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },

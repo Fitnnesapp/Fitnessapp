@@ -4,6 +4,7 @@ import { useEffect, useMemo, type ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ChallengeCard } from '@/components/challenge-card';
+import { HeroRings } from '@/components/illustrations/hero-rings';
 import { EventCard } from '@/components/event-card';
 import { PremiumPrompt } from '@/components/premium-prompt';
 import { AppText } from '@/components/ui/app-text';
@@ -217,6 +218,7 @@ export default function DashboardScreen() {
           { backgroundColor: hero.href ? theme.accent : theme.surface, borderColor: hero.href ? theme.accent : theme.border },
           pressed && styles.pressed,
         ]}>
+        {hero.href ? <HeroRings color={theme.onAccent} /> : null}
         <AppText variant="label" style={{ color: hero.href ? theme.onAccent : theme.accent, opacity: 0.8 }}>
           {hero.label}
         </AppText>
@@ -347,6 +349,7 @@ export default function DashboardScreen() {
 
       {featuredChallenge ? (
         <ChallengeCard
+          featured
           challenge={featuredChallenge.challenge}
           joined={featuredChallenge.joined}
           progress={featuredChallenge.progress}
@@ -512,7 +515,7 @@ const styles = StyleSheet.create({
   celebrate: { alignItems: 'center', borderWidth: 2 },
   badgeIcon: { width: 56, height: 56, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
 
-  hero: { padding: Spacing.four, borderRadius: Radius.large, borderWidth: 1, gap: Spacing.two },
+  hero: { padding: Spacing.four, borderRadius: Radius.large, borderWidth: 1, gap: Spacing.two, overflow: 'hidden' },
   heroFooter: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginTop: Spacing.two },
   playButton: {
     flexDirection: 'row',

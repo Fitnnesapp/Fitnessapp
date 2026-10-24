@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState, type ComponentProps } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
+import { KettlebellHero } from '@/components/illustrations/kettlebell-hero';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
@@ -77,7 +78,7 @@ const TIMES: { value: PlanTime; title: string; icon: IconName }[] = [
   { value: 'abends', title: 'Abends', icon: 'moon' },
 ];
 
-type Step = 'goals' | 'level' | 'places' | 'run' | 'health' | 'days' | 'time' | 'start';
+type Step = 'welcome' | 'goals' | 'level' | 'places' | 'run' | 'health' | 'days' | 'time' | 'start';
 
 /**
  * Einstieg mit kurzen, klaren Fragen; nur die Schritte, die für die Person wichtig sind.
@@ -126,8 +127,18 @@ export default function PlanSetupScreen() {
     goals.some((g) => g === 'ausdauer' || g === 'abnehmen' || g === 'fitness');
 
   const steps = useMemo<Step[]>(
-    () => ['goals', 'level', 'places', ...(runningLikely ? (['run'] as Step[]) : []), 'health', 'days', 'time', 'start'],
-    [runningLikely],
+    () => [
+      ...(previous ? [] : (['welcome'] as Step[])),
+      'goals',
+      'level',
+      'places',
+      ...(runningLikely ? (['run'] as Step[]) : []),
+      'health',
+      'days',
+      'time',
+      'start',
+    ],
+    [runningLikely, previous],
   );
   const step = steps[Math.min(index, steps.length - 1)];
 
@@ -227,10 +238,41 @@ export default function PlanSetupScreen() {
       </View>
 
       <ScrollView style={styles.flex} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        {step === 'welcome' ? (
+          <View style={styles.welcome}>
+            <KettlebellHero size={220} />
+            <AppText variant="label" color="accent">
+              WILLKOMMEN
+            </AppText>
+            <AppText variant="display" style={styles.center}>
+              Dein Training.{'\n'}Dein Plan.
+            </AppText>
+            <View style={styles.benefits}>
+              {(
+                [
+                  ['calendar', 'Ein Wochenplan, der zu deinem Ziel, deiner Zeit und deinem Körper passt'],
+                  ['git-merge', 'Kraft, Laufen und Home-Workouts frei kombinierbar'],
+                  ['trending-up', 'Sichtbarer Fortschritt, Challenges wie der Winter Arc'],
+                ] as [IconName, string][]
+              ).map(([icon, text]) => (
+                <View key={text} style={styles.benefit}>
+                  <View style={[styles.benefitIcon, { backgroundColor: theme.accentSoft }]}>
+                    <Ionicons name={icon} size={18} color={theme.accent} />
+                  </View>
+                  <AppText style={styles.flex}>{text}</AppText>
+                </View>
+              ))}
+            </View>
+            <AppText variant="caption" color="textSecondary" style={styles.center}>
+              Dauert etwa zwei Minuten. Deine Angaben bleiben auf diesem Gerät.
+            </AppText>
+          </View>
+        ) : null}
+
         {step === 'goals' ? (
           <>
             <AppText variant="label" color="accent">
-              DEIN PERSÖNLICHER PLAN · 2 MINUTEN
+              DEIN PERSÖNLICHER PLAN
             </AppText>
             <AppText variant="title">Was möchtest du erreichen?</AppText>
             <AppText color="textSecondary">Wähle ein oder zwei Ziele. Das erste wird dein Schwerpunkt.</AppText>
@@ -526,7 +568,11 @@ export default function PlanSetupScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button title={step === 'start' ? 'Plan erstellen' : 'Weiter'} onPress={next} disabled={!canContinue} />
+        <Button
+          title={step === 'start' ? 'Plan erstellen' : step === 'welcome' ? "Los geht's" : 'Weiter'}
+          onPress={next}
+          disabled={!canContinue}
+        />
       </View>
     </Screen>
   );
@@ -534,6 +580,11 @@ export default function PlanSetupScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  center: { textAlign: 'center' },
+  welcome: { alignItems: 'center', gap: Spacing.three, paddingTop: Spacing.two },
+  benefits: { alignSelf: 'stretch', gap: Spacing.three, marginTop: Spacing.two },
+  benefit: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  benefitIcon: { width: 36, height: 36, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center' },
   screen: { gap: Spacing.three },
   top: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingTop: Spacing.two },
   topSpacer: { width: 40 },

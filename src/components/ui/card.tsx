@@ -12,7 +12,13 @@ type CardProps = {
 
 export function Card({ children, onPress, style }: CardProps) {
   const theme = useTheme();
-  const base = [styles.card, { backgroundColor: theme.surface, borderColor: theme.border }, style];
+  const base = [
+    styles.card,
+    { backgroundColor: theme.surface, borderColor: theme.border },
+    // Im Hellmodus trennt ein weicher Schatten die Karte vom Hintergrund, im Dunkelmodus der Rahmen
+    theme.scheme === 'light' ? styles.lifted : null,
+    style,
+  ];
 
   if (!onPress) {
     return <View style={base}>{children}</View>;
@@ -33,4 +39,5 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   pressed: { opacity: 0.7 },
+  lifted: { boxShadow: '0 6px 20px rgba(11, 13, 16, 0.07)' },
 });

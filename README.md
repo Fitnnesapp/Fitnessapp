@@ -26,7 +26,10 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - Zeit wird aus Zeitstempeln berechnet, bleibt also bei gesperrtem Bildschirm korrekt; Bildschirm bleibt während des Trainings an
   - Zusammenfassung mit Dauer, geschätzten Kalorien (MET-Formel, Körpergewicht im Profil) und optionaler Anstrengung (1 bis 10)
   - Erscheint gemeinsam mit den Kraft-Workouts im Verlauf
-- **Persönlicher Trainingsplan:** Einstieg beim ersten Öffnen und im Profil (Ziel, Erfahrung, Ort, Tage, Zeit, Start), Wochenplan mit Wenn-Dann-Sätzen, heutige Einheit auf dem Start-Bildschirm
+- **Persönlicher Trainingsplan:** Willkommen-Screen und Fragebogen beim ersten Öffnen und im Profil: bis zu zwei Ziele, mehrere Orte, Geräte zu Hause, Lauferfahrung, Tage, Doppel-Einheiten, Zeit, Start; jeder Wochentag lässt sich selbst belegen; Wenn-Dann-Sätze, heutige Einheit auf dem Start-Bildschirm
+- **Gesundheitsangaben (optional):** Alter, Gewicht, Beschwerden nur mit ausdrücklicher Einwilligung (Art. 9 DSGVO), nur lokal, im Profil widerrufbar; der Plan passt sich an (z. B. ohne Sprünge bei Knieproblemen)
+- **Smarte Suche:** findet Funktionen, Übungen, Programme, Challenges und Events, versteht Fragen, Synonyme und Tippfehler, komplett auf dem Gerät
+- **Illustrationen:** räumlich wirkende Vektorgrafiken (Kettlebell, Challenge-Titelbilder) direkt im Code, ohne Bilddateien
 - **Challenges (offline):** Winter Arc 2026, 100 km im November, Neustart 2027, 30 Tage Gewohnheit; Fortschritt aus dem Verlauf, Etappen, faire Ziele für Spät-Einsteiger
 - **Events:** große Läufe und Fitness-Wettkämpfe im Tab „Entdecken“, live aus `src/data/events.json` auf `main` geladen, offline aus dem Cache
 - **Design-Begründung mit Studien:** [docs/design-psychologie.md](docs/design-psychologie.md)

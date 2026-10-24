@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import type { ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { ChallengeArt, artVariantFor } from '@/components/illustrations/challenge-art';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -70,10 +70,8 @@ export default function ChallengeScreen() {
 
   return (
     <Screen>
+      <ChallengeArt variant={artVariantFor(challenge.id)} height={180} />
       <View style={styles.head}>
-        <View style={[styles.icon, { backgroundColor: theme.accent }]}>
-          <Ionicons name={challenge.icon as ComponentProps<typeof Ionicons>['name']} size={30} color={theme.onAccent} />
-        </View>
         <AppText variant="label" color="accent">
           {challenge.tagline.toUpperCase()}
         </AppText>
@@ -162,7 +160,6 @@ const styles = StyleSheet.create({
   center: { textAlign: 'center' },
   tabular: { fontVariant: ['tabular-nums'] },
   head: { alignItems: 'center', gap: Spacing.two, paddingTop: Spacing.two },
-  icon: { width: 64, height: 64, borderRadius: Radius.large, alignItems: 'center', justifyContent: 'center' },
   progressCard: { alignItems: 'center', gap: Spacing.three },
   stageRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingVertical: Spacing.one },
   stageDot: { width: 28, height: 28, borderRadius: Radius.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },

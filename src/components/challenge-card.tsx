@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { ChallengeArt, artVariantFor } from '@/components/illustrations/challenge-art';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
 import { Radius, Spacing } from '@/constants/theme';
@@ -23,10 +24,12 @@ type ChallengeCardProps = {
   progress?: ChallengeProgress;
   now: number;
   onPress: () => void;
+  /** Große Darstellung mit Titelbild */
+  featured?: boolean;
 };
 
 /** Kompakte Karte: ohne Teilnahme eine Einladung, mit Teilnahme der Fortschritt. */
-export function ChallengeCard({ challenge, joined, progress, now, onPress }: ChallengeCardProps) {
+export function ChallengeCard({ challenge, joined, progress, now, onPress, featured = false }: ChallengeCardProps) {
   const theme = useTheme();
   const status = challengeStatus(challenge, now, joined);
   const { start } = challengeWindow(challenge, joined?.joinedAt);
@@ -40,6 +43,7 @@ export function ChallengeCard({ challenge, joined, progress, now, onPress }: Cha
 
   return (
     <Card onPress={onPress}>
+      {featured ? <ChallengeArt variant={artVariantFor(challenge.id)} height={128} /> : null}
       <View style={styles.row}>
         <View style={[styles.icon, { backgroundColor: joined ? theme.accent : theme.accentSoft }]}>
           <Ionicons
