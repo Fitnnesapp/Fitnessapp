@@ -10,6 +10,7 @@ import { useChallengeStore } from '@/lib/storage/challenge-store';
 import { useEntitlementStore } from '@/lib/storage/entitlement-store';
 import { useEventsStore } from '@/lib/storage/events-store';
 import { useGamification } from '@/lib/storage/gamification-store';
+import { useHealthStore } from '@/lib/storage/health-store';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
 import { useRunStore } from '@/lib/storage/run-store';
@@ -29,8 +30,9 @@ export default function RootLayout() {
   const planReady = usePlanStore((state) => state.hydrated);
   const challengesReady = useChallengeStore((state) => state.hydrated);
   const eventsReady = useEventsStore((state) => state.hydrated);
+  const healthReady = useHealthStore((state) => state.hydrated);
   const hydrated =
-    settingsReady && workoutsReady && homeReady && runsReady && gamificationReady && entitlementReady && planReady && challengesReady && eventsReady;
+    settingsReady && workoutsReady && homeReady && runsReady && gamificationReady && entitlementReady && planReady && challengesReady && eventsReady && healthReady;
 
   useEffect(() => {
     if (hydrated) SplashScreen.hideAsync();

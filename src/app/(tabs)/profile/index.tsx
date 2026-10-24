@@ -13,7 +13,8 @@ import { kgToDisplay, displayToKg, parseNumber, weightUnitLabel } from '@/lib/lo
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
 import { useChallengeStore } from '@/lib/storage/challenge-store';
-import { GOAL_LABELS } from '@/lib/logic/plan';
+import { useHealthStore } from '@/lib/storage/health-store';
+import { GOAL_LABELS, LIMITATION_LABELS, planDayCount } from '@/lib/logic/plan';
 import { requestReminderPermission, remindersSupported } from '@/lib/notifications';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useRunStore } from '@/lib/storage/run-store';
@@ -34,6 +35,7 @@ export default function ProfileScreen() {
   const plan = usePlanStore((state) => state.plan);
   const resetPlan = usePlanStore((state) => state.reset);
   const resetChallenges = useChallengeStore((state) => state.reset);
+  const health = useHealthStore();
   const streakReminder = useSettings((state) => state.streakReminder);
   const setStreakReminder = useSettings((state) => state.setStreakReminder);
   const [reminderDenied, setReminderDenied] = useState(false);
@@ -65,7 +67,7 @@ export default function ProfileScreen() {
     confirmAction({
       title: 'Alle Daten löschen?',
       message:
-        'Name, Einstellungen, Trainingsplan, Challenges, Workouts, Home-Workouts, Läufe, Abzeichen und Vorlagen werden von diesem Gerät gelöscht. Das lässt sich nicht rückgängig machen.',
+        'Name, Einstellungen, Trainingsplan, Gesundheitsangaben, Challenges, Workouts, Home-Workouts, Läufe, Abzeichen und Vorlagen werden von diesem Gerät gelöscht. Das lässt sich nicht rückgängig machen.',
       confirmLabel: 'Löschen',
       onConfirm: () => {
         resetSettings();
@@ -75,6 +77,7 @@ export default function ProfileScreen() {
         resetGamification();
         resetPlan();
         resetChallenges();
+        health.revoke();
       },
     });
   }
@@ -86,7 +89,7 @@ export default function ProfileScreen() {
           TRAININGSPLAN
         </AppText>
         <AppText variant="heading">
-          {plan ? `${GOAL_LABELS[plan.answers.goal]} · ${plan.sessions.length} Tage pro Woche` : 'Persönlichen Plan erstellen'}
+          {plan ? `${plan.answers.goals.map((g) => GOAL_LABELS[g]).join(' + ')} · ${planDayCount(plan)} Tage pro Woche` : 'Persönlichen Plan erstellen'}
         </AppText>
         <AppText color="textSecondary">
           {plan
@@ -151,6 +154,51 @@ export default function ProfileScreen() {
           ) : null}
         </View>
       ) : null}
+
+      <Card>
+        <AppText variant="label" color="textSecondary">
+          GESUNDHEITSANGABEN
+        </AppText>
+        {health.consentAt ? (
+          <>
+            <AppText>
+              Eingewilligt am {new Date(health.consentAt).toLocaleDateString('de-DE')}.{' '}
+              {health.age !== null ? `Alter: ${health.age}. ` : ''}
+              {health.limitations.length > 0
+                ? `Beschwerden: ${health.limitations.map((l) => LIMITATION_LABELS[l]).join(', ')}.`
+                : 'Keine Beschwerden angegeben.'}
+            </AppText>
+            <AppText variant="caption" color="textSecondary">
+              Nur auf diesem Gerät gespeichert und nur für deinen Trainingsplan verwendet.
+            </AppText>
+            <Button
+              title="Einwilligung widerrufen"
+              variant="danger"
+              onPress={() =>
+                confirmAction({
+                  title: 'Einwilligung widerrufen?',
+                  message:
+                    'Alter, Beschwerden und Körpergewicht werden gelöscht. Erstelle danach deinen Plan neu, damit er ohne diese Angaben auskommt.',
+                  confirmLabel: 'Widerrufen',
+                  onConfirm: () => {
+                    health.revoke();
+                    setBodyWeightKg(null);
+                    setWeightText('');
+                  },
+                })
+              }
+            />
+          </>
+        ) : (
+          <>
+            <AppText color="textSecondary">
+              Keine Einwilligung. Wenn du Alter und Beschwerden angibst, wird dein Plan sicherer, z. B. ohne Sprünge bei
+              Knieproblemen.
+            </AppText>
+            <Button title="Im Plan-Fragebogen angeben" variant="secondary" onPress={() => router.push('/plan/setup')} />
+          </>
+        )}
+      </Card>
 
       <Button title="Premium" variant="secondary" onPress={() => router.push('/profile/premium')} />
 

@@ -25,7 +25,7 @@ import { daysUntilEvent, upcomingEvents } from '@/lib/logic/events';
 import { BADGES } from '@/lib/logic/badges';
 import { formatDuration } from '@/lib/logic/format';
 import { dayHeading, greeting, nextBadge, WEEKLY_GOAL_DAYS, weeklyGoal } from '@/lib/logic/motivation';
-import { missedLastPlanned, nextSession, plannedDaysThisWeek, sessionForDay, WEEKDAY_NAMES } from '@/lib/logic/plan';
+import { missedLastPlanned, nextSession, plannedDaysThisWeek, sessionsForDay, WEEKDAY_NAMES } from '@/lib/logic/plan';
 import { suggestWorkout, type SuggestionTarget } from '@/lib/logic/suggestions';
 import { formatDistance, formatWeight } from '@/lib/logic/units';
 import { hrefForSession } from '@/lib/plan-href';
@@ -119,7 +119,7 @@ export default function DashboardScreen() {
         note: 'Aus einfachen Regeln, keine KI',
       };
     }
-    const session = sessionForDay(plan, now);
+    const [session, extra] = sessionsForDay(plan, now);
     if (session && !streak.trainedToday) {
       const comeback = missedLastPlanned(plan, activities, now);
       return {
@@ -129,7 +129,11 @@ export default function DashboardScreen() {
           ? 'Die letzte Einheit ist ausgefallen. Kein Problem: Entscheidend ist, dass du heute wieder einsteigst.'
           : session.detail,
         href: hrefForSession(session),
-        note: comeback ? `${session.minutes} Minuten, die zählen` : 'Dein Plan, deine Zeit',
+        note: extra
+          ? `Danach: ${extra.minutes} Min ${extra.title}`
+          : comeback
+            ? `${session.minutes} Minuten, die zählen`
+            : 'Dein Plan, deine Zeit',
       };
     }
     const upcomingSession = nextSession(plan, now);
