@@ -3,6 +3,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useMemo, type ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ChallengeCard } from '@/components/challenge-card';
 import { PremiumPrompt } from '@/components/premium-prompt';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { Radius, Spacing } from '@/constants/theme';
 import { getExercise } from '@/data/exercises';
 import { useActivities } from '@/hooks/use-activities';
 import { useBadgeContext } from '@/hooks/use-badge-context';
+import { useChallenges } from '@/hooks/use-challenges';
 import { useNow } from '@/hooks/use-now';
 import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
@@ -67,6 +69,11 @@ export default function DashboardScreen() {
   const markSeen = useGamification((state) => state.markSeen);
   const badgeContext = useBadgeContext();
   const plan = usePlanStore((state) => state.plan);
+  const { entries: challengeEntries } = useChallenges();
+  // Eine Challenge auf dem Start-Bildschirm: die eigene, sonst eine laufende als Einladung
+  const featuredChallenge =
+    challengeEntries.find((e) => e.joined && !e.progress?.completed) ??
+    challengeEntries.find((e) => !e.joined && e.challenge.window.kind === 'fixed');
 
   const week = useMemo(() => weekStats(activities, weekStart(now)), [activities, now]);
   const goal = useMemo(
@@ -307,6 +314,18 @@ export default function DashboardScreen() {
               : `Ein Freeze überbrückt einen Tag ohne Training. ${streak.freezesLeft} von ${FREEZES_PER_MONTH} übrig diesen Monat.`}
         </AppText>
       </Card>
+
+      {featuredChallenge ? (
+        <ChallengeCard
+          challenge={featuredChallenge.challenge}
+          joined={featuredChallenge.joined}
+          progress={featuredChallenge.progress}
+          now={now}
+          onPress={() =>
+            router.push({ pathname: '/discover/challenge/[id]', params: { id: featuredChallenge.challenge.id } })
+          }
+        />
+      ) : null}
 
       {/* Nächstes Abzeichen: ein konkretes, nahes Ziel (Zielgradient-Effekt) */}
       {upcoming && upcomingBadge ? (

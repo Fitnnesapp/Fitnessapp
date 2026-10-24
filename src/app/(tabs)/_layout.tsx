@@ -31,6 +31,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="discover"
+        options={{
+          title: 'Entdecken',
+          tabBarIcon: ({ focused, size }) => <Ionicons name="compass-outline" color={focused ? theme.accent : theme.textSecondary} size={size} />,
+        }}
+      />
+      <Tabs.Screen
         name="history"
         options={{
           title: 'Verlauf',

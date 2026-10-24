@@ -12,6 +12,7 @@ import { confirmAction } from '@/lib/confirm';
 import { kgToDisplay, displayToKg, parseNumber, weightUnitLabel } from '@/lib/logic/units';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
+import { useChallengeStore } from '@/lib/storage/challenge-store';
 import { GOAL_LABELS } from '@/lib/logic/plan';
 import { requestReminderPermission, remindersSupported } from '@/lib/notifications';
 import { useGamification } from '@/lib/storage/gamification-store';
@@ -32,6 +33,7 @@ export default function ProfileScreen() {
   const resetGamification = useGamification((state) => state.reset);
   const plan = usePlanStore((state) => state.plan);
   const resetPlan = usePlanStore((state) => state.reset);
+  const resetChallenges = useChallengeStore((state) => state.reset);
   const streakReminder = useSettings((state) => state.streakReminder);
   const setStreakReminder = useSettings((state) => state.setStreakReminder);
   const [reminderDenied, setReminderDenied] = useState(false);
@@ -63,7 +65,7 @@ export default function ProfileScreen() {
     confirmAction({
       title: 'Alle Daten löschen?',
       message:
-        'Name, Einstellungen, Trainingsplan, Workouts, Home-Workouts, Läufe, Abzeichen und Vorlagen werden von diesem Gerät gelöscht. Das lässt sich nicht rückgängig machen.',
+        'Name, Einstellungen, Trainingsplan, Challenges, Workouts, Home-Workouts, Läufe, Abzeichen und Vorlagen werden von diesem Gerät gelöscht. Das lässt sich nicht rückgängig machen.',
       confirmLabel: 'Löschen',
       onConfirm: () => {
         resetSettings();
@@ -72,6 +74,7 @@ export default function ProfileScreen() {
         resetRuns();
         resetGamification();
         resetPlan();
+        resetChallenges();
       },
     });
   }
