@@ -7,6 +7,8 @@ export const Colors = {
     text: '#F4F6F8',
     textSecondary: '#9AA4AF',
     accent: '#C8F03C',
+    /** Zart getönte Fläche im Akzentton, z.B. für Fortschrittsspuren */
+    accentSoft: '#2A3313',
     onAccent: '#0B0D10',
     danger: '#FF6B6B',
     success: '#4ADE80',
@@ -19,6 +21,7 @@ export const Colors = {
     text: '#0B0D10',
     textSecondary: '#5B6570',
     accent: '#4F7A00',
+    accentSoft: '#E6EFD3',
     onAccent: '#FFFFFF',
     danger: '#D93636',
     success: '#1F9D55',

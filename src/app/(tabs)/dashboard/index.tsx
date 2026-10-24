@@ -1,29 +1,33 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useRouter, type Href } from 'expo-router';
+import { useMemo, type ComponentProps } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { PremiumPrompt } from '@/components/premium-prompt';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ProgressRing } from '@/components/ui/progress-ring';
 import { Screen } from '@/components/ui/screen';
 import { Radius, Spacing } from '@/constants/theme';
-import type { Href } from 'expo-router';
-import { useActivities } from '@/hooks/use-activities';
 import { getExercise } from '@/data/exercises';
+import { useActivities } from '@/hooks/use-activities';
+import { useBadgeContext } from '@/hooks/use-badge-context';
 import { useNow } from '@/hooks/use-now';
 import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
 import { FREEZES_PER_MONTH, streaks, weekStart, weekStats } from '@/lib/logic/activity';
 import { muscleVolume } from '@/lib/logic/analytics';
-import { suggestWorkout, type SuggestionTarget } from '@/lib/logic/suggestions';
 import { BADGES } from '@/lib/logic/badges';
 import { formatDuration } from '@/lib/logic/format';
+import { dayHeading, greeting, nextBadge, weeklyGoal } from '@/lib/logic/motivation';
+import { suggestWorkout, type SuggestionTarget } from '@/lib/logic/suggestions';
 import { formatDistance, formatWeight } from '@/lib/logic/units';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
+
+type IconName = ComponentProps<typeof Ionicons>['name'];
 
 function hrefFor(target: SuggestionTarget): Href {
   if (target.kind === 'strength') return '/training/strength';
@@ -33,6 +37,17 @@ function hrefFor(target: SuggestionTarget): Href {
 
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
+const QUICK_START: { label: string; hint: string; icon: IconName; href: Href }[] = [
+  { label: 'Kraft', hint: 'Sätze loggen', icon: 'barbell', href: '/training/strength' },
+  { label: 'Home', hint: 'Ohne Geräte', icon: 'body', href: '/training/home' },
+  { label: 'Laufen', hint: 'Mit GPS', icon: 'walk', href: '/training/running' },
+];
+
+/**
+ * Start-Bildschirm. Aufbau nach dem Muster großer Fitness-Apps:
+ * zuerst der nächste Schritt (Vorschlag), dann der Fortschritt (Wochenziel-Ring, Serie),
+ * dann das nächste erreichbare Ziel (Abzeichen) und schnelle Wege ins Training.
+ */
 export default function DashboardScreen() {
   const router = useRouter();
   const theme = useTheme();
@@ -45,9 +60,13 @@ export default function DashboardScreen() {
   const earned = useGamification((state) => state.earned);
   const unseen = useGamification((state) => state.unseen);
   const markSeen = useGamification((state) => state.markSeen);
+  const badgeContext = useBadgeContext();
 
   const week = useMemo(() => weekStats(activities, weekStart(now)), [activities, now]);
+  const goal = useMemo(() => weeklyGoal(week.perDay), [week]);
   const streak = useMemo(() => streaks(activities, now), [activities, now]);
+  const upcoming = useMemo(() => nextBadge(badgeContext, earned), [badgeContext, earned]);
+  const upcomingBadge = upcoming ? BADGES.find((b) => b.key === upcoming.key) : undefined;
   const muscles = useMemo(
     () => muscleVolume(strengthHistory, 30, now, (id) => getExercise(id)?.muscleGroup),
     [strengthHistory, now],
@@ -58,99 +77,220 @@ export default function DashboardScreen() {
     [activities, strengthHistory, now],
   );
   const today = (new Date(now).getDay() + 6) % 7;
+  const earnedCount = Object.keys(earned).length;
 
   return (
-    <Screen>
-      <AppText variant="display">{name ? `Hallo, ${name}.` : 'Hallo.'}</AppText>
-
-      <Card
-        onPress={
-          suggestion.target ? () => router.push(hrefFor(suggestion.target as SuggestionTarget)) : undefined
-        }>
-        <AppText variant="label" color="accent">
-          VORSCHLAG FÜR HEUTE
-        </AppText>
-        <AppText variant="heading">{suggestion.title}</AppText>
-        <AppText color="textSecondary">{suggestion.reason}</AppText>
-        {suggestion.target ? (
-          <AppText variant="caption" color="textSecondary">
-            Einfache Regeln aus deinem Verlauf, keine KI.
+    <Screen topInset>
+      {/* Kopfzeile: Datum, Begrüßung, Serie immer im Blick */}
+      <View style={styles.header}>
+        <View style={styles.headerText}>
+          <AppText variant="label" color="textSecondary">
+            {dayHeading(now).toUpperCase()}
           </AppText>
-        ) : null}
-      </Card>
-
-      <Card>
-        <View style={styles.streakRow}>
-          <Ionicons name="flame" size={36} color={streak.current > 0 ? theme.accent : theme.textSecondary} />
-          <View>
-            <AppText variant="title">
-              {streak.current} {streak.current === 1 ? 'Tag' : 'Tage'} in Folge
-            </AppText>
-            <AppText variant="caption" color="textSecondary">
-              Längste Serie: {streak.longest} {streak.longest === 1 ? 'Tag' : 'Tage'}
+          <AppText variant="title" numberOfLines={2}>
+            {greeting(now)}
+            {name ? `, ${name}` : ''}
+          </AppText>
+        </View>
+        {streak.current > 0 ? (
+          <View
+            style={[styles.streakPill, { backgroundColor: theme.accentSoft }]}
+            accessibilityLabel={`Serie: ${streak.current} Tage in Folge`}>
+            <Ionicons name="flame" size={20} color={theme.accent} />
+            <AppText variant="heading" style={styles.tabular}>
+              {streak.current}
             </AppText>
           </View>
-        </View>
-        <AppText variant="caption" color="textSecondary">
-          Freezes diesen Monat: {streak.freezesLeft} von {FREEZES_PER_MONTH}. Ein Freeze rettet die Serie an einem
-          Tag ohne Training.
-        </AppText>
-        {streak.atRisk ? (
-          <AppText variant="caption" color="accent">
-            Heute noch trainieren, um die Serie zu verlängern.
-          </AppText>
         ) : null}
-      </Card>
+      </View>
 
+      {/* Belohnung zuerst, wenn es etwas zu feiern gibt */}
       {unseen.length > 0 ? (
-        <Card>
+        <Card style={[styles.celebrate, { borderColor: theme.accent }]}>
+          <View style={[styles.badgeIcon, { backgroundColor: theme.accent }]}>
+            <Ionicons name="trophy" size={26} color={theme.onAccent} />
+          </View>
           <AppText variant="label" color="accent">
-            NEUES ABZEICHEN
+            {unseen.length === 1 ? 'NEUES ABZEICHEN' : `${unseen.length} NEUE ABZEICHEN`}
           </AppText>
           {unseen.map((key) => (
-            <AppText key={key} variant="heading">
+            <AppText key={key} variant="title" style={styles.centerText}>
               {BADGES.find((b) => b.key === key)?.name ?? key}
             </AppText>
           ))}
-          <Button title="Super!" variant="secondary" onPress={markSeen} />
+          <Button title="Super!" onPress={markSeen} style={styles.fullWidth} />
         </Card>
       ) : null}
 
-      <AppText variant="heading">Diese Woche</AppText>
-      <View style={styles.stats}>
-        <Stat label="Workouts" value={String(week.workouts)} />
-        <Stat label="Zeit" value={formatDuration(week.durationSeconds * 1000)} />
-        <Stat label="Distanz" value={formatDistance(week.distanceM, units)} />
-      </View>
-
-      <Card>
-        <View style={styles.days}>
-          {DAYS.map((day, i) => (
-            <View key={day} style={styles.day}>
-              <View
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: week.perDay[i] > 0 ? theme.accent : theme.surfaceAlt,
-                    borderColor: i === today ? theme.text : 'transparent',
-                  },
-                ]}>
-                {week.perDay[i] > 0 ? (
-                  <AppText variant="label" style={{ color: theme.onAccent }}>
-                    {week.perDay[i]}
-                  </AppText>
-                ) : null}
-              </View>
-              <AppText variant="caption" color={i === today ? 'text' : 'textSecondary'}>
-                {day}
+      {/* Der nächste Schritt: eine klare Handlung statt vieler Optionen */}
+      <Pressable
+        accessibilityRole="button"
+        disabled={!suggestion.target}
+        onPress={suggestion.target ? () => router.push(hrefFor(suggestion.target as SuggestionTarget)) : undefined}
+        style={({ pressed }) => [
+          styles.hero,
+          { backgroundColor: suggestion.target ? theme.accent : theme.surface, borderColor: suggestion.target ? theme.accent : theme.border },
+          pressed && styles.pressed,
+        ]}>
+        <AppText variant="label" style={{ color: suggestion.target ? theme.onAccent : theme.accent, opacity: 0.8 }}>
+          HEUTE FÜR DICH
+        </AppText>
+        <AppText variant="title" style={{ color: suggestion.target ? theme.onAccent : theme.text }}>
+          {suggestion.title}
+        </AppText>
+        <AppText style={{ color: suggestion.target ? theme.onAccent : theme.textSecondary, opacity: suggestion.target ? 0.85 : 1 }}>
+          {suggestion.reason}
+        </AppText>
+        {suggestion.target ? (
+          <View style={styles.heroFooter}>
+            <View style={[styles.playButton, { backgroundColor: theme.onAccent }]}>
+              <Ionicons name="play" size={18} color={theme.accent} />
+              <AppText variant="heading" style={{ color: theme.accent }}>
+                Los geht&apos;s
               </AppText>
             </View>
-          ))}
+            <AppText variant="caption" style={[styles.flex, { color: theme.onAccent, opacity: 0.7 }]}>
+              Aus einfachen Regeln, keine KI
+            </AppText>
+          </View>
+        ) : (
+          <View style={styles.heroFooter}>
+            <Ionicons name="checkmark-circle" size={22} color={theme.accent} />
+            <AppText variant="caption" color="textSecondary">
+              Erholung gehört zum Training.
+            </AppText>
+          </View>
+        )}
+      </Pressable>
+
+      {/* Wochenziel als Ring: sichtbarer Fortschritt motiviert, ein kleines Ziel ist erreichbar */}
+      <Card>
+        <View style={styles.goalRow}>
+          <ProgressRing progress={goal.ratio} size={112} strokeWidth={12}>
+            <AppText variant="title" style={styles.tabular}>
+              {goal.activeDays}/{goal.goal}
+            </AppText>
+            <AppText variant="caption" color="textSecondary">
+              Tage
+            </AppText>
+          </ProgressRing>
+          <View style={styles.goalText}>
+            <AppText variant="label" color="accent">
+              {goal.reached ? 'WOCHENZIEL ERREICHT' : 'WOCHENZIEL'}
+            </AppText>
+            <AppText variant="heading">{goal.message}</AppText>
+            <View style={styles.miniStats}>
+              <MiniStat icon="time-outline" value={formatDuration(week.durationSeconds * 1000)} />
+              <MiniStat icon="navigate-outline" value={formatDistance(week.distanceM, units)} />
+            </View>
+          </View>
         </View>
-        <AppText variant="caption" color="textSecondary">
-          Kraft {week.byType.strength} · Home {week.byType.home} · Laufen {week.byType.running}
+
+        <View style={styles.days}>
+          {DAYS.map((day, i) => {
+            const done = week.perDay[i] > 0;
+            const isToday = i === today;
+            return (
+              <View key={day} style={styles.day}>
+                <View
+                  style={[
+                    styles.dot,
+                    {
+                      backgroundColor: done ? theme.accent : i > today ? 'transparent' : theme.surfaceAlt,
+                      borderColor: isToday ? theme.text : done ? theme.accent : theme.border,
+                    },
+                  ]}>
+                  {done ? <Ionicons name="checkmark" size={18} color={theme.onAccent} /> : null}
+                </View>
+                <AppText variant="caption" color={isToday ? 'text' : 'textSecondary'} style={isToday && styles.bold}>
+                  {day}
+                </AppText>
+              </View>
+            );
+          })}
+        </View>
+      </Card>
+
+      {/* Serie mit Freezes: motiviert, ohne bei einem verpassten Tag alles zu nehmen */}
+      <Card>
+        <View style={styles.streakRow}>
+          <View style={[styles.flameBox, { backgroundColor: streak.current > 0 ? theme.accentSoft : theme.surfaceAlt }]}>
+            <Ionicons name="flame" size={30} color={streak.current > 0 ? theme.accent : theme.textSecondary} />
+          </View>
+          <View style={styles.flex}>
+            <AppText variant="heading">
+              {streak.current > 0
+                ? `${streak.current} ${streak.current === 1 ? 'Tag' : 'Tage'} in Folge`
+                : 'Starte deine Serie'}
+            </AppText>
+            <AppText variant="caption" color="textSecondary">
+              {streak.longest > 0
+                ? `Rekord: ${streak.longest} ${streak.longest === 1 ? 'Tag' : 'Tage'}`
+                : 'Jeder Trainingstag zählt'}
+            </AppText>
+          </View>
+          <View style={styles.freezes} accessibilityLabel={`${streak.freezesLeft} von ${FREEZES_PER_MONTH} Freezes übrig`}>
+            {Array.from({ length: FREEZES_PER_MONTH }, (_, i) => (
+              <Ionicons key={i} name="snow" size={18} color={i < streak.freezesLeft ? theme.accent : theme.border} />
+            ))}
+          </View>
+        </View>
+        <AppText variant="caption" color={streak.atRisk ? 'accent' : 'textSecondary'}>
+          {streak.atRisk
+            ? 'Heute ist noch alles offen. Schon 10 Minuten verlängern deine Serie.'
+            : streak.trainedToday
+              ? 'Heute erledigt. Deine Serie läuft weiter.'
+              : `Ein Freeze überbrückt einen Tag ohne Training. ${streak.freezesLeft} von ${FREEZES_PER_MONTH} übrig diesen Monat.`}
         </AppText>
       </Card>
+
+      {/* Nächstes Abzeichen: ein konkretes, nahes Ziel (Zielgradient-Effekt) */}
+      {upcoming && upcomingBadge ? (
+        <Card onPress={() => router.push('/dashboard/badges')}>
+          <View style={styles.streakRow}>
+            <View style={[styles.flameBox, { backgroundColor: theme.surfaceAlt }]}>
+              <Ionicons name={upcomingBadge.icon as IconName} size={26} color={theme.text} />
+            </View>
+            <View style={styles.flex}>
+              <AppText variant="label" color="textSecondary">
+                NÄCHSTES ABZEICHEN
+              </AppText>
+              <AppText variant="heading">{upcomingBadge.name}</AppText>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+          </View>
+          <View style={[styles.barTrack, { backgroundColor: theme.accentSoft }]}>
+            <View style={[styles.barFill, { backgroundColor: theme.accent, width: `${Math.max(4, Math.round(upcoming.ratio * 100))}%` }]} />
+          </View>
+          <AppText variant="caption" color="textSecondary">
+            {upcomingBadge.description} · {formatProgress(upcoming.current)} von {upcoming.target}
+          </AppText>
+        </Card>
+      ) : null}
+
+      {/* Schnellstart: jede Trainingsart mit einem Tipp erreichbar */}
+      <AppText variant="heading">Direkt loslegen</AppText>
+      <View style={styles.quickRow}>
+        {QUICK_START.map((item) => (
+          <Pressable
+            key={item.label}
+            accessibilityRole="button"
+            onPress={() => router.push(item.href)}
+            style={({ pressed }) => [
+              styles.quickTile,
+              { backgroundColor: theme.surface, borderColor: theme.border },
+              pressed && styles.pressed,
+            ]}>
+            <View style={[styles.quickIcon, { backgroundColor: theme.accentSoft }]}>
+              <Ionicons name={item.icon} size={22} color={theme.accent} />
+            </View>
+            <AppText variant="heading">{item.label}</AppText>
+            <AppText variant="caption" color="textSecondary">
+              {item.hint}
+            </AppText>
+          </Pressable>
+        ))}
+      </View>
 
       <AppText variant="heading">Muskelgruppen (30 Tage)</AppText>
       {isPremium ? (
@@ -161,7 +301,7 @@ export default function DashboardScreen() {
             muscles.map((m) => (
               <View key={m.group} style={styles.muscleRow}>
                 <AppText style={styles.muscleName}>{m.group}</AppText>
-                <View style={[styles.barTrack, { backgroundColor: theme.surfaceAlt }]}>
+                <View style={[styles.barTrack, styles.flex, { backgroundColor: theme.surfaceAlt }]}>
                   <View
                     style={[styles.barFill, { backgroundColor: theme.accent, width: `${Math.round((m.volumeKg / maxVolume) * 100)}%` }]}
                   />
@@ -180,51 +320,117 @@ export default function DashboardScreen() {
         />
       )}
 
-      <Card onPress={() => router.push('/dashboard/year')}>
-        <AppText variant="heading">Jahresrückblick</AppText>
-        <AppText color="textSecondary">Dein Jahr in Zahlen</AppText>
-      </Card>
-
-      <Card onPress={() => router.push('/dashboard/badges')}>
-        <AppText variant="heading">Abzeichen</AppText>
-        <AppText color="textSecondary">
-          {Object.keys(earned).length} von {BADGES.length} erreicht
-        </AppText>
-      </Card>
-
-      <Button title="Training starten" onPress={() => router.push('/training')} />
+      <View style={styles.quickRow}>
+        <LinkTile icon="calendar-number-outline" title="Jahresrückblick" text="Dein Jahr in Zahlen" onPress={() => router.push('/dashboard/year')} />
+        <LinkTile
+          icon="ribbon-outline"
+          title="Abzeichen"
+          text={`${earnedCount} von ${BADGES.length} erreicht`}
+          onPress={() => router.push('/dashboard/badges')}
+        />
+      </View>
     </Screen>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+/** Ganze Zahlen ohne Nachkommastellen, Kilometer mit einer. */
+function formatProgress(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace('.', ',');
+}
+
+function MiniStat({ icon, value }: { icon: IconName; value: string }) {
+  const theme = useTheme();
   return (
-    <Card style={styles.stat}>
-      <AppText variant="label" color="textSecondary">
-        {label.toUpperCase()}
+    <View style={styles.miniStat}>
+      <Ionicons name={icon} size={15} color={theme.textSecondary} />
+      <AppText variant="caption" color="textSecondary" style={styles.tabular}>
+        {value}
       </AppText>
-      <AppText variant="heading">{value}</AppText>
+    </View>
+  );
+}
+
+function LinkTile({ icon, title, text, onPress }: { icon: IconName; title: string; text: string; onPress: () => void }) {
+  const theme = useTheme();
+  return (
+    <Card onPress={onPress} style={styles.linkTile}>
+      <Ionicons name={icon} size={22} color={theme.accent} />
+      <AppText variant="heading">{title}</AppText>
+      <AppText variant="caption" color="textSecondary">
+        {text}
+      </AppText>
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  streakRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  stats: { flexDirection: 'row', gap: Spacing.two },
-  stat: { flex: 1, padding: Spacing.three, gap: Spacing.one },
-  days: { flexDirection: 'row', justifyContent: 'space-between' },
-  muscleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  muscleName: { width: 84 },
-  barTrack: { flex: 1, height: 10, borderRadius: Radius.pill, overflow: 'hidden' },
-  barFill: { height: '100%', borderRadius: Radius.pill },
-  muscleValue: { width: 64, textAlign: 'right' },
+  flex: { flex: 1 },
+  bold: { fontWeight: '700' },
+  tabular: { fontVariant: ['tabular-nums'] },
+  centerText: { textAlign: 'center' },
+  fullWidth: { alignSelf: 'stretch' },
+  pressed: { opacity: 0.75, transform: [{ scale: 0.985 }] },
+
+  header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingTop: Spacing.two },
+  headerText: { flex: 1, gap: 2 },
+  streakPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: Radius.pill,
+  },
+
+  celebrate: { alignItems: 'center', borderWidth: 2 },
+  badgeIcon: { width: 56, height: 56, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
+
+  hero: { padding: Spacing.four, borderRadius: Radius.large, borderWidth: 1, gap: Spacing.two },
+  heroFooter: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginTop: Spacing.two },
+  playButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three - 4,
+    borderRadius: Radius.pill,
+  },
+
+  goalRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.four },
+  goalText: { flex: 1, gap: Spacing.one },
+  miniStats: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.three, marginTop: Spacing.one },
+  miniStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  days: { flexDirection: 'row', justifyContent: 'space-between', marginTop: Spacing.three },
   day: { alignItems: 'center', gap: Spacing.one },
   dot: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     borderRadius: Radius.pill,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  streakRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  flameBox: { width: 52, height: 52, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center' },
+  freezes: { flexDirection: 'row', gap: 2 },
+
+  barTrack: { height: 10, borderRadius: Radius.pill, overflow: 'hidden' },
+  barFill: { height: '100%', borderRadius: Radius.pill },
+
+  quickRow: { flexDirection: 'row', gap: Spacing.two },
+  quickTile: { flex: 1, padding: Spacing.three, borderRadius: Radius.large, borderWidth: 1, gap: Spacing.one },
+  quickIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.one,
+  },
+  linkTile: { flex: 1, padding: Spacing.three, gap: Spacing.one },
+
+  muscleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  muscleName: { width: 84 },
+  muscleValue: { width: 64, textAlign: 'right' },
 });
