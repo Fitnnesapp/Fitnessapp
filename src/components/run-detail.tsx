@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { CelebrationCard } from '@/components/celebration-card';
 import { DetailHeader, StatGrid } from '@/components/detail-layout';
 import { RouteMap } from '@/components/route-map';
 import { AppText } from '@/components/ui/app-text';
@@ -68,9 +69,12 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
 
   return (
     <Screen>
-      <DetailHeader startedAt={run.startedAt} title={justFinished ? 'Stark gelaufen!' : 'Lauf'} />
+      {justFinished ? (
+        <CelebrationCard sessionId={run.id} headline="Stark gelaufen!" records={earned.map((type) => RECORD_LABELS[type])} />
+      ) : null}
+      <DetailHeader startedAt={run.startedAt} title="Lauf" />
 
-      {earned.length > 0 ? (
+      {earned.length > 0 && !justFinished ? (
         <Card>
           {earned.map((type) => (
             <AppText key={type} variant="heading">

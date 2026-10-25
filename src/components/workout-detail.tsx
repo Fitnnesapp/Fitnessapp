@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 
+import { CelebrationCard } from '@/components/celebration-card';
 import { DetailHeader, StatGrid } from '@/components/detail-layout';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -64,7 +65,14 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
 
   return (
     <Screen>
-      <DetailHeader startedAt={workout.startedAt} title={justFinished ? 'Stark! Workout abgeschlossen.' : 'Kraft-Workout'} />
+      {justFinished ? (
+        <CelebrationCard
+          sessionId={workout.id}
+          headline="Stark!"
+          records={recordCount > 0 ? [recordCount === 1 ? '1 neuer Rekord' : `${recordCount} neue Rekorde`] : []}
+        />
+      ) : null}
+      <DetailHeader startedAt={workout.startedAt} title="Kraft-Workout" />
 
       <StatGrid
         items={[

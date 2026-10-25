@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { CelebrationCard } from '@/components/celebration-card';
 import { DetailHeader, StatGrid } from '@/components/detail-layout';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -50,16 +51,19 @@ export function HomeSessionDetail({ sessionId, justFinished = false }: HomeSessi
 
   return (
     <Screen>
+      {justFinished ? (
+        <CelebrationCard sessionId={session.id} headline={session.completed ? 'Geschafft!' : 'Gut, dass du dran warst.'} />
+      ) : null}
       <DetailHeader
         startedAt={session.startedAt}
-        title={justFinished ? (session.completed ? 'Geschafft! Workout abgeschlossen.' : 'Workout beendet.') : 'Home-Workout'}
+        title="Home-Workout"
         subtitle={`${program?.name ?? 'Programm'}${program ? ` · ${program.category}` : ''}${!session.completed ? ' · vorzeitig beendet' : ''}`}
       />
 
       <StatGrid
         items={[
-          { label: 'Dauer', value: `${formatClock(session.activeSeconds * 1000)} Min` },
-          { label: 'Kalorien (Schätzung)', value: `ca. ${session.caloriesEstimate} kcal` },
+          { label: 'Dauer', value: formatClock(session.activeSeconds * 1000), unit: 'Min' },
+          { label: 'Kalorien (ca.)', value: String(session.caloriesEstimate), unit: 'kcal' },
         ]}
       />
 
