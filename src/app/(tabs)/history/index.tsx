@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 
+import { LinkTile } from '@/components/link-tile';
 import { MonthCalendar } from '@/components/month-calendar';
 import { PremiumPrompt } from '@/components/premium-prompt';
 import { AppText } from '@/components/ui/app-text';
@@ -12,10 +13,12 @@ import { getProgram } from '@/data/programs';
 import { getExercise } from '@/data/exercises';
 import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
+import { BADGES } from '@/lib/logic/badges';
 import { dayKey, formatClock, formatDate, formatDuration, formatTime } from '@/lib/logic/format';
 import { paceSecPerKm } from '@/lib/logic/run-stats';
 import { formatDistance, formatPace, formatWeight, paceUnitLabel } from '@/lib/logic/units';
 import { summarizeWorkout } from '@/lib/logic/workout-stats';
+import { useGamification } from '@/lib/storage/gamification-store';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
@@ -58,6 +61,7 @@ export default function HistoryScreen() {
   const sessions = useHomeSessions((state) => state.sessions);
   const runs = useRunStore((state) => state.history);
   const { isPremium } = useSubscription();
+  const earnedCount = useGamification((state) => Object.keys(state.earned).length);
   const [now] = useState(() => Date.now());
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
@@ -101,7 +105,21 @@ export default function HistoryScreen() {
           </View>
         ) : undefined
       }
-      ListHeaderComponent={<MonthCalendar counts={counts} selected={selectedDay} onSelect={setSelectedDay} />}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <View style={styles.tiles}>
+            <LinkTile
+              icon="ribbon-outline"
+              title="Abzeichen"
+              text={`${earnedCount} von ${BADGES.length} erreicht`}
+              onPress={() => router.push('/history/badges')}
+            />
+            <LinkTile icon="calendar-number-outline" title="Rückblick" text="Dein Jahr in Zahlen" onPress={() => router.push('/history/year')} />
+          </View>
+          <AppText variant="heading">Aktivitäten</AppText>
+          <MonthCalendar counts={counts} selected={selectedDay} onSelect={setSelectedDay} />
+        </View>
+      }
       keyExtractor={(entry) => (entry.kind === 'strength' ? entry.workout.id : entry.kind === 'home' ? entry.session.id : entry.run.id)}
       stickySectionHeadersEnabled={false}
       ListEmptyComponent={
@@ -186,4 +204,6 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   separator: { height: Spacing.two },
   footer: { marginTop: Spacing.four },
+  header: { gap: Spacing.three },
+  tiles: { flexDirection: 'row', gap: Spacing.two },
 });

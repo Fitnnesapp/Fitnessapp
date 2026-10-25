@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ChallengeCard } from '@/components/challenge-card';
 import { EventCard } from '@/components/event-card';
+import { LinkTile } from '@/components/link-tile';
 import { PremiumPrompt } from '@/components/premium-prompt';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -375,7 +376,7 @@ export default function DashboardScreen() {
 
       {/* Nächstes Abzeichen: ein konkretes, nahes Ziel (Zielgradient-Effekt) */}
       {upcoming && upcomingBadge ? (
-        <Card onPress={() => router.push('/dashboard/badges')}>
+        <Card onPress={() => router.push('/history/badges')}>
           <View style={styles.streakRow}>
             <View style={[styles.flameBox, { backgroundColor: theme.surfaceAlt }]}>
               <Ionicons name={upcomingBadge.icon as IconName} size={26} color={theme.text} />
@@ -450,12 +451,11 @@ export default function DashboardScreen() {
       )}
 
       <View style={styles.quickRow}>
-        <LinkTile icon="calendar-number-outline" title="Jahresrückblick" text="Dein Jahr in Zahlen" onPress={() => router.push('/dashboard/year')} />
         <LinkTile
-          icon="ribbon-outline"
-          title="Abzeichen"
-          text={`${earnedCount} von ${BADGES.length} erreicht`}
-          onPress={() => router.push('/dashboard/badges')}
+          icon="stats-chart-outline"
+          title="Dein Fortschritt"
+          text={`Verlauf, Jahresrückblick und ${earnedCount} von ${BADGES.length} Abzeichen`}
+          onPress={() => router.push('/history')}
         />
       </View>
     </Screen>
@@ -476,19 +476,6 @@ function MiniStat({ icon, value }: { icon: IconName; value: string }) {
         {value}
       </AppText>
     </View>
-  );
-}
-
-function LinkTile({ icon, title, text, onPress }: { icon: IconName; title: string; text: string; onPress: () => void }) {
-  const theme = useTheme();
-  return (
-    <Card onPress={onPress} style={styles.linkTile}>
-      <Ionicons name={icon} size={22} color={theme.accent} />
-      <AppText variant="heading">{title}</AppText>
-      <AppText variant="caption" color="textSecondary">
-        {text}
-      </AppText>
-    </Card>
   );
 }
 
@@ -559,7 +546,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: Spacing.one,
   },
-  linkTile: { flex: 1, padding: Spacing.three, gap: Spacing.one },
   planInvite: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   sectionRow: { flexDirection: 'row', alignItems: 'center' },
   searchBar: {

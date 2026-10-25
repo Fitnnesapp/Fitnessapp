@@ -58,8 +58,8 @@ export const FEATURES: readonly FeatureItem[] = [
   {
     id: 'history',
     kind: 'funktion',
-    title: 'Verlauf',
-    subtitle: 'Alle Workouts im Kalender',
+    title: 'Fortschritt und Verlauf',
+    subtitle: 'Alle Workouts im Kalender, Abzeichen, Jahresrückblick',
     keywords: ['vergangene Workouts', 'Kalender', 'letzte Woche', 'Fortschritt', 'Historie'],
     href: '/history',
   },
@@ -69,7 +69,7 @@ export const FEATURES: readonly FeatureItem[] = [
     title: 'Abzeichen',
     subtitle: 'Erreichte und offene Auszeichnungen',
     keywords: ['Badges', 'Erfolge', 'Medaillen', 'Belohnung'],
-    href: '/dashboard/badges',
+    href: '/history/badges',
   },
   {
     id: 'year',
@@ -77,7 +77,7 @@ export const FEATURES: readonly FeatureItem[] = [
     title: 'Jahresrückblick',
     subtitle: 'Dein Jahr in Zahlen',
     keywords: ['Statistik', 'Jahr', 'Zusammenfassung', 'Rekorde'],
-    href: '/dashboard/year',
+    href: '/history/year',
   },
   {
     id: 'discover',
