@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { finalizeDraft } from '@/lib/logic/draft';
+import { draftFromWorkout } from '@/lib/logic/repeat';
 import { kgToDisplay, type Units } from '@/lib/logic/units';
 import { lastWorkingSet } from '@/lib/logic/workout-stats';
 import type { ActiveWorkout, DraftSet, StrengthWorkout, WorkoutTemplate } from '@/types/workout';
@@ -17,6 +18,8 @@ type WorkoutState = {
   hydrated: boolean;
 
   startWorkout: (exerciseIds?: string[]) => void;
+  /** Startet ein gespeichertes Workout erneut mit gleichen Übungen und vorbelegten Sätzen. false, wenn es nicht existiert. */
+  repeatWorkout: (workoutId: string) => boolean;
   discardWorkout: () => void;
   /** Beendet das Workout und gibt die Id des gespeicherten Workouts zurück, oder null wenn kein Satz erledigt wurde. */
   finishWorkout: () => string | null;
@@ -72,6 +75,15 @@ export const useWorkouts = create<WorkoutState>()(
             })),
           },
         });
+      },
+
+      repeatWorkout: (workoutId) => {
+        const source = get().history.find((w) => w.id === workoutId);
+        if (!source || get().active) return false;
+
+        const exercises = draftFromWorkout(source, useSettings.getState().units, newId);
+        set({ active: { id: newId(), startedAt: Date.now(), exercises } });
+        return true;
       },
 
       discardWorkout: () => set({ active: null }),
