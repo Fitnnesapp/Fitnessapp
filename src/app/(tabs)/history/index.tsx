@@ -2,13 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LinkTile } from '@/components/link-tile';
 import { MonthCalendar } from '@/components/month-calendar';
 import { MuscleBalanceCard } from '@/components/muscle-balance-card';
 import { PremiumPrompt } from '@/components/premium-prompt';
+import { ProgressOverview } from '@/components/progress-overview';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
+import { SectionHeader } from '@/components/ui/section-header';
 import { Spacing } from '@/constants/theme';
 import { getProgram } from '@/data/programs';
 import { getExercise } from '@/data/exercises';
@@ -65,6 +68,8 @@ export default function HistoryScreen() {
   const earnedCount = useGamification((state) => Object.keys(state.earned).length);
   const [now] = useState(() => Date.now());
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  // Eigene große Überschrift statt Kopfzeile: oben den Abstand zur Statusleiste einrechnen
+  const insets = useSafeAreaInsets();
 
   // Alle Trainingsarten gemeinsam, neueste zuerst, gruppiert nach Kalendertag
   const { sections, hidden } = useMemo(() => {
@@ -94,7 +99,7 @@ export default function HistoryScreen() {
   return (
     <SectionList
       style={{ backgroundColor: theme.background }}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.three }]}
       sections={visible}
       ListFooterComponent={
         hidden > 0 ? (
@@ -108,6 +113,8 @@ export default function HistoryScreen() {
       }
       ListHeaderComponent={
         <View style={styles.header}>
+          <ProgressOverview />
+          <SectionHeader title="Erfolge" />
           <View style={styles.tiles}>
             <LinkTile
               icon="ribbon-outline"
@@ -118,7 +125,7 @@ export default function HistoryScreen() {
             <LinkTile icon="calendar-number-outline" title="Rückblick" text="Dein Jahr in Zahlen" onPress={() => router.push('/history/year')} />
           </View>
           <MuscleBalanceCard />
-          <AppText variant="heading">Aktivitäten</AppText>
+          <SectionHeader title="Aktivitäten" />
           <MonthCalendar counts={counts} selected={selectedDay} onSelect={setSelectedDay} />
         </View>
       }
@@ -131,8 +138,8 @@ export default function HistoryScreen() {
         </Card>
       }
       renderSectionHeader={({ section }) => (
-        <AppText variant="label" color="textSecondary" style={styles.sectionHeader}>
-          {section.title.toUpperCase()}
+        <AppText variant="eyebrow" color="textSecondary" style={styles.sectionHeader}>
+          {section.title}
         </AppText>
       )}
       renderItem={({ item }) => {
@@ -200,7 +207,7 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: Spacing.three, paddingBottom: Spacing.six },
+  content: { padding: Spacing.four, paddingBottom: Spacing.six },
   sectionHeader: { marginTop: Spacing.three, marginBottom: Spacing.two },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },

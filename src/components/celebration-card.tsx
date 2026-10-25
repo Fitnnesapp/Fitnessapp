@@ -11,7 +11,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { streaks, weekStart } from '@/lib/logic/activity';
 import { celebrate, ordinalText, weekEffectText } from '@/lib/logic/celebration';
 import { WEEKLY_GOAL_DAYS } from '@/lib/logic/motivation';
-import { nextSession, plannedDaysThisWeek, WEEKDAY_NAMES } from '@/lib/logic/plan';
+import { nextSession, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
 import { usePlanStore } from '@/lib/storage/plan-store';
 
 type CelebrationCardProps = {
@@ -32,7 +32,7 @@ export function CelebrationCard({ sessionId, headline, records = [] }: Celebrati
   const now = useNow(60_000);
 
   const session = activities.find((a) => a.id === sessionId);
-  const goalDays = plan && session ? Math.max(1, plannedDaysThisWeek(plan, weekStart(session.startedAt))) : WEEKLY_GOAL_DAYS;
+  const goalDays = session ? weekGoalDays(plan, weekStart(session.startedAt), WEEKLY_GOAL_DAYS) : WEEKLY_GOAL_DAYS;
   const result = useMemo(() => celebrate(activities, sessionId, goalDays), [activities, sessionId, goalDays]);
   const streak = useMemo(() => streaks(activities, now), [activities, now]);
   const upcoming = plan ? nextSession(plan, now) : null;

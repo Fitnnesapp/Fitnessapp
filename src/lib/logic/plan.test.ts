@@ -12,6 +12,7 @@ import {
   nextSession,
   planDayCount,
   plannedDaysThisWeek,
+  weekGoalDays,
   recommendedDays,
   sessionForDay,
   sessionsForDay,
@@ -205,6 +206,14 @@ test('in der Startwoche zählen nur die Tage ab dem Planstart, Doppel-Tage einma
   const plan = build({ days: [0, 2, 5], doubleSessions: true });
   assert.equal(plannedDaysThisWeek(plan, new Date(2026, 9, 19).getTime()), 1);
   assert.equal(plannedDaysThisWeek(plan, new Date(2026, 9, 26).getTime()), 3);
+});
+
+test('Wochenziel: geplante Tage, vor dem Planstart und ohne Plan der Standard', () => {
+  const plan = build({ days: [0, 2, 5], doubleSessions: true });
+  assert.equal(weekGoalDays(plan, new Date(2026, 9, 26).getTime(), 3), 3);
+  assert.equal(weekGoalDays(plan, new Date(2026, 9, 19).getTime(), 3), 1);
+  assert.equal(weekGoalDays(plan, new Date(2026, 9, 12).getTime(), 3), 3); // Woche vor dem Planstart
+  assert.equal(weekGoalDays(null, new Date(2026, 9, 26).getTime(), 3), 3);
 });
 
 test('empfohlene Tage sind verteilt und passen zur Anzahl', () => {

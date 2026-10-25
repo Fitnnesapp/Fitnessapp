@@ -29,7 +29,7 @@ import { daysUntilEvent, upcomingEvents } from '@/lib/logic/events';
 import { buildFeed } from '@/lib/logic/feed';
 import { compareWithLastWeek, trainingIdentity } from '@/lib/logic/identity';
 import { dayHeading, greeting, nextBadge, WEEKLY_GOAL_DAYS, weeklyGoal } from '@/lib/logic/motivation';
-import { missedLastPlanned, nextSession, plannedDaysThisWeek, sessionsForDay, WEEKDAY_NAMES } from '@/lib/logic/plan';
+import { missedLastPlanned, nextSession, sessionsForDay, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
 import { suggestWorkout, type SuggestionTarget } from '@/lib/logic/suggestions';
 import type { Units } from '@/lib/logic/units';
 import { hrefForSession } from '@/lib/plan-href';
@@ -115,7 +115,7 @@ export default function DashboardScreen() {
 
   const week = useMemo(() => weekStats(activities, weekStart(now)), [activities, now]);
   const goal = useMemo(
-    () => weeklyGoal(week.perDay, plan ? Math.max(1, plannedDaysThisWeek(plan, weekStart(now))) : WEEKLY_GOAL_DAYS),
+    () => weeklyGoal(week.perDay, weekGoalDays(plan, weekStart(now), WEEKLY_GOAL_DAYS)),
     [week, plan, now],
   );
   const streak = useMemo(() => streaks(activities, now), [activities, now]);

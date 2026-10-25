@@ -7,7 +7,7 @@ export const unstable_settings = { initialRouteName: 'index' };
 export default function HistoryLayout() {
   return (
     <Stack screenOptions={{ headerShadowVisible: false }}>
-      <Stack.Screen name="index" options={{ title: 'Fortschritt' }} />
+      <Stack.Screen name="index" options={{ title: 'Fortschritt', headerShown: false }} />
       <Stack.Screen name="[id]" options={{ title: 'Workout' }} />
       <Stack.Screen name="badges" options={{ title: 'Abzeichen' }} />
       <Stack.Screen name="year" options={{ title: 'Jahresrückblick' }} />

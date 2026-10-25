@@ -525,6 +525,15 @@ export function plannedDaysThisWeek(plan: TrainingPlan, weekStartAt: number): nu
   return days.size;
 }
 
+/**
+ * Wochenziel in Trainingstagen: die geplanten Tage dieser Woche, sonst der Standard.
+ * Liegt die Woche vor dem Planstart (0 geplante Tage), gilt der Standard statt eines Ziels von 0 oder 1.
+ */
+export function weekGoalDays(plan: TrainingPlan | null, weekStartAt: number, fallback: number): number {
+  const planned = plan ? plannedDaysThisWeek(plan, weekStartAt) : 0;
+  return planned > 0 ? planned : Math.max(1, fallback);
+}
+
 // ---------------------------------------------------------------------------------------------
 // Migration gespeicherter Pläne
 
