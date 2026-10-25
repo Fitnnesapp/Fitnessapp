@@ -5,6 +5,7 @@ import { SectionList, StyleSheet, View } from 'react-native';
 
 import { LinkTile } from '@/components/link-tile';
 import { MonthCalendar } from '@/components/month-calendar';
+import { MuscleBalanceCard } from '@/components/muscle-balance-card';
 import { PremiumPrompt } from '@/components/premium-prompt';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
@@ -116,6 +117,7 @@ export default function HistoryScreen() {
             />
             <LinkTile icon="calendar-number-outline" title="Rückblick" text="Dein Jahr in Zahlen" onPress={() => router.push('/history/year')} />
           </View>
+          <MuscleBalanceCard />
           <AppText variant="heading">Aktivitäten</AppText>
           <MonthCalendar counts={counts} selected={selectedDay} onSelect={setSelectedDay} />
         </View>

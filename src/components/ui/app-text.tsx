@@ -4,7 +4,7 @@ import type { ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type AppTextProps = TextProps & {
-  variant?: 'display' | 'hero' | 'title' | 'heading' | 'body' | 'caption' | 'label';
+  variant?: 'display' | 'hero' | 'title' | 'heading' | 'body' | 'caption' | 'label' | 'number' | 'eyebrow';
   color?: ThemeColor;
 };
 
@@ -22,4 +22,8 @@ const styles = StyleSheet.create({
   body: { fontSize: 16, lineHeight: 24, fontWeight: '400' },
   caption: { fontSize: 13, lineHeight: 18, fontWeight: '400' },
   label: { fontSize: 13, lineHeight: 18, fontWeight: '600', letterSpacing: 0.4 },
+  /** Große Kennzahl im Sport-Stil: fett, eng, Ziffern gleich breit */
+  number: { fontSize: 40, lineHeight: 44, fontWeight: '900', letterSpacing: -1.2, fontVariant: ['tabular-nums'] },
+  /** Kleine Dachzeile über Abschnitten und Kennzahlen */
+  eyebrow: { fontSize: 12, lineHeight: 16, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' },
 });

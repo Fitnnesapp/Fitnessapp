@@ -23,6 +23,24 @@ gestaltet sind. Leitlinie aus dem Entwicklungsplan: motivieren ohne künstlichen
 - **Suche statt Menü-Labyrinth:** Jede Funktion ist über die Suche mit Alltagssprache erreichbar.
 - **Belohnungsmomente:** Nach dem Erstellen des Plans und bei neuen Abzeichen gibt es einen sichtbaren Erfolgsmoment.
 
+## Redesign 2.0 (ab 25.10.2026): starke, faire Bindung
+
+Entscheidung des Nutzers: Die App soll stärker binden, im sportlich-kraftvollen Stil (große, fette Zahlen, starke
+Kontraste, Limette als einziger Akzent). Leitlinie: **alles, was nachweislich bindet und dem Menschen nützt; nichts,
+was auf Sucht oder Verlustangst zielt.** Der Abschnitt „Bewusst vermieden“ gilt unverändert weiter.
+
+| Prinzip | Grundlage | Umsetzung |
+|---|---|---|
+| **Gewohnheitsschleife** | Auslöser, Handlung, Belohnung; Gewohnheiten entstehen durch Wiederholung im gleichen Kontext (Lally et al. 2010, Wood & Neal 2007). | Oben steht immer genau eine nächste Handlung mit einem Tipp. Nach jeder Einheit ein sichtbarer Erfolgsmoment. |
+| **Identität statt Aufgabe** | Substantiv statt Verb („Wähler sein“ statt „wählen“) erhöhte die Beteiligung messbar (Bryan, Walton, Rogers & Dweck 2011). | Kopfzeile zeigt „Team Lauf“, „Team Kraft“ oder „Team Allround“ aus den eigenen Einheiten der letzten 90 Tage. |
+| **Sichtbarer Fortschritt** | Fortschritt ist der stärkste Motivator im Alltag („Progress Principle“, Amabile & Kramer 2011); Goal-Gradient (Kivetz et al. 2006). | Große Wochenzahlen (Einheiten, Zeit, Distanz), Wochenziel-Ring, Vergleich mit der Vorwoche bis zum gleichen Zeitpunkt. |
+| **Positiver Vergleich mit sich selbst** | Selbstbezogenes Feedback stärkt das Kompetenzerleben (Selbstbestimmungstheorie, Ryan & Deci 2000); Vergleiche mit anderen können demotivieren. | Vergleich nur mit der eigenen Vorwoche, positiv formuliert; weniger als letzte Woche wird neutral genannt, nie als Verlust. |
+| **Kompetenz feiern** | Belohnung für tatsächliche Leistung, nicht zufällig (Gegenteil von variablen Belohnungen). | Rekorde und Abzeichen erscheinen genau dann, wenn sie erreicht wurden. |
+
+**Fahrplan (je ein Schritt):** 1. Start-Bildschirm und Design-Bausteine · 2. Training-Bereich · 3. Abschluss einer Einheit
+(Erfolgsmoment, Rekorde) · 4. Fortschritt mit Wochenrückblick · 5. Profil · 6. Erinnerung zur selbst gewählten Uhrzeit.
+Entdecken bleibt im Aufbau unverändert, übernimmt aber gemeinsame Bausteine wie Schrift und Karten.
+
 ## Bewusst vermieden
 
 - Keine Mechaniken, die auf Sucht zielen (endloses Scrollen, Verlustangst, zufällige Belohnungen nach Spielautomaten-Prinzip). Ziel ist eine Gewohnheit, die Menschen guttut, nicht maximale Bildschirmzeit.
@@ -40,6 +58,10 @@ gestaltet sind. Leitlinie aus dem Entwicklungsplan: motivieren ohne künstlichen
 - Lally, P., van Jaarsveld, C. H. M., Potts, H. W. W. & Wardle, J. (2010). How are habits formed: Modelling habit formation in the real world. *European Journal of Social Psychology, 40*(6), 998–1009.
 - Kivetz, R., Urminsky, O. & Zheng, Y. (2006). The goal-gradient hypothesis resurrected. *Journal of Marketing Research, 43*(1), 39–58.
 - Nunes, J. C. & Drèze, X. (2006). The endowed progress effect. *Journal of Consumer Research, 32*(4), 504–512.
+- Bryan, C. J., Walton, G. M., Rogers, T. & Dweck, C. S. (2011). Motivating voter turnout by invoking the self. *PNAS, 108*(31), 12653–12656.
+- Amabile, T. M. & Kramer, S. J. (2011). *The Progress Principle*. Harvard Business Review Press.
+- Ryan, R. M. & Deci, E. L. (2000). Self-determination theory and the facilitation of intrinsic motivation, social development, and well-being. *American Psychologist, 55*(1), 68–78.
+- Wood, W. & Neal, D. T. (2007). A new look at habits and the habit-goal interface. *Psychological Review, 114*(4), 843–863.
 - Mazéas, A., Duclos, M., Pereira, B. & Chalabaev, A. (2022). Evaluating the effectiveness of gamification on physical activity: Systematic review and meta-analysis of randomized controlled trials. *Journal of Medical Internet Research, 24*(1), e26779.
 
 ## Pflege

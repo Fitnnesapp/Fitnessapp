@@ -6,15 +6,15 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ChallengeCard } from '@/components/challenge-card';
 import { EventCard } from '@/components/event-card';
 import { FeedCard } from '@/components/feed-card';
-import { LinkTile } from '@/components/link-tile';
-import { PremiumPrompt } from '@/components/premium-prompt';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ImageCard } from '@/components/ui/image-card';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Screen } from '@/components/ui/screen';
-import { Radius, Spacing } from '@/constants/theme';
+import { SectionHeader } from '@/components/ui/section-header';
+import { Stat } from '@/components/ui/stat';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 import { getExercise } from '@/data/exercises';
 import { sceneForKind } from '@/data/images';
 import { getProgram } from '@/data/programs';
@@ -22,18 +22,16 @@ import { useActivities } from '@/hooks/use-activities';
 import { useBadgeContext } from '@/hooks/use-badge-context';
 import { useChallenges } from '@/hooks/use-challenges';
 import { useNow } from '@/hooks/use-now';
-import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
 import { FREEZES_PER_MONTH, streaks, weekStart, weekStats } from '@/lib/logic/activity';
-import { muscleVolume } from '@/lib/logic/analytics';
+import { BADGES } from '@/lib/logic/badges';
 import { daysUntilEvent, upcomingEvents } from '@/lib/logic/events';
 import { buildFeed } from '@/lib/logic/feed';
-import { BADGES } from '@/lib/logic/badges';
-import { formatDuration } from '@/lib/logic/format';
+import { compareWithLastWeek, trainingIdentity } from '@/lib/logic/identity';
 import { dayHeading, greeting, nextBadge, WEEKLY_GOAL_DAYS, weeklyGoal } from '@/lib/logic/motivation';
 import { missedLastPlanned, nextSession, plannedDaysThisWeek, sessionsForDay, WEEKDAY_NAMES } from '@/lib/logic/plan';
 import { suggestWorkout, type SuggestionTarget } from '@/lib/logic/suggestions';
-import { formatDistance, formatWeight } from '@/lib/logic/units';
+import type { Units } from '@/lib/logic/units';
 import { hrefForSession } from '@/lib/plan-href';
 import { useEvents, useEventsStore } from '@/lib/storage/events-store';
 import { useGamification } from '@/lib/storage/gamification-store';
@@ -45,7 +43,15 @@ import { useWorkouts } from '@/lib/storage/workout-store';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
-type Hero = { label: string; title: string; text: string; href: Href | null; note: string; kind: 'strength' | 'run' | 'program' | 'rest' };
+type Hero = {
+  label: string;
+  title: string;
+  text: string;
+  href: Href | null;
+  cta: string;
+  note: string;
+  kind: 'strength' | 'run' | 'program' | 'rest';
+};
 
 function hrefFor(target: SuggestionTarget): Href {
   if (target.kind === 'strength') return '/training/strength';
@@ -53,13 +59,33 @@ function hrefFor(target: SuggestionTarget): Href {
   return { pathname: '/training/program/[id]', params: { id: target.programId } };
 }
 
-const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const DAYS = ['M', 'D', 'M', 'D', 'F', 'S', 'S'];
+
+/** Bilder sind in beiden Modi dunkel: darauf immer die helle Limette, sonst ist sie im Hellmodus kaum lesbar. */
+const ON_IMAGE_ACCENT = Colors.dark.accent;
+
+/** Zeit als große Zahl: unter einer Stunde in Minuten, sonst h:mm. */
+function durationParts(seconds: number): { value: string; unit: string } {
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return { value: String(minutes), unit: 'Min' };
+  return { value: `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`, unit: 'Std' };
+}
+
+function distanceParts(meters: number, units: Units): { value: string; unit: string } {
+  const value = units === 'metric' ? meters / 1000 : meters / 1609.344;
+  return { value: value.toFixed(1).replace('.', ','), unit: units === 'metric' ? 'km' : 'mi' };
+}
+
+/** Ganze Zahlen ohne Nachkommastellen, Kilometer mit einer. */
+function formatProgress(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace('.', ',');
+}
 
 /**
- * Start-Bildschirm. Aufbau nach dem Muster großer Fitness-Apps:
- * zuerst der nächste Schritt (Vorschlag), dann der Fortschritt (Wochenziel-Ring, Serie),
- * dann der Aktivitäts-Feed (wie bei Strava) und das nächste erreichbare Ziel (Abzeichen).
- * Trainings starten über den Plus-Knopf in der Tab-Leiste.
+ * Start-Bildschirm (Redesign 2.0, sportlich-kraftvoll). Aufbau entlang der Gewohnheitsschleife:
+ * 1. Identität und Begrüßung, 2. genau eine nächste Handlung, 3. sichtbarer Fortschritt der Woche
+ *    mit Serie und fairem Vergleich zur Vorwoche, 4. eigene Aktivitäten, 5. nahe Ziele.
+ * Begründung und Quellen: docs/design-psychologie.md
  */
 export default function DashboardScreen() {
   const router = useRouter();
@@ -68,7 +94,6 @@ export default function DashboardScreen() {
   const name = useSettings((state) => state.displayName).trim();
   const activities = useActivities();
   const now = useNow(60_000);
-  const { isPremium } = useSubscription();
   const strengthHistory = useWorkouts((state) => state.history);
   const homeSessions = useHomeSessions((state) => state.sessions);
   const runHistory = useRunStore((state) => state.history);
@@ -83,12 +108,10 @@ export default function DashboardScreen() {
   useEffect(() => {
     void refreshEvents();
   }, [refreshEvents]);
+
   // Ankündigung: das nächste Event der kommenden zwei Wochen
-  const nextEvent = useMemo(
-    () => upcomingEvents(events, now, 1).find((e) => daysUntilEvent(e, now) <= 14),
-    [events, now],
-  );
-  // Eine Challenge auf dem Start-Bildschirm: die eigene, sonst eine laufende als Einladung
+  const nextEvent = useMemo(() => upcomingEvents(events, now, 1).find((e) => daysUntilEvent(e, now) <= 14), [events, now]);
+  // Eine Challenge: die eigene, sonst eine laufende als Einladung
   const featuredChallenge =
     challengeEntries.find((e) => e.joined && !e.progress?.completed) ??
     challengeEntries.find((e) => !e.joined && e.challenge.window.kind === 'fixed');
@@ -99,13 +122,10 @@ export default function DashboardScreen() {
     [week, plan, now],
   );
   const streak = useMemo(() => streaks(activities, now), [activities, now]);
+  const identity = useMemo(() => trainingIdentity(activities, now), [activities, now]);
+  const comparison = useMemo(() => compareWithLastWeek(activities, now), [activities, now]);
   const upcoming = useMemo(() => nextBadge(badgeContext, earned), [badgeContext, earned]);
   const upcomingBadge = upcoming ? BADGES.find((b) => b.key === upcoming.key) : undefined;
-  const muscles = useMemo(
-    () => muscleVolume(strengthHistory, 30, now, (id) => getExercise(id)?.muscleGroup),
-    [strengthHistory, now],
-  );
-  const maxVolume = Math.max(1, ...muscles.map((m) => m.volumeKg));
   const suggestion = useMemo(
     () => suggestWorkout({ activities, strength: strengthHistory, now, muscleGroupOf: (id) => getExercise(id)?.muscleGroup }),
     [activities, strengthHistory, now],
@@ -122,16 +142,18 @@ export default function DashboardScreen() {
     [strengthHistory, homeSessions, runHistory],
   );
   const today = (new Date(now).getDay() + 6) % 7;
-  const earnedCount = Object.keys(earned).length;
+  const time = durationParts(week.durationSeconds);
+  const distance = distanceParts(week.distanceM, units);
 
-  // Was die große Karte oben zeigt: mit Plan die heutige Einheit, sonst den regelbasierten Vorschlag
+  // Genau eine nächste Handlung: mit Plan die heutige Einheit, sonst der regelbasierte Vorschlag
   const hero = useMemo((): Hero => {
     if (!plan) {
       return {
-        label: 'HEUTE FÜR DICH',
+        label: 'Heute für dich',
         title: suggestion.title,
         text: suggestion.reason,
         href: suggestion.target ? hrefFor(suggestion.target) : null,
+        cta: "Los geht's",
         note: 'Aus einfachen Regeln, keine KI',
         kind: suggestion.target?.kind ?? 'rest',
       };
@@ -140,31 +162,25 @@ export default function DashboardScreen() {
     if (session && !streak.trainedToday) {
       const comeback = missedLastPlanned(plan, activities, now);
       return {
-        label: comeback ? 'COMEBACK-TAG' : `HEUTE IN DEINEM PLAN · ${session.minutes} MIN`,
+        label: comeback ? 'Comeback-Tag' : 'Heute in deinem Plan',
         title: session.title,
         text: comeback
           ? 'Die letzte Einheit ist ausgefallen. Kein Problem: Entscheidend ist, dass du heute wieder einsteigst.'
           : session.detail,
         href: hrefForSession(session),
-        note: extra
-          ? `Danach: ${extra.minutes} Min ${extra.title}`
-          : comeback
-            ? `${session.minutes} Minuten, die zählen`
-            : 'Dein Plan, deine Zeit',
+        cta: `Los geht's · ${session.minutes} Min`,
+        note: extra ? `Danach: ${extra.minutes} Min ${extra.title}` : 'Dein Plan, deine Zeit',
         kind: session.kind,
       };
     }
     const upcomingSession = nextSession(plan, now);
-    const when = upcomingSession
-      ? upcomingSession.inDays === 1
-        ? 'Morgen'
-        : WEEKDAY_NAMES[upcomingSession.session.day]
-      : null;
+    const when = upcomingSession ? (upcomingSession.inDays === 1 ? 'Morgen' : WEEKDAY_NAMES[upcomingSession.session.day]) : null;
     return {
-      label: session ? 'HEUTE ERLEDIGT' : now < plan.startsAt ? 'DEIN PLAN STARTET BALD' : 'RUHETAG LAUT PLAN',
+      label: session ? 'Heute erledigt' : now < plan.startsAt ? 'Dein Plan startet bald' : 'Ruhetag laut Plan',
       title: session ? 'Stark, Einheit geschafft' : now < plan.startsAt ? `Start am ${dayHeading(plan.startsAt)}` : 'Heute ist Erholung dran',
       text: upcomingSession ? `${when}: ${upcomingSession.session.title}` : 'Erholung gehört zum Training.',
       href: null,
+      cta: '',
       note: 'Erholung gehört zum Training.',
       kind: 'rest',
     };
@@ -172,53 +188,46 @@ export default function DashboardScreen() {
 
   return (
     <Screen topInset>
-      {/* Kopfzeile: Datum, Begrüßung, Serie immer im Blick */}
+      {/* 1. Identität: wer du bist, nicht was du tun musst */}
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <AppText variant="label" color="textSecondary">
-            {dayHeading(now).toUpperCase()}
+          <AppText variant="eyebrow" color="textSecondary">
+            {dayHeading(now)}
           </AppText>
-          <AppText variant="title" numberOfLines={2}>
+          <AppText variant="display" style={styles.greeting} numberOfLines={2}>
             {greeting(now)}
             {name ? `, ${name}` : ''}
           </AppText>
+          {identity ? (
+            <View style={[styles.teamPill, { backgroundColor: theme.accentSoft }]}>
+              <Ionicons name="shield-checkmark" size={14} color={theme.accent} />
+              <AppText variant="eyebrow" color="accent">
+                Team {identity.team} · {identity.sessions} {identity.sessions === 1 ? 'Einheit' : 'Einheiten'}
+              </AppText>
+            </View>
+          ) : null}
         </View>
-        {streak.current > 0 ? (
-          <View
-            style={[styles.streakPill, { backgroundColor: theme.accentSoft }]}
-            accessibilityLabel={`Serie: ${streak.current} Tage in Folge`}>
-            <Ionicons name="flame" size={20} color={theme.accent} />
-            <AppText variant="heading" style={styles.tabular}>
-              {streak.current}
-            </AppText>
-          </View>
-        ) : null}
+        <Pressable
+          accessibilityRole="search"
+          accessibilityLabel="Suche öffnen"
+          onPress={() => router.push('/search')}
+          hitSlop={8}
+          style={({ pressed }) => [styles.iconButton, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}>
+          <Ionicons name="search" size={20} color={theme.text} />
+        </Pressable>
       </View>
 
-      {/* Suche: jede Funktion in einem Schritt erreichbar */}
-      <Pressable
-        accessibilityRole="search"
-        accessibilityLabel="Suche öffnen"
-        onPress={() => router.push('/search')}
-        style={({ pressed }) => [styles.searchBar, { backgroundColor: theme.surface, borderColor: theme.border }, pressed && styles.pressed]}>
-        <Ionicons name="sparkles" size={18} color={theme.accent} />
-        <AppText color="textSecondary" style={styles.flex} numberOfLines={1}>
-          Suchen oder fragen …
-        </AppText>
-        <Ionicons name="search" size={18} color={theme.textSecondary} />
-      </Pressable>
-
-      {/* Belohnung zuerst, wenn es etwas zu feiern gibt */}
+      {/* Belohnung zuerst, wenn es etwas zu feiern gibt (echte Leistung, keine Zufallsbelohnung) */}
       {unseen.length > 0 ? (
         <Card style={[styles.celebrate, { borderColor: theme.accent }]}>
           <View style={[styles.badgeIcon, { backgroundColor: theme.accent }]}>
-            <Ionicons name="trophy" size={26} color={theme.onAccent} />
+            <Ionicons name="trophy" size={28} color={theme.onAccent} />
           </View>
-          <AppText variant="label" color="accent">
-            {unseen.length === 1 ? 'NEUES ABZEICHEN' : `${unseen.length} NEUE ABZEICHEN`}
+          <AppText variant="eyebrow" color="accent">
+            {unseen.length === 1 ? 'Neues Abzeichen' : `${unseen.length} neue Abzeichen`}
           </AppText>
           {unseen.map((key) => (
-            <AppText key={key} variant="title" style={styles.centerText}>
+            <AppText key={key} variant="hero" style={styles.centerText}>
               {BADGES.find((b) => b.key === key)?.name ?? key}
             </AppText>
           ))}
@@ -226,36 +235,36 @@ export default function DashboardScreen() {
         </Card>
       ) : null}
 
-      {/* Der nächste Schritt als große Bildkarte (wie bei Nike Training Club): eine klare Handlung */}
+      {/* 2. Genau eine nächste Handlung, ein Tipp bis zum Training */}
       <ImageCard
         source={sceneForKind(hero.kind)}
-        height={hero.href ? 280 : 220}
+        height={hero.href ? 340 : 260}
         accessibilityLabel={`${hero.label}: ${hero.title}`}
         onPress={hero.href ? () => router.push(hero.href as Href) : plan ? () => router.push('/plan') : undefined}>
-        <AppText variant="label" style={{ color: theme.accent }}>
+        <AppText variant="eyebrow" style={{ color: ON_IMAGE_ACCENT }}>
           {hero.label}
         </AppText>
-        <AppText variant="hero" style={styles.onImage}>
+        <AppText variant="display" style={[styles.onImage, styles.heroTitle]} numberOfLines={2} adjustsFontSizeToFit>
           {hero.title}
         </AppText>
-        <AppText style={styles.onImageSoft} numberOfLines={3}>
+        <AppText style={styles.onImageSoft} numberOfLines={2}>
           {hero.text}
         </AppText>
         {hero.href ? (
-          <View style={styles.heroFooter}>
-            <View style={[styles.playButton, { backgroundColor: theme.accent }]}>
-              <Ionicons name="play" size={18} color="#0B0D10" />
+          <>
+            <View style={[styles.cta, { backgroundColor: ON_IMAGE_ACCENT }]}>
+              <Ionicons name="play" size={20} color="#0B0D10" />
               <AppText variant="heading" style={styles.onAccentFixed}>
-                Los geht&apos;s
+                {hero.cta}
               </AppText>
             </View>
-            <AppText variant="caption" style={[styles.flex, styles.onImageSoft]}>
+            <AppText variant="caption" style={[styles.onImageSoft, styles.centerText]}>
               {hero.note}
             </AppText>
-          </View>
+          </>
         ) : (
           <View style={styles.heroFooter}>
-            <Ionicons name="checkmark-circle" size={22} color={theme.accent} />
+            <Ionicons name="checkmark-circle" size={22} color={ON_IMAGE_ACCENT} />
             <AppText variant="caption" style={styles.onImageSoft}>
               {hero.note}
             </AppText>
@@ -263,86 +272,114 @@ export default function DashboardScreen() {
         )}
       </ImageCard>
 
-      {/* Ohne Plan: Einladung, einen zu erstellen (Wenn-Dann-Pläne erhöhen die Umsetzung) */}
+      {/* Ohne Plan: Einladung (Wenn-Dann-Pläne erhöhen die Umsetzung) */}
       {plan ? null : (
-        <Card onPress={() => router.push('/plan/setup')} style={styles.planInvite}>
-          <View style={[styles.flameBox, { backgroundColor: theme.accentSoft }]}>
+        <Card onPress={() => router.push('/plan/setup')} style={styles.inviteRow}>
+          <View style={[styles.iconBox, { backgroundColor: theme.accentSoft }]}>
             <Ionicons name="calendar" size={24} color={theme.accent} />
           </View>
           <View style={styles.flex}>
             <AppText variant="heading">Dein persönlicher Plan</AppText>
             <AppText variant="caption" color="textSecondary">
-              In einer Minute: Ziel, Tage und Zeit wählen, fertig ist dein Wochenplan.
+              In einer Minute: Ziel, Tage und Zeit wählen.
             </AppText>
           </View>
           <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
         </Card>
       )}
 
-      {/* Wochenziel als Ring: sichtbarer Fortschritt motiviert, ein kleines Ziel ist erreichbar */}
-      <Card>
+      {/* 3. Sichtbarer Fortschritt: große Zahlen, Ziel-Ring, Serie, fairer Vergleich mit dir selbst */}
+      <SectionHeader title="Diese Woche" action={{ label: 'Fortschritt', onPress: () => router.push('/history') }} />
+      <Card style={styles.weekCard}>
         <View style={styles.goalRow}>
-          <ProgressRing progress={goal.ratio} size={112} strokeWidth={12}>
-            <AppText variant="title" style={styles.tabular}>
+          <ProgressRing progress={goal.ratio} size={96} strokeWidth={11}>
+            <AppText variant="number" style={styles.ringNumber}>
               {goal.activeDays}/{goal.goal}
             </AppText>
-            <AppText variant="caption" color="textSecondary">
-              Tage
-            </AppText>
           </ProgressRing>
-          <View style={styles.goalText}>
-            <AppText variant="label" color="accent">
-              {goal.reached ? 'WOCHENZIEL ERREICHT' : plan ? 'WOCHENZIEL LAUT PLAN' : 'WOCHENZIEL'}
+          <View style={styles.flex}>
+            <AppText variant="eyebrow" color="accent">
+              {goal.reached ? 'Wochenziel erreicht' : plan ? 'Wochenziel laut Plan' : 'Wochenziel'}
             </AppText>
             <AppText variant="heading">{goal.message}</AppText>
-            <View style={styles.miniStats}>
-              <MiniStat icon="time-outline" value={formatDuration(week.durationSeconds * 1000)} />
-              <MiniStat icon="navigate-outline" value={formatDistance(week.distanceM, units)} />
-            </View>
           </View>
         </View>
 
-        <View style={styles.days}>
+        <View style={[styles.stats, { borderColor: theme.border }]}>
+          <Stat label="Einheiten" value={String(week.workouts)} style={styles.flex} />
+          <Stat label="Zeit" value={time.value} unit={time.unit} style={styles.flex} />
+          <Stat label="Distanz" value={distance.value} unit={distance.unit} style={styles.flex} />
+        </View>
+
+        <View style={styles.days} accessibilityLabel={`${goal.activeDays} Trainingstage diese Woche`}>
           {DAYS.map((day, i) => {
             const done = week.perDay[i] > 0;
             const isToday = i === today;
             return (
-              <View key={day} style={styles.day}>
+              <View key={i} style={styles.day}>
                 <View
                   style={[
-                    styles.dot,
+                    styles.dayBar,
                     {
-                      backgroundColor: done ? theme.accent : i > today ? 'transparent' : theme.surfaceAlt,
-                      borderColor: isToday ? theme.text : done ? theme.accent : theme.border,
+                      backgroundColor: done ? theme.accent : theme.surfaceAlt,
+                      borderColor: isToday ? theme.text : 'transparent',
+                      opacity: i > today && !done ? 0.5 : 1,
                     },
                   ]}>
-                  {done ? <Ionicons name="checkmark" size={18} color={theme.onAccent} /> : null}
+                  {done ? <Ionicons name="checkmark" size={16} color={theme.onAccent} /> : null}
                 </View>
-                <AppText variant="caption" color={isToday ? 'text' : 'textSecondary'} style={isToday && styles.bold}>
+                <AppText variant="eyebrow" color={isToday ? 'text' : 'textSecondary'}>
                   {day}
                 </AppText>
               </View>
             );
           })}
         </View>
+
+        {comparison.message ? (
+          <View style={styles.inline}>
+            <Ionicons name="trending-up" size={18} color={theme.accent} />
+            <AppText variant="caption" color="textSecondary" style={styles.flex}>
+              {comparison.message}
+            </AppText>
+          </View>
+        ) : null}
+
+        {/* Serie mit Freezes: motiviert, ohne bei einem verpassten Tag alles zu nehmen */}
+        <View style={[styles.streakRow, { borderTopColor: theme.border }]}>
+          <Ionicons name="flame" size={26} color={streak.current > 0 ? theme.accent : theme.textSecondary} />
+          <View style={styles.flex}>
+            <AppText variant="heading">
+              {streak.current > 0 ? `${streak.current} ${streak.current === 1 ? 'Tag' : 'Tage'} in Folge` : 'Starte deine Serie'}
+            </AppText>
+            <AppText variant="caption" color={streak.atRisk ? 'accent' : 'textSecondary'}>
+              {streak.atRisk
+                ? 'Schon 10 Minuten heute verlängern deine Serie.'
+                : streak.trainedToday
+                  ? 'Heute erledigt.'
+                  : streak.longest > 0
+                    ? `Rekord: ${streak.longest} ${streak.longest === 1 ? 'Tag' : 'Tage'}`
+                    : 'Jeder Trainingstag zählt.'}
+            </AppText>
+          </View>
+          <View style={styles.freezes} accessibilityLabel={`${streak.freezesLeft} von ${FREEZES_PER_MONTH} Freezes übrig`}>
+            {Array.from({ length: FREEZES_PER_MONTH }, (_, i) => (
+              <Ionicons key={i} name="snow" size={18} color={i < streak.freezesLeft ? theme.accent : theme.border} />
+            ))}
+          </View>
+        </View>
       </Card>
 
-      {/* Aktivitäts-Feed wie bei Strava: die letzten Einheiten mit Kennzahlen und Rekorden, bewusst begrenzt */}
-      <View style={styles.sectionRow}>
-        <AppText variant="heading" style={styles.flex}>
-          Deine Aktivitäten
-        </AppText>
-        {feed.length > 0 ? (
-          <AppText variant="label" color="accent" onPress={() => router.push('/history')}>
-            Alle ansehen
-          </AppText>
-        ) : null}
-      </View>
+      {/* 4. Eigene Aktivitäten (Feed wie bei Strava), bewusst begrenzt */}
+      <SectionHeader
+        title="Deine Aktivitäten"
+        action={feed.length > 0 ? { label: 'Alle ansehen', onPress: () => router.push('/history') } : undefined}
+      />
       {feed.length === 0 ? (
         <Card>
-          <AppText variant="heading">Noch keine Aktivitäten</AppText>
+          <AppText variant="heading">Deine erste Einheit wartet</AppText>
           <AppText color="textSecondary">
-            Tippe unten auf das Plus und starte deine erste Einheit. Sie erscheint dann hier mit allen Kennzahlen.
+            Tippe unten auf das Plus. Danach steht sie hier mit allen Kennzahlen und Rekorden.
           </AppText>
         </Card>
       ) : (
@@ -358,38 +395,34 @@ export default function DashboardScreen() {
         ))
       )}
 
-      {/* Serie mit Freezes: motiviert, ohne bei einem verpassten Tag alles zu nehmen */}
-      <Card>
-        <View style={styles.streakRow}>
-          <View style={[styles.flameBox, { backgroundColor: streak.current > 0 ? theme.accentSoft : theme.surfaceAlt }]}>
-            <Ionicons name="flame" size={30} color={streak.current > 0 ? theme.accent : theme.textSecondary} />
-          </View>
-          <View style={styles.flex}>
-            <AppText variant="heading">
-              {streak.current > 0
-                ? `${streak.current} ${streak.current === 1 ? 'Tag' : 'Tage'} in Folge`
-                : 'Starte deine Serie'}
-            </AppText>
+      {/* 5. Nahe Ziele: nächstes Abzeichen (Goal-Gradient), Challenge, Event */}
+      {upcoming && upcomingBadge ? (
+        <>
+          <SectionHeader title="Als Nächstes" />
+          <Card onPress={() => router.push('/history/badges')}>
+            <View style={styles.inviteRow}>
+              <View style={[styles.iconBox, { backgroundColor: theme.surfaceAlt }]}>
+                <Ionicons name={upcomingBadge.icon as IconName} size={26} color={theme.text} />
+              </View>
+              <View style={styles.flex}>
+                <AppText variant="eyebrow" color="textSecondary">
+                  Nächstes Abzeichen
+                </AppText>
+                <AppText variant="heading">{upcomingBadge.name}</AppText>
+              </View>
+              <AppText variant="number" style={styles.percent}>
+                {Math.round(upcoming.ratio * 100)}%
+              </AppText>
+            </View>
+            <View style={[styles.barTrack, { backgroundColor: theme.accentSoft }]}>
+              <View style={[styles.barFill, { backgroundColor: theme.accent, width: `${Math.max(4, Math.round(upcoming.ratio * 100))}%` }]} />
+            </View>
             <AppText variant="caption" color="textSecondary">
-              {streak.longest > 0
-                ? `Rekord: ${streak.longest} ${streak.longest === 1 ? 'Tag' : 'Tage'}`
-                : 'Jeder Trainingstag zählt'}
+              {upcomingBadge.description} · {formatProgress(upcoming.current)} von {upcoming.target}
             </AppText>
-          </View>
-          <View style={styles.freezes} accessibilityLabel={`${streak.freezesLeft} von ${FREEZES_PER_MONTH} Freezes übrig`}>
-            {Array.from({ length: FREEZES_PER_MONTH }, (_, i) => (
-              <Ionicons key={i} name="snow" size={18} color={i < streak.freezesLeft ? theme.accent : theme.border} />
-            ))}
-          </View>
-        </View>
-        <AppText variant="caption" color={streak.atRisk ? 'accent' : 'textSecondary'}>
-          {streak.atRisk
-            ? 'Heute ist noch alles offen. Schon 10 Minuten verlängern deine Serie.'
-            : streak.trainedToday
-              ? 'Heute erledigt. Deine Serie läuft weiter.'
-              : `Ein Freeze überbrückt einen Tag ohne Training. ${streak.freezesLeft} von ${FREEZES_PER_MONTH} übrig diesen Monat.`}
-        </AppText>
-      </Card>
+          </Card>
+        </>
+      ) : null}
 
       {featuredChallenge ? (
         <ChallengeCard
@@ -398,178 +431,100 @@ export default function DashboardScreen() {
           joined={featuredChallenge.joined}
           progress={featuredChallenge.progress}
           now={now}
-          onPress={() =>
-            router.push({ pathname: '/discover/challenge/[id]', params: { id: featuredChallenge.challenge.id } })
-          }
+          onPress={() => router.push({ pathname: '/discover/challenge/[id]', params: { id: featuredChallenge.challenge.id } })}
         />
       ) : null}
 
       {nextEvent ? (
         <>
-          <View style={styles.sectionRow}>
-            <AppText variant="heading" style={styles.flex}>
-              Demnächst
-            </AppText>
-            <AppText variant="label" color="accent" onPress={() => router.push('/discover')}>
-              Alle Events
-            </AppText>
-          </View>
+          <SectionHeader title="Demnächst" action={{ label: 'Alle Events', onPress: () => router.push('/discover') }} />
           <EventCard event={nextEvent} now={now} compact />
         </>
       ) : null}
-
-      {/* Nächstes Abzeichen: ein konkretes, nahes Ziel (Zielgradient-Effekt) */}
-      {upcoming && upcomingBadge ? (
-        <Card onPress={() => router.push('/history/badges')}>
-          <View style={styles.streakRow}>
-            <View style={[styles.flameBox, { backgroundColor: theme.surfaceAlt }]}>
-              <Ionicons name={upcomingBadge.icon as IconName} size={26} color={theme.text} />
-            </View>
-            <View style={styles.flex}>
-              <AppText variant="label" color="textSecondary">
-                NÄCHSTES ABZEICHEN
-              </AppText>
-              <AppText variant="heading">{upcomingBadge.name}</AppText>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
-          </View>
-          <View style={[styles.barTrack, { backgroundColor: theme.accentSoft }]}>
-            <View style={[styles.barFill, { backgroundColor: theme.accent, width: `${Math.max(4, Math.round(upcoming.ratio * 100))}%` }]} />
-          </View>
-          <AppText variant="caption" color="textSecondary">
-            {upcomingBadge.description} · {formatProgress(upcoming.current)} von {upcoming.target}
-          </AppText>
-        </Card>
-      ) : null}
-
-      <AppText variant="heading">Muskelgruppen (30 Tage)</AppText>
-      {isPremium ? (
-        <Card>
-          {muscles.length === 0 ? (
-            <AppText color="textSecondary">Noch kein Krafttraining in den letzten 30 Tagen.</AppText>
-          ) : (
-            muscles.map((m) => (
-              <View key={m.group} style={styles.muscleRow}>
-                <AppText style={styles.muscleName}>{m.group}</AppText>
-                <View style={[styles.barTrack, styles.flex, { backgroundColor: theme.surfaceAlt }]}>
-                  <View
-                    style={[styles.barFill, { backgroundColor: theme.accent, width: `${Math.round((m.volumeKg / maxVolume) * 100)}%` }]}
-                  />
-                </View>
-                <AppText variant="caption" color="textSecondary" style={styles.muscleValue}>
-                  {formatWeight(m.volumeKg, units)}
-                </AppText>
-              </View>
-            ))
-          )}
-        </Card>
-      ) : (
-        <PremiumPrompt
-          title="Muskelgruppen-Analyse"
-          text="Sieh, welche Muskelgruppen du in den letzten 30 Tagen wie stark trainiert hast."
-        />
-      )}
-
-      <View style={styles.quickRow}>
-        <LinkTile
-          icon="stats-chart-outline"
-          title="Dein Fortschritt"
-          text={`Verlauf, Jahresrückblick und ${earnedCount} von ${BADGES.length} Abzeichen`}
-          onPress={() => router.push('/history')}
-        />
-      </View>
     </Screen>
-  );
-}
-
-/** Ganze Zahlen ohne Nachkommastellen, Kilometer mit einer. */
-function formatProgress(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace('.', ',');
-}
-
-function MiniStat({ icon, value }: { icon: IconName; value: string }) {
-  const theme = useTheme();
-  return (
-    <View style={styles.miniStat}>
-      <Ionicons name={icon} size={15} color={theme.textSecondary} />
-      <AppText variant="caption" color="textSecondary" style={styles.tabular}>
-        {value}
-      </AppText>
-    </View>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  bold: { fontWeight: '700' },
-  tabular: { fontVariant: ['tabular-nums'] },
   centerText: { textAlign: 'center' },
   fullWidth: { alignSelf: 'stretch' },
-  pressed: { opacity: 0.75, transform: [{ scale: 0.985 }] },
+  pressed: { opacity: 0.75, transform: [{ scale: 0.97 }] },
 
-  header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingTop: Spacing.two },
-  headerText: { flex: 1, gap: 2 },
-  streakPill: {
+  header: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.three, paddingTop: Spacing.two },
+  headerText: { flex: 1, gap: Spacing.one },
+  greeting: { fontSize: 34, lineHeight: 38, fontWeight: '900' },
+  teamPill: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'flex-start',
     gap: Spacing.one,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.two + 2,
+    paddingVertical: Spacing.one,
     borderRadius: Radius.pill,
+    marginTop: Spacing.one,
   },
-
-  celebrate: { alignItems: 'center', borderWidth: 2 },
-  badgeIcon: { width: 56, height: 56, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
-
-  onImage: { color: '#FFFFFF' },
-  onImageSoft: { color: '#FFFFFF', opacity: 0.82 },
-  onAccentFixed: { color: '#0B0D10' },
-  heroFooter: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginTop: Spacing.two },
-  playButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three - 4,
+  iconButton: {
+    width: 44,
+    height: 44,
     borderRadius: Radius.pill,
-  },
-
-  goalRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.four },
-  goalText: { flex: 1, gap: Spacing.one },
-  miniStats: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.three, marginTop: Spacing.one },
-  miniStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  days: { flexDirection: 'row', justifyContent: 'space-between', marginTop: Spacing.three },
-  day: { alignItems: 'center', gap: Spacing.one },
-  dot: {
-    width: 34,
-    height: 34,
-    borderRadius: Radius.pill,
-    borderWidth: 2,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  streakRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  flameBox: { width: 52, height: 52, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center' },
-  freezes: { flexDirection: 'row', gap: 2 },
+  celebrate: { alignItems: 'center', borderWidth: 2 },
+  badgeIcon: { width: 60, height: 60, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
 
-  barTrack: { height: 10, borderRadius: Radius.pill, overflow: 'hidden' },
-  barFill: { height: '100%', borderRadius: Radius.pill },
-
-  quickRow: { flexDirection: 'row', gap: Spacing.two },
-  planInvite: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  sectionRow: { flexDirection: 'row', alignItems: 'center' },
-  searchBar: {
+  onImage: { color: '#FFFFFF' },
+  heroTitle: { fontSize: 34, lineHeight: 38, fontWeight: '900' },
+  onImageSoft: { color: '#FFFFFF', opacity: 0.85 },
+  onAccentFixed: { color: '#0B0D10' },
+  heroFooter: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, marginTop: Spacing.two },
+  cta: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: Spacing.two,
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
+    minHeight: 54,
     borderRadius: Radius.pill,
-    borderWidth: 1,
+    marginTop: Spacing.two,
   },
 
-  muscleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  muscleName: { width: 84 },
-  muscleValue: { width: 64, textAlign: 'right' },
+  inviteRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  iconBox: { width: 52, height: 52, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center' },
+
+  weekCard: { gap: Spacing.three },
+  goalRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  ringNumber: { fontSize: 26, lineHeight: 30 },
+  stats: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  days: { flexDirection: 'row', gap: Spacing.two },
+  day: { flex: 1, alignItems: 'center', gap: Spacing.one },
+  dayBar: {
+    alignSelf: 'stretch',
+    height: 36,
+    borderRadius: Radius.small,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inline: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  streakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    paddingTop: Spacing.three,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  freezes: { flexDirection: 'row', gap: 2 },
+
+  percent: { fontSize: 24, lineHeight: 28 },
+  barTrack: { height: 10, borderRadius: Radius.pill, overflow: 'hidden' },
+  barFill: { height: '100%', borderRadius: Radius.pill },
 });
