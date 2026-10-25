@@ -38,7 +38,10 @@ export default function StrengthScreen() {
         <Button title="Leeres Workout starten" onPress={() => start()} />
       )}
 
-      <Button title="Übungsbibliothek" variant="secondary" onPress={() => router.push('/training/exercises')} />
+      <View style={styles.actions}>
+        <Button title="Übungen" variant="secondary" onPress={() => router.push('/training/exercises')} style={styles.flex} />
+        <Button title="Rechner" variant="secondary" onPress={() => router.push('/training/calculator')} style={styles.flex} />
+      </View>
 
       <AppText variant="heading">Vorlagen</AppText>
       {templates.length === 0 ? (

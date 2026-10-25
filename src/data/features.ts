@@ -56,6 +56,14 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/training/running',
   },
   {
+    id: 'calculator',
+    kind: 'funktion',
+    title: 'Kraft-Rechner',
+    subtitle: '1RM schätzen und Hantelscheiben berechnen',
+    keywords: ['1RM', 'One Rep Max', 'Maximalgewicht', 'Maximalkraft', 'Scheiben', 'Hantelscheiben', 'Stange', 'Prozent', 'Rechner'],
+    href: '/training/calculator',
+  },
+  {
     id: 'history',
     kind: 'funktion',
     title: 'Fortschritt und Verlauf',
