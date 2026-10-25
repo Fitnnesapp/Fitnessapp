@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ChallengeCard } from '@/components/challenge-card';
 import { EventCard } from '@/components/event-card';
+import { FeedCard } from '@/components/feed-card';
 import { LinkTile } from '@/components/link-tile';
 import { PremiumPrompt } from '@/components/premium-prompt';
 import { AppText } from '@/components/ui/app-text';
@@ -16,6 +17,7 @@ import { Screen } from '@/components/ui/screen';
 import { Radius, Spacing } from '@/constants/theme';
 import { getExercise } from '@/data/exercises';
 import { sceneForKind } from '@/data/images';
+import { getProgram } from '@/data/programs';
 import { useActivities } from '@/hooks/use-activities';
 import { useBadgeContext } from '@/hooks/use-badge-context';
 import { useChallenges } from '@/hooks/use-challenges';
@@ -25,6 +27,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { FREEZES_PER_MONTH, streaks, weekStart, weekStats } from '@/lib/logic/activity';
 import { muscleVolume } from '@/lib/logic/analytics';
 import { daysUntilEvent, upcomingEvents } from '@/lib/logic/events';
+import { buildFeed } from '@/lib/logic/feed';
 import { BADGES } from '@/lib/logic/badges';
 import { formatDuration } from '@/lib/logic/format';
 import { dayHeading, greeting, nextBadge, WEEKLY_GOAL_DAYS, weeklyGoal } from '@/lib/logic/motivation';
@@ -34,7 +37,9 @@ import { formatDistance, formatWeight } from '@/lib/logic/units';
 import { hrefForSession } from '@/lib/plan-href';
 import { useEvents, useEventsStore } from '@/lib/storage/events-store';
 import { useGamification } from '@/lib/storage/gamification-store';
+import { useHomeSessions } from '@/lib/storage/home-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
+import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
@@ -50,16 +55,11 @@ function hrefFor(target: SuggestionTarget): Href {
 
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
-const QUICK_START: { label: string; hint: string; icon: IconName; href: Href }[] = [
-  { label: 'Kraft', hint: 'Sätze loggen', icon: 'barbell', href: '/training/strength' },
-  { label: 'Home', hint: 'Ohne Geräte', icon: 'body', href: '/training/home' },
-  { label: 'Laufen', hint: 'Mit GPS', icon: 'walk', href: '/training/running' },
-];
-
 /**
  * Start-Bildschirm. Aufbau nach dem Muster großer Fitness-Apps:
  * zuerst der nächste Schritt (Vorschlag), dann der Fortschritt (Wochenziel-Ring, Serie),
- * dann das nächste erreichbare Ziel (Abzeichen) und schnelle Wege ins Training.
+ * dann der Aktivitäts-Feed (wie bei Strava) und das nächste erreichbare Ziel (Abzeichen).
+ * Trainings starten über den Plus-Knopf in der Tab-Leiste.
  */
 export default function DashboardScreen() {
   const router = useRouter();
@@ -70,6 +70,8 @@ export default function DashboardScreen() {
   const now = useNow(60_000);
   const { isPremium } = useSubscription();
   const strengthHistory = useWorkouts((state) => state.history);
+  const homeSessions = useHomeSessions((state) => state.sessions);
+  const runHistory = useRunStore((state) => state.history);
   const earned = useGamification((state) => state.earned);
   const unseen = useGamification((state) => state.unseen);
   const markSeen = useGamification((state) => state.markSeen);
@@ -107,6 +109,17 @@ export default function DashboardScreen() {
   const suggestion = useMemo(
     () => suggestWorkout({ activities, strength: strengthHistory, now, muscleGroupOf: (id) => getExercise(id)?.muscleGroup }),
     [activities, strengthHistory, now],
+  );
+  const feed = useMemo(
+    () =>
+      buildFeed({
+        strength: strengthHistory,
+        home: homeSessions,
+        runs: runHistory,
+        muscleGroupOf: (id) => getExercise(id)?.muscleGroup,
+        programName: (id) => getProgram(id)?.name,
+      }),
+    [strengthHistory, homeSessions, runHistory],
   );
   const today = (new Date(now).getDay() + 6) % 7;
   const earnedCount = Object.keys(earned).length;
@@ -216,7 +229,7 @@ export default function DashboardScreen() {
       {/* Der nächste Schritt als große Bildkarte (wie bei Nike Training Club): eine klare Handlung */}
       <ImageCard
         source={sceneForKind(hero.kind)}
-        height={hero.href ? 340 : 240}
+        height={hero.href ? 280 : 220}
         accessibilityLabel={`${hero.label}: ${hero.title}`}
         onPress={hero.href ? () => router.push(hero.href as Href) : plan ? () => router.push('/plan') : undefined}>
         <AppText variant="label" style={{ color: theme.accent }}>
@@ -314,6 +327,37 @@ export default function DashboardScreen() {
         </View>
       </Card>
 
+      {/* Aktivitäts-Feed wie bei Strava: die letzten Einheiten mit Kennzahlen und Rekorden, bewusst begrenzt */}
+      <View style={styles.sectionRow}>
+        <AppText variant="heading" style={styles.flex}>
+          Deine Aktivitäten
+        </AppText>
+        {feed.length > 0 ? (
+          <AppText variant="label" color="accent" onPress={() => router.push('/history')}>
+            Alle ansehen
+          </AppText>
+        ) : null}
+      </View>
+      {feed.length === 0 ? (
+        <Card>
+          <AppText variant="heading">Noch keine Aktivitäten</AppText>
+          <AppText color="textSecondary">
+            Tippe unten auf das Plus und starte deine erste Einheit. Sie erscheint dann hier mit allen Kennzahlen.
+          </AppText>
+        </Card>
+      ) : (
+        feed.map((item) => (
+          <FeedCard
+            key={item.id}
+            item={item}
+            name={name}
+            now={now}
+            units={units}
+            onPress={() => router.push({ pathname: '/history/[id]', params: { id: item.id } })}
+          />
+        ))
+      )}
+
       {/* Serie mit Freezes: motiviert, ohne bei einem verpassten Tag alles zu nehmen */}
       <Card>
         <View style={styles.streakRow}>
@@ -397,30 +441,6 @@ export default function DashboardScreen() {
           </AppText>
         </Card>
       ) : null}
-
-      {/* Schnellstart: jede Trainingsart mit einem Tipp erreichbar */}
-      <AppText variant="heading">Direkt loslegen</AppText>
-      <View style={styles.quickRow}>
-        {QUICK_START.map((item) => (
-          <Pressable
-            key={item.label}
-            accessibilityRole="button"
-            onPress={() => router.push(item.href)}
-            style={({ pressed }) => [
-              styles.quickTile,
-              { backgroundColor: theme.surface, borderColor: theme.border },
-              pressed && styles.pressed,
-            ]}>
-            <View style={[styles.quickIcon, { backgroundColor: theme.accentSoft }]}>
-              <Ionicons name={item.icon} size={22} color={theme.accent} />
-            </View>
-            <AppText variant="heading">{item.label}</AppText>
-            <AppText variant="caption" color="textSecondary">
-              {item.hint}
-            </AppText>
-          </Pressable>
-        ))}
-      </View>
 
       <AppText variant="heading">Muskelgruppen (30 Tage)</AppText>
       {isPremium ? (
@@ -537,15 +557,6 @@ const styles = StyleSheet.create({
   barFill: { height: '100%', borderRadius: Radius.pill },
 
   quickRow: { flexDirection: 'row', gap: Spacing.two },
-  quickTile: { flex: 1, padding: Spacing.three, borderRadius: Radius.large, borderWidth: 1, gap: Spacing.one },
-  quickIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.medium,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.one,
-  },
   planInvite: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   sectionRow: { flexDirection: 'row', alignItems: 'center' },
   searchBar: {
