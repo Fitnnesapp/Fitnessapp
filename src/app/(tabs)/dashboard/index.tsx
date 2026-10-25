@@ -14,7 +14,7 @@ import { ProgressRing } from '@/components/ui/progress-ring';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
 import { Stat } from '@/components/ui/stat';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { OnImage, Radius, Spacing } from '@/constants/theme';
 import { getExercise } from '@/data/exercises';
 import { sceneForKind } from '@/data/images';
 import { getProgram } from '@/data/programs';
@@ -60,9 +60,6 @@ function hrefFor(target: SuggestionTarget): Href {
 }
 
 const DAYS = ['M', 'D', 'M', 'D', 'F', 'S', 'S'];
-
-/** Bilder sind in beiden Modi dunkel: darauf immer die helle Limette, sonst ist sie im Hellmodus kaum lesbar. */
-const ON_IMAGE_ACCENT = Colors.dark.accent;
 
 /** Zeit als große Zahl: unter einer Stunde in Minuten, sonst h:mm. */
 function durationParts(seconds: number): { value: string; unit: string } {
@@ -241,7 +238,7 @@ export default function DashboardScreen() {
         height={hero.href ? 340 : 260}
         accessibilityLabel={`${hero.label}: ${hero.title}`}
         onPress={hero.href ? () => router.push(hero.href as Href) : plan ? () => router.push('/plan') : undefined}>
-        <AppText variant="eyebrow" style={{ color: ON_IMAGE_ACCENT }}>
+        <AppText variant="eyebrow" style={{ color: OnImage.accent }}>
           {hero.label}
         </AppText>
         <AppText variant="display" style={[styles.onImage, styles.heroTitle]} numberOfLines={2} adjustsFontSizeToFit>
@@ -252,7 +249,7 @@ export default function DashboardScreen() {
         </AppText>
         {hero.href ? (
           <>
-            <View style={[styles.cta, { backgroundColor: ON_IMAGE_ACCENT }]}>
+            <View style={[styles.cta, { backgroundColor: OnImage.accent }]}>
               <Ionicons name="play" size={20} color="#0B0D10" />
               <AppText variant="heading" style={styles.onAccentFixed}>
                 {hero.cta}
@@ -264,7 +261,7 @@ export default function DashboardScreen() {
           </>
         ) : (
           <View style={styles.heroFooter}>
-            <Ionicons name="checkmark-circle" size={22} color={ON_IMAGE_ACCENT} />
+            <Ionicons name="checkmark-circle" size={22} color={OnImage.accent} />
             <AppText variant="caption" style={styles.onImageSoft}>
               {hero.note}
             </AppText>

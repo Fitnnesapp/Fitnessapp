@@ -28,6 +28,13 @@ export const Colors = {
   },
 } as const;
 
+/** Farben auf Bildern: Bilder sind in beiden Modi dunkel, darauf immer helle Schrift und helle Limette. */
+export const OnImage = {
+  text: '#FFFFFF',
+  accent: Colors.dark.accent,
+  onAccent: Colors.dark.onAccent,
+} as const;
+
 export type ThemeColors = { [K in keyof typeof Colors.dark]: string };
 export type ThemeColor = keyof ThemeColors;
 
