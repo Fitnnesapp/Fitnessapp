@@ -64,6 +64,14 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/history/records',
   },
   {
+    id: 'goals',
+    kind: 'funktion',
+    title: 'Kraftziele',
+    subtitle: 'Zielgewicht je Übung festlegen und den Abstand sehen',
+    keywords: ['Ziel setzen', '100 kg Bankdrücken', 'Zielgewicht', 'Vorsatz', 'Meilenstein'],
+    href: '/training/strength',
+  },
+  {
     id: 'backup',
     kind: 'funktion',
     title: 'Datensicherung',

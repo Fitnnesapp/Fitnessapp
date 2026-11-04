@@ -29,6 +29,7 @@ import { lifetimeTotals } from '@/lib/logic/weekly-review';
 import { requestReminderPermission, remindersSupported } from '@/lib/notifications';
 import { useChallengeStore } from '@/lib/storage/challenge-store';
 import { useGamification } from '@/lib/storage/gamification-store';
+import { useGoalsStore } from '@/lib/storage/goals-store';
 import { useHealthStore } from '@/lib/storage/health-store';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
@@ -63,6 +64,7 @@ export default function ProfileScreen() {
   const plan = usePlanStore((state) => state.plan);
   const resetPlan = usePlanStore((state) => state.reset);
   const resetChallenges = useChallengeStore((state) => state.reset);
+  const resetGoals = useGoalsStore((state) => state.reset);
   const health = useHealthStore();
   const streakReminder = useSettings((state) => state.streakReminder);
   const setStreakReminder = useSettings((state) => state.setStreakReminder);
@@ -111,6 +113,7 @@ export default function ProfileScreen() {
         resetGamification();
         resetPlan();
         resetChallenges();
+        resetGoals();
         health.revoke();
         setWeightText('');
       },

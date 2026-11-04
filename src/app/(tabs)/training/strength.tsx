@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { GoalCard } from '@/components/goal-card';
 import { RoutineCard } from '@/components/routine-card';
 import { WeeklySetsCard } from '@/components/weekly-sets-card';
 import { AppText } from '@/components/ui/app-text';
@@ -22,6 +23,7 @@ import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { confirmAction } from '@/lib/confirm';
 import { preferencesFromPlan, routineMinutes, suggestRoutine } from '@/lib/logic/routines';
+import { useGoalsStore } from '@/lib/storage/goals-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 import type { RoutineSetting } from '@/types/workout';
@@ -35,6 +37,7 @@ export default function StrengthScreen() {
   const now = useNow(60_000);
   const { active, history, templates, startWorkout, deleteTemplate } = useWorkouts();
   const answers = usePlanStore((state) => state.plan?.answers);
+  const goals = useGoalsStore((state) => state.goals);
   const preferences = useMemo(() => preferencesFromPlan(answers), [answers]);
   const [setting, setSetting] = useState<RoutineSetting | null>(preferences.setting ?? null);
 
@@ -106,6 +109,15 @@ export default function StrengthScreen() {
       </View>
 
       <WeeklySetsCard />
+
+      {goals.length > 0 ? (
+        <>
+          <SectionHeader title="Deine Ziele" />
+          {goals.map((goal) => (
+            <GoalCard key={goal.id} goal={goal} />
+          ))}
+        </>
+      ) : null}
 
       <SectionHeader title="Fertige Workouts" />
       <AppText color="textSecondary">Durchdacht zusammengestellt, mit Sätzen, Zielen und Pausen. Einfach starten.</AppText>

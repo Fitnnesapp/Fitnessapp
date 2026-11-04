@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { View } from 'react-native';
 
+import { GoalEditor } from '@/components/goal-card';
 import { MuscleMap } from '@/components/muscle-map';
 import { ProgressChart } from '@/components/progress-chart';
 import { AppText } from '@/components/ui/app-text';
@@ -114,6 +115,8 @@ export default function ExerciseDetailScreen() {
           />
         </Card>
       ) : null}
+
+      {exercise.equipment !== 'Körpergewicht' ? <GoalEditor exerciseId={exercise.id} /> : null}
 
       {alternatives.length > 0 ? (
         <>

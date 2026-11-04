@@ -5,6 +5,7 @@ import { BACKUP_KEYS, createBackup, type BackupKey } from '@/lib/logic/backup';
 import { useChallengeStore } from './challenge-store';
 import { flushPendingWrites } from './debounced-storage';
 import { useGamification } from './gamification-store';
+import { useGoalsStore } from './goals-store';
 import { useHealthStore } from './health-store';
 import { useHomeSessions } from './home-store';
 import { usePlanStore } from './plan-store';
@@ -40,5 +41,6 @@ export async function restoreBackup(entries: [BackupKey, string][]): Promise<voi
     usePlanStore.persist.rehydrate(),
     useChallengeStore.persist.rehydrate(),
     useHealthStore.persist.rehydrate(),
+    useGoalsStore.persist.rehydrate(),
   ]);
 }
