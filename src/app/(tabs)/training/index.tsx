@@ -237,6 +237,10 @@ export default function TrainingScreen() {
         <LinkTile icon="library-outline" title="Übungen" text="Anleitungen und Verlauf" onPress={() => router.push('/training/exercises')} />
         <LinkTile icon="calculator-outline" title="Rechner" text="1RM und Scheiben" onPress={() => router.push('/training/calculator')} />
       </View>
+      <View style={styles.pair}>
+        <LinkTile icon="trophy-outline" title="Rekordbuch" text="Bestwerte, 1RM, Ziele" onPress={() => router.push('/history/records')} />
+        <LinkTile icon="search-outline" title="Suche" text="Alles in der App finden" onPress={() => router.push('/search')} />
+      </View>
     </Screen>
   );
 }
