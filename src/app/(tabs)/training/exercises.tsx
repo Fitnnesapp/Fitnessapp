@@ -60,16 +60,18 @@ export default function ExercisesScreen() {
     MUSCLE_GROUPS.find((group) => group === params.muscle) ?? null,
   );
   const [equipment, setEquipment] = useState<Equipment | null>(null);
+  const [onlyOwn, setOnlyOwn] = useState(false);
 
   const results = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return all.filter(
       (exercise) =>
+        (!onlyOwn || exercise.custom) &&
         (!needle || exercise.name.toLowerCase().includes(needle)) &&
         (!muscle || exercise.muscleGroup === muscle) &&
         (!equipment || exercise.equipment === equipment),
     );
-  }, [all, query, muscle, equipment]);
+  }, [all, query, muscle, equipment, onlyOwn]);
 
   function createOwn() {
     router.push({
@@ -138,6 +140,9 @@ export default function ExercisesScreen() {
             ))}
           </ScrollView>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+            {custom.length > 0 ? (
+              <Chip label={`Eigene (${custom.length})`} selected={onlyOwn} onPress={() => setOnlyOwn(!onlyOwn)} />
+            ) : null}
             {EQUIPMENT.map((item) => (
               <Chip
                 key={item}
