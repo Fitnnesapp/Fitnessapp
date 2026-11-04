@@ -141,7 +141,7 @@ export default function HistoryScreen() {
             <LinkTile
               icon="trophy-outline"
               title="Rekordbuch"
-              text="Bestwerte und 1RM je Übung"
+              text="Kraft- und Laufbestwerte"
               onPress={() => router.push('/history/records')}
             />
           </View>
