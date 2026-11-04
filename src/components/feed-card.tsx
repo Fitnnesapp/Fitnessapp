@@ -85,6 +85,11 @@ export function FeedCard({ item, name, now, units, onPress }: FeedCardProps) {
 
       {item.kind === 'run' && item.points.length >= 2 ? <RouteMap points={item.points} height={150} /> : null}
 
+      {item.kind === 'strength' && item.note ? (
+        <AppText color="textSecondary" numberOfLines={2} style={styles.note}>
+          „{item.note}“
+        </AppText>
+      ) : null}
       {item.kind === 'strength' && item.exercises.length > 0 ? (
         <View style={styles.exercises}>
           {item.exercises.slice(0, 3).map((e) => (
@@ -161,6 +166,7 @@ function recordsFor(item: FeedItem): string[] {
 }
 
 const styles = StyleSheet.create({
+  note: { fontStyle: 'italic' },
   card: { gap: Spacing.three },
   flex: { flex: 1, gap: 2 },
   tabular: { fontVariant: ['tabular-nums'] },

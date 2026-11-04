@@ -39,6 +39,8 @@ export type FeedItem =
       exercises: { exerciseId: string; sets: number }[];
       /** Anzahl der Sätze mit persönlichem Rekord */
       recordCount: number;
+      /** Eigene Notiz zum Training */
+      note?: string;
     }
   | {
       kind: 'home';
@@ -142,6 +144,7 @@ export function buildFeed({ strength, home, runs, muscleGroupOf, programName, li
         workingSets: working.length,
         exercises,
         recordCount: working.filter((s) => setRecords.has(s.id)).length,
+        ...(w.note ? { note: w.note } : {}),
       };
     }),
     ...home.map(
