@@ -84,3 +84,10 @@ test('Treffer aller Wörter stehen vor Teiltreffern', () => {
   ];
   assert.equal(top('lauf starten', items), 'a');
 });
+
+test('Neue Funktionen sind über Alltagsbegriffe auffindbar', () => {
+  const first = (query: string) => search(FEATURES, query, 3)[0]?.item.id;
+  assert.equal(first('Backup machen'), 'backup');
+  assert.equal(first('Muskelkater was trainieren'), 'recovery');
+  assert.equal(first('Zielzeit Halbmarathon'), 'run-prediction');
+});

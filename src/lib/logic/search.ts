@@ -7,7 +7,7 @@
  * - Tippfehler: kleine Abweichungen (Levenshtein-Abstand) werden toleriert
  */
 
-export type SearchKind = 'funktion' | 'uebung' | 'programm' | 'challenge' | 'event';
+export type SearchKind = 'funktion' | 'workout' | 'uebung' | 'programm' | 'challenge' | 'event';
 
 export type SearchItem = {
   id: string;
@@ -58,6 +58,10 @@ const SYNONYM_GROUPS: string[][] = [
   ['hiit', 'intervall', 'intervalle', 'cardio', 'tabata'],
   ['pause', 'ruhezeit', 'timer', 'satzpause'],
   ['vorlage', 'vorlagen', 'template'],
+  ['sicherung', 'backup', 'datensicherung', 'export', 'exportieren', 'importieren', 'wiederherstellen', 'handywechsel'],
+  ['erholung', 'regeneration', 'muskelkater', 'erholt', 'recovery'],
+  ['prognose', 'vorhersage', 'zielzeit', 'wettkampfzeit', 'schaetzung'],
+  ['muskelkarte', 'koerperkarte', 'muskelgruppen', 'koerper'],
   ['starten', 'start', 'beginnen', 'loslegen', 'anfangen'],
   ['tag', 'tage', 'wochentag', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag', 'sonntag'],
 ];

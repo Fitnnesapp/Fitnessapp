@@ -14,6 +14,7 @@ import { search, type SearchKind } from '@/lib/logic/search';
 
 const KIND_LABEL: Record<SearchKind, string> = {
   funktion: 'Funktionen',
+  workout: 'Kraft-Workouts',
   uebung: 'Übungen',
   programm: 'Home-Programme',
   challenge: 'Challenges',
@@ -22,13 +23,14 @@ const KIND_LABEL: Record<SearchKind, string> = {
 
 const KIND_ICON: Record<SearchKind, keyof typeof Ionicons.glyphMap> = {
   funktion: 'apps',
+  workout: 'flash',
   uebung: 'barbell',
   programm: 'body',
   challenge: 'trophy',
   event: 'calendar',
 };
 
-const KIND_ORDER: SearchKind[] = ['funktion', 'challenge', 'programm', 'uebung', 'event'];
+const KIND_ORDER: SearchKind[] = ['funktion', 'workout', 'challenge', 'programm', 'uebung', 'event'];
 
 const EXAMPLES = ['Winter Arc', 'Plan ändern', 'Übungen für den Rücken', 'Joggen', 'Daten löschen', 'Marathon'];
 

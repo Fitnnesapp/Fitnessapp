@@ -2,9 +2,10 @@ import type { Href } from 'expo-router';
 import { useMemo } from 'react';
 
 import { CHALLENGES } from '@/data/challenges';
-import { EXERCISES } from '@/data/exercises';
+import { EXERCISES, getExercise } from '@/data/exercises';
 import { FEATURES } from '@/data/features';
 import { PROGRAMS } from '@/data/programs';
+import { ROUTINES } from '@/data/routines';
 import { useNow } from '@/hooks/use-now';
 import { upcomingEvents } from '@/lib/logic/events';
 import type { SearchItem } from '@/lib/logic/search';
@@ -12,7 +13,7 @@ import { useEvents } from '@/lib/storage/events-store';
 
 export type SearchEntry = SearchItem & { target: { href: Href } | { url: string } };
 
-/** Alles, was die Suche findet: Funktionen, Übungen, Programme, Challenges und kommende Events. */
+/** Alles, was die Suche findet: Funktionen, Kraft-Workouts, Übungen, Programme, Challenges und kommende Events. */
 export function useSearchIndex(): SearchEntry[] {
   const events = useEvents();
   const now = useNow(60 * 60_000);
@@ -28,6 +29,17 @@ export function useSearchIndex(): SearchEntry[] {
         subtitle: `${e.muscleGroup} · ${e.equipment} · ${e.difficulty}`,
         keywords: [e.instructions],
         target: { href: { pathname: '/training/exercise/[id]', params: { id: e.id } } },
+      });
+    }
+
+    for (const r of ROUTINES) {
+      entries.push({
+        id: `workout-${r.id}`,
+        kind: 'workout',
+        title: r.name,
+        subtitle: `Kraft · ${r.focus} · ${r.setting} · ${r.difficulty}`,
+        keywords: [r.description, r.focus, r.setting, ...r.items.map((item) => getExercise(item.exerciseId)?.name ?? '')],
+        target: { href: { pathname: '/training/routine/[id]', params: { id: r.id } } },
       });
     }
 
