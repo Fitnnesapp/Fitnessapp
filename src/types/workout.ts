@@ -36,6 +36,8 @@ export type DraftSet = {
 export type DraftExercise = {
   exerciseId: string;
   sets: DraftSet[];
+  /** Vorgabe aus einem fertigen Workout (seit Speicherversion 1, optional) */
+  target?: { reps: string; restSeconds: number };
 };
 
 export type ActiveWorkout = {

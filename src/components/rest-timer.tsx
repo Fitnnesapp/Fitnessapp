@@ -53,7 +53,7 @@ export function RestTimer({ endsAt, onChangeEnd, duration, onChangeDuration }: R
         </View>
       ) : (
         <View style={styles.actions}>
-          {PRESETS.map((seconds) => (
+          {(PRESETS.includes(duration) ? PRESETS : [...PRESETS, duration].sort((x, y) => x - y)).map((seconds) => (
             <TimerButton
               key={seconds}
               label={`${seconds} s`}

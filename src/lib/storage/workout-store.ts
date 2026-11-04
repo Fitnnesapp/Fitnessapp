@@ -19,7 +19,9 @@ type WorkoutState = {
 
   startWorkout: (exerciseIds?: string[]) => void;
   /** Startet ein fertiges Workout: pro Übung die vorgegebene Satzzahl, vorbelegt mit dem letzten Training oder dem Ziel. */
-  startRoutine: (items: { exerciseId: string; sets: number; targetReps: number | null }[]) => void;
+  startRoutine: (
+    items: { exerciseId: string; sets: number; targetReps: number | null; reps: string; restSeconds: number }[],
+  ) => void;
   /** Startet ein gespeichertes Workout erneut mit gleichen Übungen und vorbelegten Sätzen. false, wenn es nicht existiert. */
   repeatWorkout: (workoutId: string) => boolean;
   discardWorkout: () => void;
@@ -56,6 +58,7 @@ function prefilledSet(history: StrengthWorkout[], exerciseId: string, units: Uni
 }
 
 const INITIAL = { active: null, history: [], templates: [] };
+export const WORKOUT_STORE_VERSION = 1;
 
 export const useWorkouts = create<WorkoutState>()(
   persist(
@@ -87,8 +90,9 @@ export const useWorkouts = create<WorkoutState>()(
           active: {
             id: newId(),
             startedAt: Date.now(),
-            exercises: items.map(({ exerciseId, sets, targetReps }) => ({
+            exercises: items.map(({ exerciseId, sets, targetReps, reps, restSeconds }) => ({
               exerciseId,
+              target: { reps, restSeconds },
               sets: Array.from({ length: Math.max(1, sets) }, () => {
                 const prefilled = prefilledSet(history, exerciseId, units);
                 if (prefilled.reps === '' && targetReps !== null) prefilled.reps = String(targetReps);
@@ -201,6 +205,10 @@ export const useWorkouts = create<WorkoutState>()(
     }),
     {
       name: 'fitnessapp-workouts',
+      // Version 1: Übungen im laufenden Workout können eine optionale Vorgabe (target) haben.
+      // Ältere Daten bleiben unverändert gültig, die Migration übernimmt sie wie sie sind.
+      version: WORKOUT_STORE_VERSION,
+      migrate: (persisted) => persisted as Pick<WorkoutState, 'active' | 'history' | 'templates'>,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: ({ active, history, templates }) => ({ active, history, templates }),
       onRehydrateStorage: () => () => useWorkouts.setState({ hydrated: true }),

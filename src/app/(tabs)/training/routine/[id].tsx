@@ -53,7 +53,13 @@ export default function RoutineDetailScreen() {
     if (!routine) return;
     impactFeedback();
     startRoutine(
-      routine.items.map((item) => ({ exerciseId: item.exerciseId, sets: item.sets, targetReps: targetReps(item.reps) })),
+      routine.items.map((item) => ({
+        exerciseId: item.exerciseId,
+        sets: item.sets,
+        targetReps: targetReps(item.reps),
+        reps: item.reps,
+        restSeconds: item.restSeconds,
+      })),
     );
     router.push('/training/workout');
   }

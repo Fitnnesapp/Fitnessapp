@@ -117,6 +117,11 @@ export default function WorkoutScreen() {
                 style={styles.removeButton}
               />
             </View>
+            {entry.target ? (
+              <AppText variant="caption" color="textSecondary">
+                Ziel: {entry.sets.filter((set) => !set.isWarmup).length} × {entry.target.reps} · {entry.target.restSeconds} s Pause
+              </AppText>
+            ) : null}
 
             {(() => {
               const tip = tips.get(entry.exerciseId);
@@ -160,8 +165,12 @@ export default function WorkoutScreen() {
                   onRemove={() => store.removeSet(exerciseIndex, set.id)}
                   onToggleDone={() => {
                     store.updateSet(exerciseIndex, set.id, { done: !set.done });
-                    // Beim Abhaken eines Satzes startet die Ruhezeit
-                    if (!set.done) setRestEndsAt(Date.now() + restSeconds * 1000);
+                    // Beim Abhaken eines Satzes startet die Ruhezeit, bei fertigen Workouts mit der Vorgabe der Übung
+                    if (!set.done) {
+                      const seconds = entry.target?.restSeconds ?? restSeconds;
+                      if (entry.target) setRestSeconds(seconds);
+                      setRestEndsAt(Date.now() + seconds * 1000);
+                    }
                   }}
                 />
               );
