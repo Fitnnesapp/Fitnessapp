@@ -120,7 +120,7 @@ export default function TrainingScreen() {
           source={sceneForKind(todaySession.kind)}
           height={300}
           accessibilityLabel={`Heute im Plan: ${todaySession.title}`}
-          onPress={() => router.push(hrefForSession(todaySession))}>
+          onPress={() => router.push(hrefForSession(todaySession, plan?.answers))}>
           <AppText variant="eyebrow" style={{ color: OnImage.accent }}>
             Heute im Plan · {todaySession.minutes} Min
           </AppText>

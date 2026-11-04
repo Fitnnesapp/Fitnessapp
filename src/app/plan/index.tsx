@@ -179,7 +179,9 @@ export default function PlanScreen() {
             <View style={[styles.ifThen, { backgroundColor: theme.surfaceAlt }]}>
               <AppText variant="caption">{ifThenSentence(sessions[0], plan.answers.time)}</AppText>
             </View>
-            {isToday ? <Button title="Jetzt starten" onPress={() => router.push(hrefForSession(sessions[0]))} /> : null}
+            {isToday ? (
+              <Button title="Jetzt starten" onPress={() => router.push(hrefForSession(sessions[0], plan.answers))} />
+            ) : null}
           </Card>
         );
       })}

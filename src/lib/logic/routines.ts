@@ -152,3 +152,44 @@ export function preferencesFromPlan(answers: { places: readonly string[]; level:
     difficulty: answers.level === 'einsteiger' ? 'Einsteiger' : undefined,
   };
 }
+
+type PlanContext = {
+  places: readonly string[];
+  level: string;
+  equipment: readonly string[];
+  body: { limitations: readonly string[] } | null;
+};
+
+/**
+ * Passendes fertiges Workout zu einer Kraft-Einheit aus dem Plan ("Kraft: Push ..."), damit "Jetzt starten"
+ * direkt zum konkreten Workout führt. Bei angegebenen Beschwerden bewusst null: dann gilt der allgemeine
+ * Hinweis im Plan, und man wählt selbst schonende Übungen.
+ */
+export function routineIdForPlanFocus(title: string, plan: PlanContext): string | null {
+  if (plan.body && plan.body.limitations.length > 0) return null;
+  const studio = plan.places.includes('studio');
+  const home = plan.places.includes('zuhause');
+  if (!studio && !home) return null;
+  const beginner = plan.level === 'einsteiger';
+  const dumbbells = plan.equipment.includes('kurzhanteln') || plan.equipment.includes('kettlebell');
+  const focus = title.toLowerCase();
+
+  if (studio) {
+    if (focus.includes('push')) return 'push-tag';
+    if (focus.includes('pull')) return 'pull-tag';
+    if (focus.includes('beine') || focus.includes('unterkörper')) return 'beine-po';
+    if (focus.includes('oberkörper')) return 'oberkoerper-kompakt';
+    if (focus.includes('ganzkörper')) return beginner || focus.endsWith('b') ? 'ganzkoerper-basis' : 'kraft-5x5';
+    return null;
+  }
+  // Zu Hause: mit Kurzhanteln die Hantel-Workouts, sonst Körpergewicht
+  if (focus.includes('beine') || focus.includes('unterkörper')) return dumbbells ? 'beine-zuhause' : 'koerpergewicht-kraft';
+  if (focus.includes('push') || focus.includes('pull') || focus.includes('oberkörper')) {
+    return dumbbells ? 'oberkoerper-zuhause' : 'koerpergewicht-kraft';
+  }
+  if (focus.includes('ganzkörper')) {
+    if (dumbbells) return 'kurzhantel-zuhause';
+    return beginner ? 'koerpergewicht-kraft' : 'koerpergewicht-pro';
+  }
+  return null;
+}

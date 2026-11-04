@@ -182,7 +182,7 @@ export default function DashboardScreen() {
         text: comeback
           ? 'Die letzte Einheit ist ausgefallen. Kein Problem: Entscheidend ist, dass du heute wieder einsteigst.'
           : session.detail,
-        href: hrefForSession(session),
+        href: hrefForSession(session, plan?.answers),
         cta: `Los geht's · ${session.minutes} Min`,
         note: extra ? `Danach: ${extra.minutes} Min ${extra.title}` : 'Dein Plan, deine Zeit',
         kind: session.kind,

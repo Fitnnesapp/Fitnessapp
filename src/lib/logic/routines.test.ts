@@ -5,6 +5,7 @@ import type { MuscleGroup, Routine, StrengthWorkout } from '../../types/workout.
 import {
   lastTrainedByMuscle,
   preferencesFromPlan,
+  routineIdForPlanFocus,
   routineMinutes,
   routineMuscles,
   routineSetCount,
@@ -142,4 +143,25 @@ test('Anderer Vorschlag: ausgeschlossene Workouts werden übersprungen, bis kein
   const b = routine('b', [['rudern', 3]]);
   assert.equal(suggestRoutine([a, b], [], NOW, muscleOf, { exclude: ['a'] })?.routine.id, 'b');
   assert.equal(suggestRoutine([a, b], [], NOW, muscleOf, { exclude: ['a', 'b'] })?.routine.id, 'a');
+});
+
+test('Plan-Einheit führt zum passenden fertigen Workout', () => {
+  const studio = { places: ['studio'], level: 'fortgeschritten', equipment: [], body: null };
+  assert.equal(routineIdForPlanFocus('Kraft: Push: Brust, Schultern, Trizeps', studio), 'push-tag');
+  assert.equal(routineIdForPlanFocus('Kraft: Pull: Rücken, Bizeps', studio), 'pull-tag');
+  assert.equal(routineIdForPlanFocus('Kraft: Unterkörper', studio), 'beine-po');
+  assert.equal(routineIdForPlanFocus('Kraft: Ganzkörper A', studio), 'kraft-5x5');
+  assert.equal(routineIdForPlanFocus('Kraft: Ganzkörper B', studio), 'ganzkoerper-basis');
+  assert.equal(routineIdForPlanFocus('Kraft: Ganzkörper A', { ...studio, level: 'einsteiger' }), 'ganzkoerper-basis');
+
+  const home = { places: ['zuhause'], level: 'einsteiger', equipment: ['kurzhanteln'], body: null };
+  assert.equal(routineIdForPlanFocus('Kraft: Oberkörper', home), 'oberkoerper-zuhause');
+  assert.equal(routineIdForPlanFocus('Kraft: Ganzkörper A', home), 'kurzhantel-zuhause');
+  assert.equal(routineIdForPlanFocus('Kraft: Ganzkörper A', { ...home, equipment: [] }), 'koerpergewicht-kraft');
+});
+
+test('Bei Beschwerden oder ohne Kraftort kein automatisches Workout', () => {
+  const plan = { places: ['studio'], level: 'einsteiger', equipment: [], body: { limitations: ['knie'] } };
+  assert.equal(routineIdForPlanFocus('Kraft: Ganzkörper A', plan), null);
+  assert.equal(routineIdForPlanFocus('Kraft: Ganzkörper A', { ...plan, body: null, places: ['draussen'] }), null);
 });
