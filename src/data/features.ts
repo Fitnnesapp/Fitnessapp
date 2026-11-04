@@ -104,6 +104,14 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/training/running',
   },
   {
+    id: 'pace-calculator',
+    kind: 'funktion',
+    title: 'Pace-Rechner',
+    subtitle: 'Wunschzeit eingeben, Tempo und Zwischenzeiten sehen',
+    keywords: ['Tempo berechnen', 'Wunschzeit', 'unter 4 Stunden', 'min/km', 'Renntempo', 'Zwischenzeiten'],
+    href: '/training/running',
+  },
+  {
     id: 'interval-timer',
     kind: 'funktion',
     title: 'Intervall-Timer',

@@ -99,3 +99,7 @@ test('Eigene Übung wird über Alltagssprache gefunden', () => {
 test('Laufband führt zum Nachtragen', () => {
   assert.equal(top('laufband'), 'manual-run');
 });
+
+test('Tempo für eine Zielzeit führt zum Pace-Rechner', () => {
+  assert.equal(top('pace rechner'), 'pace-calculator');
+});

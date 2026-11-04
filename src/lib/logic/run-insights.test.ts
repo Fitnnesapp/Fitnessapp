@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { formatRaceTime, predictRaces, riegel, runBestsSummary, suggestWeeklyRunGoalM } from './run-insights.ts';
+import { evenSplits, formatRaceTime, predictRaces, riegel, runBestsSummary, suggestWeeklyRunGoalM } from './run-insights.ts';
 
 const NOW = Date.UTC(2026, 10, 4);
 const DAY = 86_400_000;
@@ -73,4 +73,17 @@ test('Wochenziel-Vorschlag: Schnitt plus 10 %, auf 5 km gerundet', () => {
   assert.equal(suggestWeeklyRunGoalM([{ startedAt: start + DAY, distanceM: 50_000 }, { startedAt: start - 5 * week, distanceM: 80_000 }], start), 10_000);
   // Kleine Umfänge: mindestens 5 km
   assert.equal(suggestWeeklyRunGoalM([{ startedAt: start - DAY, distanceM: 2_000 }], start), 5_000);
+});
+
+test('Zwischenzeiten bei gleichmäßigem Tempo', () => {
+  assert.deepEqual(evenSplits(10000, 3000), [
+    { meters: 5000, seconds: 1500 },
+    { meters: 10000, seconds: 3000 },
+  ]);
+  assert.equal(evenSplits(5000, 1500).length, 5);
+  const half = evenSplits(21097.5, 6000);
+  assert.equal(half.length, 5);
+  assert.equal(half[3].meters, 20000);
+  assert.equal(half[4].seconds, 6000);
+  assert.deepEqual(evenSplits(0, 100), []);
 });

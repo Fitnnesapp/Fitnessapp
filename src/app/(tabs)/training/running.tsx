@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 import { ActiveSessions } from '@/components/active-sessions';
+import { PaceCalculatorCard } from '@/components/pace-calculator-card';
 import { RunGoalCard } from '@/components/run-goal-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -173,6 +174,8 @@ export default function RunningScreen() {
           </AppText>
         </Card>
       ) : null}
+
+      <PaceCalculatorCard />
 
       <SectionHeader title="Lauf-Ideen" />
       <AppText color="textSecondary">Rund 80 % locker, 20 % fordernd: so trainieren auch Profis.</AppText>

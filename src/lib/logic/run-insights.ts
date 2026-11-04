@@ -114,3 +114,13 @@ export function suggestWeeklyRunGoalM(runs: readonly { startedAt: number; distan
   const target = (total / 4) * 1.1;
   return Math.min(100_000, Math.max(5_000, Math.ceil(target / 5_000) * 5_000));
 }
+
+/** Zwischenzeiten bei gleichmäßigem Tempo: alle 5 km (bei 5 km jeder Kilometer) und im Ziel. */
+export function evenSplits(meters: number, seconds: number): { meters: number; seconds: number }[] {
+  if (meters <= 0 || seconds <= 0) return [];
+  const step = meters <= 5000 ? 1000 : 5000;
+  const result: { meters: number; seconds: number }[] = [];
+  for (let at = step; at < meters - 1; at += step) result.push({ meters: at, seconds: Math.round((seconds * at) / meters) });
+  result.push({ meters, seconds: Math.round(seconds) });
+  return result;
+}
