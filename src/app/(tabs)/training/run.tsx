@@ -68,8 +68,10 @@ export default function RunScreen() {
   }
 
   function confirmFinish() {
+    const wasRunning = running;
     pauseRun();
     confirmAction({
+      onCancel: wasRunning ? resumeRun : undefined,
       title: 'Lauf beenden?',
       message: 'Der Lauf wird gespeichert. Sehr kurze Läufe unter 20 Metern werden verworfen.',
       confirmLabel: 'Beenden',
@@ -79,8 +81,10 @@ export default function RunScreen() {
   }
 
   function confirmDiscard() {
+    const wasRunning = running;
     pauseRun();
     confirmAction({
+      onCancel: wasRunning ? resumeRun : undefined,
       title: 'Lauf verwerfen?',
       message: 'Die aufgezeichnete Strecke geht verloren.',
       confirmLabel: 'Verwerfen',

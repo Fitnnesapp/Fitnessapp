@@ -231,6 +231,7 @@ export default function PlayerScreen() {
         title="Beenden und speichern"
         variant="secondary"
         onPress={() => {
+          const wasRunning = running;
           pause();
           confirmAction({
             title: 'Workout beenden?',
@@ -238,6 +239,7 @@ export default function PlayerScreen() {
             confirmLabel: 'Beenden',
             destructive: false,
             onConfirm: () => save(false),
+            onCancel: wasRunning ? resume : undefined,
           });
         }}
       />
@@ -245,12 +247,14 @@ export default function PlayerScreen() {
         title="Verwerfen"
         variant="ghost"
         onPress={() => {
+          const wasRunning = running;
           pause();
           confirmAction({
             title: 'Workout verwerfen?',
             message: 'Nichts davon wird gespeichert.',
             confirmLabel: 'Verwerfen',
             onConfirm: () => router.replace('/training/home'),
+            onCancel: wasRunning ? resume : undefined,
           });
         }}
       />
