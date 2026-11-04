@@ -29,7 +29,7 @@ export default function RoutineDetailScreen() {
   const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const routine = getRoutine(id);
-  const { active, history, startRoutine } = useWorkouts();
+  const { active, history, startRoutine, createTemplate, setTemplateExercises } = useWorkouts();
   const units = useSettings((state) => state.units);
 
   if (!routine) {
@@ -169,11 +169,27 @@ export default function RoutineDetailScreen() {
           Schritt, das wirksamste Prinzip im Krafttraining.
         </AppText>
       </Card>
+
+      <Button
+        title="Als eigene Vorlage kopieren"
+        variant="ghost"
+        onPress={() => {
+          const templateId = createTemplate(routine.name);
+          // Doppelte Übungen (z.B. zwei Blöcke derselben Übung) nur einmal übernehmen
+          setTemplateExercises(templateId, [...new Set(routine.items.map((item) => item.exerciseId))]);
+          router.push({ pathname: '/training/template/[id]', params: { id: templateId } });
+        }}
+      />
+      <AppText variant="caption" color="textSecondary" style={styles.center}>
+        Zum Anpassen: Übungen tauschen, entfernen oder ergänzen. Vorlagen merken sich die Übungen, Sätze trägst du im
+        Workout ein.
+      </AppText>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  center: { textAlign: 'center' },
   heroTitle: { color: '#FFFFFF', fontSize: 34, lineHeight: 38, fontWeight: '900' },
   onImageSoft: { color: '#FFFFFF', opacity: 0.85 },
   muscles: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
