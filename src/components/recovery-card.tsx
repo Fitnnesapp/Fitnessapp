@@ -82,7 +82,7 @@ export function RecoveryCard() {
           . Faustregel: 48 bis 72 Stunden pro Muskelgruppe.
         </AppText>
       ) : null}
-      <Button title="Passendes Workout finden" variant="secondary" onPress={() => router.push('/training/strength')} />
+      <Button title="Passendes Workout" variant="secondary" onPress={() => router.push('/training/strength')} />
     </Card>
   );
 }
