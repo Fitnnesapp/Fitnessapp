@@ -35,10 +35,16 @@ import { useHealthStore } from '@/lib/storage/health-store';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
 import { useRunStore } from '@/lib/storage/run-store';
-import { useSettings, type UnitsPreference } from '@/lib/storage/settings-store';
+import { useSettings, type Appearance, type UnitsPreference } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
+
+const APPEARANCES: { value: Appearance; label: string }[] = [
+  { value: 'system', label: 'Automatisch' },
+  { value: 'dark', label: 'Dunkel' },
+  { value: 'light', label: 'Hell' },
+];
 
 const UNITS: { value: UnitsPreference; label: string }[] = [
   { value: 'metric', label: 'kg · km' },
@@ -66,6 +72,8 @@ export default function ProfileScreen() {
   const resetPlan = usePlanStore((state) => state.reset);
   const resetChallenges = useChallengeStore((state) => state.reset);
   const resetGoals = useGoalsStore((state) => state.reset);
+  const appearance = useSettings((state) => state.appearance);
+  const setAppearance = useSettings((state) => state.setAppearance);
   const resetNews = useNewsStore((state) => state.reset);
   const health = useHealthStore();
   const streakReminder = useSettings((state) => state.streakReminder);
@@ -228,6 +236,21 @@ export default function ProfileScreen() {
             ))}
           </View>
         </View>
+        <View style={styles.field}>
+          <AppText variant="label" color="textSecondary">
+            Darstellung
+          </AppText>
+          <View style={styles.chips}>
+            {APPEARANCES.map((option) => (
+              <Chip
+                key={option.value}
+                label={option.label}
+                selected={appearance === option.value}
+                onPress={() => setAppearance(option.value)}
+              />
+            ))}
+          </View>
+        </View>
         {remindersSupported ? (
           <SettingRow
             icon="notifications"
@@ -293,7 +316,7 @@ export default function ProfileScreen() {
               Keine Einwilligung. Wenn du Alter und Beschwerden angibst, wird dein Plan sicherer, z. B. ohne Sprünge bei
               Knieproblemen.
             </AppText>
-            <Button title="Im Plan-Fragebogen angeben" variant="secondary" onPress={() => router.push('/plan/setup')} />
+            <Button title="Im Fragebogen angeben" variant="secondary" onPress={() => router.push('/plan/setup')} />
           </>
         )}
 
