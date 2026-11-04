@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -9,7 +8,6 @@ import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
 import { getExercise, MUSCLE_GROUPS } from '@/data/exercises';
-import { useTheme } from '@/hooks/use-theme';
 import { recordBook } from '@/lib/logic/record-book';
 import { formatWeight, kgToDisplay } from '@/lib/logic/units';
 import { useSettings } from '@/lib/storage/settings-store';
@@ -21,7 +19,6 @@ const SHORT_DATE = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'sh
 /** Rekordbuch: deine besten Sätze und geschätzten Maximalgewichte je Übung. */
 export default function RecordsScreen() {
   const router = useRouter();
-  const theme = useTheme();
   const units = useSettings((state) => state.units);
   const history = useWorkouts((state) => state.history);
   const [muscle, setMuscle] = useState<MuscleGroup | null>(null);
@@ -63,9 +60,10 @@ export default function RecordsScreen() {
             style={styles.row}
             onPress={() => router.push({ pathname: '/training/exercise/[id]', params: { id: record.exerciseId } })}
             accessibilityLabel={exercise?.name ?? record.exerciseId}>
-            <Ionicons name="trophy" size={22} color={theme.accent} />
             <View style={styles.flex}>
-              <AppText variant="heading">{exercise?.name ?? record.exerciseId}</AppText>
+              <AppText variant="heading" numberOfLines={2}>
+                {exercise?.name ?? record.exerciseId}
+              </AppText>
               <AppText variant="caption" color="textSecondary">
                 {bodyweight
                   ? `Meiste Wiederholungen: ${record.maxReps}`

@@ -152,8 +152,8 @@ export default function RunningScreen() {
             <View key={race.label} style={[styles.raceRow, { borderBottomColor: theme.border }]}>
               <AppText style={styles.flex}>{race.label}</AppText>
               <AppText variant="heading">{formatRaceTime(race.seconds)}</AppText>
-              <AppText variant="caption" color="textSecondary" style={styles.racePace}>
-                {formatPace(race.seconds / (race.meters / 1000), units)} {paceUnitLabel(units)}
+              <AppText variant="caption" color="textSecondary" style={styles.racePace} numberOfLines={1}>
+                {formatPace(race.seconds / (race.meters / 1000), units)} /{units === 'metric' ? 'km' : 'mi'}
               </AppText>
             </View>
           ))}
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  racePace: { width: 92, textAlign: 'right' },
+  racePace: { width: 72, textAlign: 'right' },
   flex: { flex: 1 },
   ideaHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   badge: { borderWidth: 1, borderRadius: Radius.pill, paddingHorizontal: Spacing.two, paddingVertical: 2 },
