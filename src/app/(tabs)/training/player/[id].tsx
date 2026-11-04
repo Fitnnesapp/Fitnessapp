@@ -2,6 +2,7 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, Vibration, View } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,11 @@ import { activeSecondsAt, buildTimeline, exerciseCount, locate, totalSeconds } f
 import { useCountdownSounds } from '@/lib/sounds';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { useSettings } from '@/lib/storage/settings-store';
+
+const RING_SIZE = 260;
+const RING_STROKE = 14;
+const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 export default function PlayerScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -144,6 +150,7 @@ export default function PlayerScreen() {
   const color = isWork ? 'accent' : segment.kind === 'rest' ? 'success' : 'textSecondary';
   const segmentProgress = 1 - position.remainingMs / (segment.seconds * 1000);
   const overallProgress = Math.min(1, elapsedMs / (total * 1000));
+  const nextWork = timeline.slice(position.index + 1).find((s) => s.kind === 'work');
   const shownExercise = Math.min(segment.exerciseIndex + (segment.kind === 'rest' ? 2 : 1), exerciseCount(program));
 
   return (
@@ -160,18 +167,51 @@ export default function PlayerScreen() {
       </View>
 
       <View style={styles.center}>
-        <AppText accessibilityLiveRegion="polite" style={[styles.clock, { color: theme[color] }]}>
-          {formatClock(position.remainingMs + 999)}
-        </AppText>
+        <View style={styles.ring}>
+          <Svg width={RING_SIZE} height={RING_SIZE}>
+            <Circle
+              cx={RING_SIZE / 2}
+              cy={RING_SIZE / 2}
+              r={RING_RADIUS}
+              stroke={theme.surfaceAlt}
+              strokeWidth={RING_STROKE}
+              fill="none"
+            />
+            <Circle
+              cx={RING_SIZE / 2}
+              cy={RING_SIZE / 2}
+              r={RING_RADIUS}
+              stroke={theme[color]}
+              strokeWidth={RING_STROKE}
+              fill="none"
+              strokeLinecap="round"
+              strokeDasharray={`${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`}
+              strokeDashoffset={RING_CIRCUMFERENCE * (1 - Math.min(1, Math.max(0, segmentProgress)))}
+              transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
+            />
+          </Svg>
+          <View style={[StyleSheet.absoluteFill, styles.ringCenter]}>
+            <AppText accessibilityLiveRegion="polite" style={[styles.clock, { color: theme[color] }]}>
+              {formatClock(position.remainingMs + 999)}
+            </AppText>
+            <AppText variant="label" color="textSecondary">
+              {segment.seconds} s
+            </AppText>
+          </View>
+        </View>
         <AppText variant="title" style={styles.name}>
           {segment.kind === 'rest' ? `Als Nächstes: ${segment.step.name}` : segment.step.name}
         </AppText>
         <AppText color="textSecondary" style={styles.name}>
           {segment.step.instruction}
         </AppText>
+        {isWork && nextWork ? (
+          <AppText variant="caption" color="textSecondary">
+            Danach: {nextWork.step.name}
+          </AppText>
+        ) : null}
       </View>
 
-      <ProgressBar value={segmentProgress} color={theme[color]} track={theme.surfaceAlt} />
       <View>
         <AppText variant="caption" color="textSecondary">
           Gesamt {formatClock(elapsedMs)} von {formatClock(total * 1000)}
@@ -230,7 +270,9 @@ const styles = StyleSheet.create({
   content: { gap: Spacing.four },
   header: { flexDirection: 'row', justifyContent: 'space-between' },
   center: { alignItems: 'center', gap: Spacing.three, paddingVertical: Spacing.four },
-  clock: { fontSize: 96, lineHeight: 104, fontWeight: '800', letterSpacing: -2 },
+  clock: { fontSize: 72, lineHeight: 80, fontWeight: '800', letterSpacing: -2 },
+  ring: { width: RING_SIZE, height: RING_SIZE },
+  ringCenter: { alignItems: 'center', justifyContent: 'center' },
   name: { textAlign: 'center' },
   track: { width: '100%', borderRadius: Radius.pill, overflow: 'hidden' },
 });
