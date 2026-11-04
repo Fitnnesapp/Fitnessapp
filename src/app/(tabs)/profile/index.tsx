@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { BackupCard } from '@/components/backup-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -301,6 +302,8 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Card>
+
+      <BackupCard />
 
       <Button title="Alle Daten löschen" variant="danger" onPress={confirmReset} />
     </Screen>
