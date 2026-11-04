@@ -80,6 +80,14 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/discover',
   },
   {
+    id: 'custom-exercise',
+    kind: 'funktion',
+    title: 'Eigene Übung anlegen',
+    subtitle: 'Fehlende Geräte oder Varianten ergänzen, mit Rekorden und Fortschritt',
+    keywords: ['Übung fehlt', 'neue Übung', 'Gerät hinzufügen', 'Variante', 'selbst erstellen'],
+    href: '/training/exercise/new',
+  },
+  {
     id: 'interval-timer',
     kind: 'funktion',
     title: 'Intervall-Timer',

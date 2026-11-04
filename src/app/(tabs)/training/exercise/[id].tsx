@@ -12,13 +12,17 @@ import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
 import { EXERCISES, getExercise, secondaryMuscles } from '@/data/exercises';
+import { confirmAction } from '@/lib/confirm';
 import { alternativesFor } from '@/lib/logic/alternatives';
+import { exerciseUsage } from '@/lib/logic/custom-exercises';
 import { formatDate } from '@/lib/logic/format';
 import { muscleLoad } from '@/lib/logic/muscle-load';
 import { findRecords } from '@/lib/logic/personal-records';
 import { bestOneRepMax } from '@/lib/logic/strength-calc';
 import { formatWeight, kgToDisplay, weightUnitLabel } from '@/lib/logic/units';
 import { exerciseProgress } from '@/lib/logic/workout-stats';
+import { useCustomExercises } from '@/lib/storage/custom-exercise-store';
+import { useGoalsStore } from '@/lib/storage/goals-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
@@ -38,6 +42,11 @@ export default function ExerciseDetailScreen() {
   const activeWorkout = useWorkouts((state) => state.active);
   const addExercise = useWorkouts((state) => state.addExercise);
   const startWorkout = useWorkouts((state) => state.startWorkout);
+  const templates = useWorkouts((state) => state.templates);
+  const goals = useGoalsStore((state) => state.goals);
+  const removeCustom = useCustomExercises((state) => state.remove);
+  // Abonniert die eigenen Übungen, damit die Seite nach dem Anlegen oder Löschen neu zeichnet
+  useCustomExercises((state) => state.exercises.length);
   const [metric, setMetric] = useState<Metric>('max');
 
   const progress = useMemo(() => exerciseProgress(history, id), [history, id]);
@@ -56,13 +65,28 @@ export default function ExerciseDetailScreen() {
   }
 
   const alternatives = alternativesFor(exercise, EXERCISES, 3);
+  const usage = exercise.custom ? exerciseUsage(exercise.id, { history, templates, active: activeWorkout, goals }) : null;
+
+  function deleteOwn() {
+    if (!exercise) return;
+    confirmAction({
+      title: 'Übung löschen?',
+      message: `„${exercise.name}“ wird aus deiner Bibliothek entfernt.`,
+      confirmLabel: 'Löschen',
+      onConfirm: () => {
+        removeCustom(exercise.id);
+        if (router.canGoBack()) router.back();
+        else router.replace('/training/exercises');
+      },
+    });
+  }
   const best = progress.length > 0 ? Math.max(...progress.map((p) => p.maxWeightKg)) : null;
 
   return (
     <Screen>
       <AppText variant="title">{exercise.name}</AppText>
       <AppText color="textSecondary">
-        {exercise.muscleGroup} · {exercise.equipment} · {exercise.difficulty}
+        {exercise.muscleGroup} · {exercise.equipment} · {exercise.custom ? 'Eigene Übung' : exercise.difficulty}
       </AppText>
 
       {/* Direkt ins Training: zum laufenden Workout hinzufügen oder mit dieser Übung starten */}
@@ -101,12 +125,14 @@ export default function ExerciseDetailScreen() {
         ) : null}
       </Card>
 
-      <Card>
-        <AppText variant="label" color="textSecondary">
-          ANLEITUNG
-        </AppText>
-        <AppText>{exercise.instructions}</AppText>
-      </Card>
+      {exercise.instructions ? (
+        <Card>
+          <AppText variant="label" color="textSecondary">
+            {exercise.custom ? 'DEINE NOTIZ' : 'ANLEITUNG'}
+          </AppText>
+          <AppText>{exercise.instructions}</AppText>
+        </Card>
+      ) : null}
 
       <Card>
         <AppText variant="label" color="textSecondary">
@@ -186,6 +212,25 @@ export default function ExerciseDetailScreen() {
             </Card>
           ))}
         </>
+      ) : null}
+
+      {usage ? (
+        usage.used ? (
+          <AppText variant="caption" color="textSecondary">
+            Eigene Übung. Sie bleibt erhalten, solange sie in{' '}
+            {[
+              usage.workouts > 0 ? `${usage.workouts} ${usage.workouts === 1 ? 'Workout' : 'Workouts'}` : null,
+              usage.templates > 0 ? `${usage.templates} ${usage.templates === 1 ? 'Vorlage' : 'Vorlagen'}` : null,
+              usage.inActive ? 'deinem laufenden Workout' : null,
+              usage.goal ? 'einem Kraftziel' : null,
+            ]
+              .filter(Boolean)
+              .join(', ')}{' '}
+            steckt, damit dein Verlauf vollständig bleibt.
+          </AppText>
+        ) : (
+          <Button title="Eigene Übung löschen" variant="danger" onPress={deleteOwn} />
+        )
       ) : null}
     </Screen>
   );

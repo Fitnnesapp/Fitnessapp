@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BACKUP_KEYS, createBackup, type BackupKey } from '@/lib/logic/backup';
 
 import { useChallengeStore } from './challenge-store';
+import { useCustomExercises } from './custom-exercise-store';
 import { flushPendingWrites } from './debounced-storage';
 import { useGamification } from './gamification-store';
 import { useGoalsStore } from './goals-store';
@@ -44,5 +45,6 @@ export async function restoreBackup(entries: [BackupKey, string][]): Promise<voi
     useHealthStore.persist.rehydrate(),
     useGoalsStore.persist.rehydrate(),
     useSavedEvents.persist.rehydrate(),
+    useCustomExercises.persist.rehydrate(),
   ]);
 }

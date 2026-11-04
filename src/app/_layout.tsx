@@ -8,6 +8,7 @@ import { GamificationSync } from '@/components/gamification-sync';
 import { useTheme } from '@/hooks/use-theme';
 import '@/lib/location/background-task';
 import { useChallengeStore } from '@/lib/storage/challenge-store';
+import { useCustomExercises } from '@/lib/storage/custom-exercise-store';
 import { useEntitlementStore } from '@/lib/storage/entitlement-store';
 import { useEventsStore } from '@/lib/storage/events-store';
 import { useGamification } from '@/lib/storage/gamification-store';
@@ -32,8 +33,12 @@ export default function RootLayout() {
   const challengesReady = useChallengeStore((state) => state.hydrated);
   const eventsReady = useEventsStore((state) => state.hydrated);
   const healthReady = useHealthStore((state) => state.hydrated);
+  // Eigene Übungen müssen vor dem ersten Bild bekannt sein, sonst fehlen im Verlauf die Namen
+  const customExercisesReady = useCustomExercises((state) => state.hydrated);
   const hydrated =
-    settingsReady && workoutsReady && homeReady && runsReady && gamificationReady && entitlementReady && planReady && challengesReady && eventsReady && healthReady;
+    settingsReady && workoutsReady && homeReady && runsReady && gamificationReady && entitlementReady && planReady && challengesReady && eventsReady &&
+    healthReady &&
+    customExercisesReady;
 
   useEffect(() => {
     if (hydrated) SplashScreen.hideAsync();

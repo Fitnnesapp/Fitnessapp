@@ -22,6 +22,7 @@ export const BACKUP_KEYS = [
   'fitnessapp-health',
   'fitnessapp-goals',
   'fitnessapp-saved-events',
+  'fitnessapp-custom-exercises',
 ] as const;
 
 export type BackupKey = (typeof BACKUP_KEYS)[number];

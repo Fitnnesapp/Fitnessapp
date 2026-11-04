@@ -158,6 +158,13 @@ export function secondaryMuscles(id: string): readonly MuscleGroup[] {
 
 const BY_ID = new Map(EXERCISES.map((exercise) => [exercise.id, exercise]));
 
+/** Eigene Übungen, vom Speicher gesetzt (siehe custom-exercise-store) */
+let customById = new Map<string, Exercise>();
+
+export function setCustomExercises(list: readonly Exercise[]): void {
+  customById = new Map(list.map((exercise) => [exercise.id, exercise]));
+}
+
 export function getExercise(id: string): Exercise | undefined {
-  return BY_ID.get(id);
+  return BY_ID.get(id) ?? customById.get(id);
 }

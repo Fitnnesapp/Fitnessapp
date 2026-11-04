@@ -28,6 +28,7 @@ import { displayToKg, formatDistance, formatWeight, kgToDisplay, parseNumber, we
 import { lifetimeTotals } from '@/lib/logic/weekly-review';
 import { requestReminderPermission, remindersSupported } from '@/lib/notifications';
 import { useChallengeStore } from '@/lib/storage/challenge-store';
+import { useCustomExercises } from '@/lib/storage/custom-exercise-store';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useGoalsStore } from '@/lib/storage/goals-store';
 import { useNewsStore } from '@/lib/storage/news-store';
@@ -79,6 +80,7 @@ export default function ProfileScreen() {
   const setAppearance = useSettings((state) => state.setAppearance);
   const resetNews = useNewsStore((state) => state.reset);
   const resetSavedEvents = useSavedEvents((state) => state.reset);
+  const resetCustomExercises = useCustomExercises((state) => state.reset);
   const health = useHealthStore();
   const streakReminder = useSettings((state) => state.streakReminder);
   const setStreakReminder = useSettings((state) => state.setStreakReminder);
@@ -117,7 +119,7 @@ export default function ProfileScreen() {
     confirmAction({
       title: 'Alle Daten löschen?',
       message:
-        'Name, Einstellungen, Trainingsplan, Gesundheitsangaben, Challenges, gemerkte Events, Ziele, Workouts, Home-Workouts, Läufe, Abzeichen und Vorlagen werden von diesem Gerät gelöscht. Das lässt sich nicht rückgängig machen.',
+        'Name, Einstellungen, Trainingsplan, Gesundheitsangaben, Challenges, gemerkte Events, Ziele, eigene Übungen, Workouts, Home-Workouts, Läufe, Abzeichen und Vorlagen werden von diesem Gerät gelöscht. Das lässt sich nicht rückgängig machen.',
       confirmLabel: 'Löschen',
       onConfirm: () => {
         resetSettings();
@@ -130,6 +132,7 @@ export default function ProfileScreen() {
         resetGoals();
         resetNews();
         resetSavedEvents();
+        resetCustomExercises();
         health.revoke();
         setWeightText('');
       },

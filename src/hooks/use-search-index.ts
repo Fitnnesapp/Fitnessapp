@@ -10,6 +10,7 @@ import { useNow } from '@/hooks/use-now';
 import { upcomingEvents } from '@/lib/logic/events';
 import type { SearchItem } from '@/lib/logic/search';
 import { useChallengeStore } from '@/lib/storage/challenge-store';
+import { useCustomExercises } from '@/lib/storage/custom-exercise-store';
 import { useEvents } from '@/lib/storage/events-store';
 
 export type SearchEntry = SearchItem & { target: { href: Href } | { url: string } };
@@ -18,17 +19,18 @@ export type SearchEntry = SearchItem & { target: { href: Href } | { url: string 
 export function useSearchIndex(): SearchEntry[] {
   const events = useEvents();
   const custom = useChallengeStore((state) => state.custom);
+  const customExercises = useCustomExercises((state) => state.exercises);
   const now = useNow(60 * 60_000);
 
   return useMemo(() => {
     const entries: SearchEntry[] = FEATURES.map((f) => ({ ...f, target: { href: f.href as Href } }));
 
-    for (const e of EXERCISES) {
+    for (const e of [...customExercises, ...EXERCISES]) {
       entries.push({
         id: `uebung-${e.id}`,
         kind: 'uebung',
         title: e.name,
-        subtitle: `${e.muscleGroup} · ${e.equipment} · ${e.difficulty}`,
+        subtitle: `${e.muscleGroup} · ${e.equipment} · ${e.custom ? 'Eigene Übung' : e.difficulty}`,
         keywords: [e.instructions],
         target: { href: { pathname: '/training/exercise/[id]', params: { id: e.id } } },
       });
@@ -78,5 +80,5 @@ export function useSearchIndex(): SearchEntry[] {
       });
     }
     return entries;
-  }, [events, now, custom]);
+  }, [events, now, custom, customExercises]);
 }

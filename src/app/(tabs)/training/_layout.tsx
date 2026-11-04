@@ -6,6 +6,7 @@ export default function TrainingLayout() {
       <Stack.Screen name="index" options={{ title: 'Training' }} />
       <Stack.Screen name="strength" options={{ title: 'Kraft' }} />
       <Stack.Screen name="exercises" options={{ title: 'Übungen' }} />
+      <Stack.Screen name="exercise/new" options={{ title: 'Eigene Übung' }} />
       <Stack.Screen name="exercise/[id]" options={{ title: 'Übung' }} />
       <Stack.Screen name="routine/[id]" options={{ title: 'Workout' }} />
       <Stack.Screen name="timer" options={{ title: 'Intervall-Timer' }} />

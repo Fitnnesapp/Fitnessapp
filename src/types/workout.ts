@@ -21,6 +21,8 @@ export type Exercise = {
   equipment: Equipment;
   difficulty: Difficulty;
   instructions: string;
+  /** Vom Nutzer angelegt (eigene Übung), sonst Teil der mitgelieferten Bibliothek */
+  custom?: true;
 };
 
 /** Satz während des Trainings: Eingaben bleiben Text, damit Zwischenstände wie "7," tippbar sind. */
