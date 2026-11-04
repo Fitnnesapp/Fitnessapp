@@ -107,3 +107,7 @@ test('Tempo für eine Zielzeit führt zum Pace-Rechner', () => {
 test('Vorlage bearbeiten führt zu den Vorlagen', () => {
   assert.equal(top('vorlage bearbeiten'), 'templates');
 });
+
+test('Vertippt führt zum Korrigieren', () => {
+  assert.equal(top('gewicht falsch eingetragen'), 'edit-workout');
+});

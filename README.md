@@ -73,6 +73,7 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - Übungsdetails mit den letzten fünf Einheiten samt Sätzen; zuletzt trainierte Übungen als Schnellauswahl im Workout
   - Verlauf filterbar nach Trainingsart
   - Speicher-Migrationen: Einstellungen v4, Läufe v1, neu: eigene Übungen v1
+  - **Vorlagen-Editor** (Übungen hinzufügen, entfernen, umsortieren; neue Vorlage; fertige Workouts als Vorlage kopieren) und **gespeicherte Krafttrainings korrigieren** (Gewicht, Wiederholungen, Sätze entfernen)
   - Nachtrag: eigene Übungen und nachgetragene Läufe bearbeitbar; Auflegehilfe (Scheiben pro Seite) bei Langhantel-Übungen im Workout; Intervall-Timer merkt sich die letzten Einstellungen (Einstellungen v5); Laufbestzeiten im Rekordbuch; Laufziel auch im Profil und auf dem Start-Tab
 - **Phase 8 (Ausbau):**
   - Jahresrückblick (Start-Tab): Workouts, Zeit, Distanz, Volumen, Rekorde, längste Serie, stärkster Monat, Lieblingstag und -übung, wählbares Jahr

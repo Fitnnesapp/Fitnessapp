@@ -120,6 +120,14 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/training/strength',
   },
   {
+    id: 'edit-workout',
+    kind: 'funktion',
+    title: 'Gespeichertes Workout korrigieren',
+    subtitle: 'Gewicht oder Wiederholungen nachträglich ändern, Sätze entfernen',
+    keywords: ['Tippfehler', 'falsch eingetragen', 'Satz ändern', 'Gewicht korrigieren', 'vertippt'],
+    href: '/history',
+  },
+  {
     id: 'interval-timer',
     kind: 'funktion',
     title: 'Intervall-Timer',
