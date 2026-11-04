@@ -36,3 +36,11 @@ export function sceneForChallenge(challengeId: string): ImageSourcePropType {
   if (challengeId.includes('neujahr') || challengeId.includes('neustart')) return SCENES['challenge-neustart'];
   return SCENES['challenge-gewohnheit'];
 }
+
+/** Titelbild zu einer Kategorie der Home-Workouts. */
+export function sceneForProgramCategory(category: 'HIIT' | 'Core' | 'Mobility' | 'Ganzkörper'): ImageSourcePropType {
+  if (category === 'HIIT') return SCENES['goal-abnehmen'];
+  if (category === 'Core') return SCENES['goal-fitness'];
+  if (category === 'Mobility') return SCENES['goal-beweglichkeit'];
+  return SCENES['hero-home'];
+}
