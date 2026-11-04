@@ -32,6 +32,8 @@ type RunState = {
   deleteRun: (id: string) => void;
   /** Speichert einen ohne GPS nachgetragenen Lauf (vorher validateManualRun). */
   addManualRun: (input: ManualRunInput) => string;
+  /** Korrigiert einen nachgetragenen Lauf; aufgezeichnete GPS-Läufe bleiben unverändert. */
+  updateManualRun: (id: string, input: ManualRunInput) => void;
   reset: () => void;
 };
 
@@ -142,6 +144,13 @@ export const useRunStore = create<RunState>()(
         set({ history: [...get().history, run] });
         void flushPendingWrites();
         return run.id;
+      },
+
+      updateManualRun: (id, input) => {
+        set({
+          history: get().history.map((run) => (run.id === id && run.manual ? createManualRun(input, id) : run)),
+        });
+        void flushPendingWrites();
       },
 
       reset: () => set({ active: null, history: [] }),

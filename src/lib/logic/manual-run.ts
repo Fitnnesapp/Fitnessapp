@@ -79,3 +79,18 @@ export function startFromDayAndTime(now: number, daysAgo: number, time: string):
   date.setHours(hours, minutes, 0, 0);
   return date.getTime();
 }
+
+/** Kalendertage zwischen dem Zeitpunkt und heute (0 = heute, 1 = gestern …), unabhängig von der Uhrzeit. */
+export function calendarDaysAgo(at: number, now: number): number {
+  const day = (t: number) => {
+    const d = new Date(t);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  };
+  return Math.max(0, Math.round((day(now) - day(at)) / DAY));
+}
+
+/** Uhrzeit als "HH:MM" für das Eingabefeld. */
+export function timeOfDay(at: number): string {
+  const d = new Date(at);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}

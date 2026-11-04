@@ -156,6 +156,13 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
       {!justFinished ? (
         <Button title="Neuen Lauf starten" onPress={() => router.push('/training/running')} />
       ) : null}
+      {run.manual ? (
+        <Button
+          title="Lauf bearbeiten"
+          variant="secondary"
+          onPress={() => router.push({ pathname: '/training/run-manual', params: { edit: run.id } })}
+        />
+      ) : null}
       {canShare() ? (
         <Button
           title="Lauf teilen"

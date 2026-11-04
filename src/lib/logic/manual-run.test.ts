@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { createManualRun, parseDuration, startFromDayAndTime, validateManualRun } from './manual-run.ts';
+import {
+  calendarDaysAgo,
+  createManualRun,
+  parseDuration,
+  startFromDayAndTime,
+  timeOfDay,
+  validateManualRun,
+} from './manual-run.ts';
 
 const now = new Date(2026, 10, 4, 18, 0).getTime();
 const hourAgo = now - 3600_000;
@@ -45,4 +52,14 @@ test('Nachgetragener Lauf: ohne Strecke und ohne Bestzeiten', () => {
   assert.deepEqual(run.bests, { k1: null, k5: null, k10: null });
   assert.equal(run.points.length, 0);
   assert.equal(run.manual, true);
+});
+
+test('Bearbeiten: Tage zurück und Uhrzeit aus dem gespeicherten Lauf', () => {
+  assert.equal(calendarDaysAgo(new Date(2026, 10, 4, 6, 0).getTime(), now), 0);
+  assert.equal(calendarDaysAgo(new Date(2026, 10, 3, 23, 30).getTime(), now), 1);
+  assert.equal(calendarDaysAgo(new Date(2026, 9, 28, 12, 0).getTime(), now), 7);
+  assert.equal(timeOfDay(new Date(2026, 10, 3, 7, 5).getTime()), '07:05');
+  // Rundlauf: Tag und Uhrzeit ergeben wieder denselben Start
+  const start = new Date(2026, 10, 2, 18, 45).getTime();
+  assert.equal(startFromDayAndTime(now, calendarDaysAgo(start, now), timeOfDay(start)), start);
 });

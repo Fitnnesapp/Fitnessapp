@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -12,7 +12,14 @@ import { TextField } from '@/components/ui/text-field';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { successFeedback } from '@/lib/haptics';
-import { parseDuration, startFromDayAndTime, validateManualRun } from '@/lib/logic/manual-run';
+import {
+  calendarDaysAgo,
+  parseDuration,
+  startFromDayAndTime,
+  timeOfDay,
+  validateManualRun,
+} from '@/lib/logic/manual-run';
+import { formatRaceTime } from '@/lib/logic/run-insights';
 import { formatPace, paceUnitLabel, parseNumber } from '@/lib/logic/units';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
@@ -35,11 +42,29 @@ export default function ManualRunScreen() {
   const units = useSettings((state) => state.units);
   const addManualRun = useRunStore((state) => state.addManualRun);
   const [now] = useState(() => Date.now());
+  // Bearbeiten: nur nachgetragene Läufe, Felder mit den gespeicherten Werten vorbelegt
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
+  const updateManualRun = useRunStore((state) => state.updateManualRun);
+  const editing = useRunStore((state) => state.history.find((run) => run.id === edit && run.manual));
+  const [initial] = useState(() =>
+    editing
+      ? {
+          distance: String(
+            Math.round((editing.distanceM / (units === 'metric' ? 1000 : KM_PER_MILE * 1000)) * 100) / 100,
+          ).replace('.', ','),
+          duration: formatRaceTime(editing.durationSeconds),
+          daysAgo: calendarDaysAgo(editing.startedAt, now),
+          time: timeOfDay(editing.startedAt),
+        }
+      : null,
+  );
 
-  const [distanceText, setDistanceText] = useState('');
-  const [durationText, setDurationText] = useState('');
-  const [daysAgo, setDaysAgo] = useState(0);
-  const [timeText, setTimeText] = useState('');
+  const [distanceText, setDistanceText] = useState(initial?.distance ?? '');
+  const [durationText, setDurationText] = useState(initial?.duration ?? '');
+  const [daysAgo, setDaysAgo] = useState(initial?.daysAgo ?? 0);
+  const [timeText, setTimeText] = useState(initial?.time ?? '');
+  // Tage zur Auswahl: die letzte Woche, beim Bearbeiten auch ein älterer gespeicherter Tag
+  const dayOptions = [0, 1, 2, 3, 4, 5, 6, ...(initial && initial.daysAgo > 6 ? [initial.daysAgo] : [])];
   const [error, setError] = useState<string | null>(null);
 
   const distanceValue = parseNumber(distanceText);
@@ -63,8 +88,14 @@ export default function ManualRunScreen() {
     const input = { distanceKm, durationSeconds, startedAt: start };
     const problem = validateManualRun(input, Date.now());
     if (problem) return setError(problem);
-    const id = addManualRun(input);
     successFeedback();
+    if (editing) {
+      updateManualRun(editing.id, input);
+      // Das Formular liegt im Training-Stapel, die Details im Verlauf: dorthin zurück, nicht auf die vorige Trainingsseite
+      router.replace({ pathname: '/history/[id]', params: { id: editing.id } });
+      return;
+    }
+    const id = addManualRun(input);
     router.replace({ pathname: '/history/[id]', params: { id } });
   }
 
@@ -76,7 +107,7 @@ export default function ManualRunScreen() {
   return (
     <Screen>
       <AppText variant="display" style={styles.headline}>
-        Lauf nachtragen
+        {editing ? 'Lauf bearbeiten' : 'Lauf nachtragen'}
       </AppText>
       <AppText color="textSecondary">
         Laufband, Handy vergessen oder mit einer Uhr gelaufen? Trag Distanz und Zeit ein. Der Lauf zählt für Verlauf,
@@ -92,7 +123,7 @@ export default function ManualRunScreen() {
               onChangeText={change(setDistanceText)}
               placeholder="5,0"
               keyboardType="decimal-pad"
-              autoFocus
+              autoFocus={!editing}
             />
           </View>
           <View style={styles.flex}>
@@ -118,7 +149,7 @@ export default function ManualRunScreen() {
           WANN?
         </AppText>
         <View style={styles.chips}>
-          {Array.from({ length: 7 }, (_, index) => (
+          {dayOptions.map((index) => (
             <Chip
               key={index}
               label={dayLabel(index, now)}
@@ -149,7 +180,7 @@ export default function ManualRunScreen() {
         </View>
       ) : null}
 
-      <Button title="Lauf speichern" onPress={save} />
+      <Button title={editing ? 'Änderungen speichern' : 'Lauf speichern'} onPress={save} />
       <AppText variant="caption" color="textSecondary">
         Ohne GPS gibt es keine Strecke und keine Kilometerzeiten. Bestzeiten über 1, 5 und 10 km kommen deshalb nur aus
         aufgezeichneten Läufen.
