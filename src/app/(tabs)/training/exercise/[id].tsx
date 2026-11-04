@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo } from 'react';
-import { View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { GoalEditor } from '@/components/goal-card';
 import { MuscleMap } from '@/components/muscle-map';
@@ -8,7 +8,9 @@ import { ProgressChart } from '@/components/progress-chart';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
+import { Spacing } from '@/constants/theme';
 import { EXERCISES, getExercise, secondaryMuscles } from '@/data/exercises';
 import { alternativesFor } from '@/lib/logic/alternatives';
 import { formatDate } from '@/lib/logic/format';
@@ -20,12 +22,20 @@ import { exerciseProgress } from '@/lib/logic/workout-stats';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
+type Metric = 'max' | 'orm' | 'volume';
+const METRICS: { key: Metric; label: string }[] = [
+  { key: 'max', label: 'Höchstgewicht' },
+  { key: 'orm', label: '1RM (geschätzt)' },
+  { key: 'volume', label: 'Volumen' },
+];
+
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const exercise = getExercise(id);
   const units = useSettings((state) => state.units);
   const history = useWorkouts((state) => state.history);
+  const [metric, setMetric] = useState<Metric>('max');
 
   const progress = useMemo(() => exerciseProgress(history, id), [history, id]);
   const estimate = useMemo(() => bestOneRepMax(history, id), [history, id]);
@@ -73,11 +83,24 @@ export default function ExerciseDetailScreen() {
 
       <Card>
         <AppText variant="label" color="textSecondary">
-          FORTSCHRITT (HÖCHSTGEWICHT)
+          FORTSCHRITT
         </AppText>
+        {progress.length > 1 ? (
+          <View style={styles.metrics}>
+            {METRICS.map((item) => (
+              <Chip key={item.key} label={item.label} selected={metric === item.key} onPress={() => setMetric(item.key)} />
+            ))}
+          </View>
+        ) : null}
         <ProgressChart
           unitLabel={weightUnitLabel(units)}
-          points={progress.map((p) => ({ at: p.at, value: kgToDisplay(p.maxWeightKg, units) }))}
+          points={progress
+            .map((p) => ({
+              at: p.at,
+              raw: metric === 'max' ? p.maxWeightKg : metric === 'orm' ? p.oneRepMaxKg : p.volumeKg,
+            }))
+            .filter((p): p is { at: number; raw: number } => p.raw !== null)
+            .map((p) => ({ at: p.at, value: kgToDisplay(p.raw, units) }))}
         />
         {best !== null ? (
           <View>
@@ -140,3 +163,7 @@ export default function ExerciseDetailScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+});

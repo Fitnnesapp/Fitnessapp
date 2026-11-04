@@ -76,7 +76,7 @@ export function ProgressChart({ points, unitLabel, height = 180 }: ProgressChart
           <SvgText
             fontFamily={SVG_FONT}
             x={x(points.length - 1)}
-            y={y(last.value) - 10}
+            y={Math.max(14, y(last.value) - 10)}
             fill={theme.text}
             fontSize={12}
             fontWeight="700"

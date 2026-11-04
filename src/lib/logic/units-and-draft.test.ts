@@ -85,6 +85,13 @@ test('Fortschritt liefert das Höchstgewicht je Workout, zeitlich sortiert', () 
   );
 });
 
+test('Fortschritt enthält geschätztes 1RM und Volumen ohne Aufwärmsätze', () => {
+  const [first] = exerciseProgress(history, 'bank');
+  // 55 kg × 8: Epley 55 × (1 + 8/30) = 69,7
+  assert.equal(first.oneRepMaxKg, 69.7);
+  assert.equal(first.volumeKg, 440);
+});
+
 test('lastWorkingSet findet den letzten Arbeitssatz des neuesten Workouts', () => {
   assert.equal(lastWorkingSet(history, 'bank')?.weightKg, 65);
   assert.equal(lastWorkingSet(history, 'unbekannt'), null);

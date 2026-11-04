@@ -1,4 +1,5 @@
 import type { LoggedExercise, StrengthWorkout } from '../../types/workout.ts';
+import { estimateOneRepMax } from './strength-calc.ts';
 
 export type WorkoutSummary = {
   durationMs: number;
@@ -35,20 +36,36 @@ export function summarizeWorkout(
   };
 }
 
-export type ProgressPoint = { workoutId: string; at: number; maxWeightKg: number };
+export type ProgressPoint = {
+  workoutId: string;
+  at: number;
+  maxWeightKg: number;
+  /** Bestes geschätztes Maximalgewicht (Epley) des Workouts, null ohne geeigneten Satz */
+  oneRepMaxKg: number | null;
+  /** Gewicht × Wiederholungen aller Arbeitssätze */
+  volumeKg: number;
+};
 
 /** Höchstes Arbeitsgewicht je Workout für eine Übung, zeitlich aufsteigend. */
 export function exerciseProgress(history: StrengthWorkout[], exerciseId: string): ProgressPoint[] {
   const points: ProgressPoint[] = [];
 
   for (const workout of history) {
-    const weights = workout.exercises
+    const sets = workout.exercises
       .filter((exercise) => exercise.exerciseId === exerciseId)
-      .flatMap((exercise) => exercise.sets.filter((set) => !set.isWarmup && set.reps > 0))
-      .map((set) => set.weightKg);
+      .flatMap((exercise) => exercise.sets.filter((set) => !set.isWarmup && set.reps > 0));
 
-    if (weights.length > 0) {
-      points.push({ workoutId: workout.id, at: workout.startedAt, maxWeightKg: Math.max(...weights) });
+    if (sets.length > 0) {
+      const estimates = sets
+        .map((set) => estimateOneRepMax(set.weightKg, set.reps))
+        .filter((value): value is number => value !== null);
+      points.push({
+        workoutId: workout.id,
+        at: workout.startedAt,
+        maxWeightKg: Math.max(...sets.map((set) => set.weightKg)),
+        oneRepMaxKg: estimates.length > 0 ? Math.max(...estimates) : null,
+        volumeKg: Math.round(sets.reduce((sum, set) => sum + set.weightKg * set.reps, 0) * 100) / 100,
+      });
     }
   }
 
