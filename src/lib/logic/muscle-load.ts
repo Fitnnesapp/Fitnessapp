@@ -77,3 +77,42 @@ export function muscleRecovery(workouts: readonly RecoveryWorkout[], now: number
   }
   return { recovering, hoursLeft };
 }
+
+/**
+ * Wirksamer Bereich harter Sätze pro Muskelgruppe und Woche. Mehr Sätze bringen bis etwa
+ * 10 bis 20 pro Woche mehr Muskelzuwachs (Schoenfeld, Ogborn & Krieger 2017; Pelland et al. 2024).
+ */
+export const WEEKLY_SET_RANGE = { min: 10, max: 20 } as const;
+
+export type WeeklySets = { muscle: MuscleGroup; sets: number; status: 'wenig' | 'gut' | 'viel' };
+
+/**
+ * Arbeitssätze je Muskelgruppe in einem Zeitraum. Hilfsmuskeln zählen halb, wie in der Forschung üblich
+ * (fractional counting), gerundet auf halbe Sätze. Sortiert nach Anzahl, die meisten zuerst.
+ */
+export function weeklySets(
+  workouts: readonly RecoveryWorkout[],
+  from: number,
+  to: number,
+): WeeklySets[] {
+  const sets = new Map<MuscleGroup, number>();
+  const add = (muscle: MuscleGroup, value: number) => sets.set(muscle, (sets.get(muscle) ?? 0) + value);
+  for (const workout of workouts) {
+    if (workout.startedAt < from || workout.startedAt >= to) continue;
+    for (const exercise of workout.exercises) {
+      if (exercise.workingSets <= 0) continue;
+      if (exercise.primary) add(exercise.primary, exercise.workingSets);
+      for (const muscle of exercise.secondary) {
+        if (muscle !== exercise.primary) add(muscle, exercise.workingSets * 0.5);
+      }
+    }
+  }
+  return [...sets.entries()]
+    .map(([muscle, value]) => {
+      const rounded = Math.round(value * 2) / 2;
+      const status: WeeklySets['status'] =
+        rounded < WEEKLY_SET_RANGE.min ? 'wenig' : rounded > WEEKLY_SET_RANGE.max ? 'viel' : 'gut';
+      return { muscle, sets: rounded, status };
+    })
+    .sort((a, b) => b.sets - a.sets);
+}

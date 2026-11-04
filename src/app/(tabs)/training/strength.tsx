@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { RoutineCard } from '@/components/routine-card';
+import { WeeklySetsCard } from '@/components/weekly-sets-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -103,6 +104,8 @@ export default function StrengthScreen() {
         <QuickAction icon="barbell-outline" label="Übungen" onPress={() => router.push('/training/exercises')} />
         <QuickAction icon="calculator-outline" label="Rechner" onPress={() => router.push('/training/calculator')} />
       </View>
+
+      <WeeklySetsCard />
 
       <SectionHeader title="Fertige Workouts" />
       <AppText color="textSecondary">Durchdacht zusammengestellt, mit Sätzen, Zielen und Pausen. Einfach starten.</AppText>

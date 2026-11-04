@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { muscleLoad, muscleRecovery } from './muscle-load.ts';
+import { muscleLoad, muscleRecovery, weeklySets } from './muscle-load.ts';
 
 test('Hauptmuskel voll, Hilfsmuskeln anteilig, normiert', () => {
   assert.deepEqual(muscleLoad([{ primary: 'Brust', secondary: ['Trizeps', 'Schultern'], amount: 3 }]), {
@@ -45,4 +45,23 @@ test('Erholung: Hauptmuskel 72 Std, Hilfsmuskel 36 Std, das jüngste Training z�
   assert.equal(hoursLeft.Trizeps, 12);
   assert.equal(recovering.Beine, undefined); // längst erholt
   assert.equal(recovering.Rücken, undefined); // nur Aufwärmsätze
+});
+
+test('Wochensätze: Hilfsmuskeln halb, nur im Zeitraum, Bewertung nach 10 bis 20', () => {
+  const day = 86_400_000;
+  const week = (startedAt: number, primary: 'Brust' | 'Beine', secondary: ('Trizeps' | 'Gesäß')[], workingSets: number) => ({
+    startedAt,
+    exercises: [{ primary, secondary, workingSets }],
+  });
+  const result = weeklySets(
+    [week(1 * day, 'Brust', ['Trizeps'], 12), week(3 * day, 'Beine', ['Gesäß'], 25), week(9 * day, 'Brust', [], 30)],
+    0,
+    7 * day,
+  );
+  assert.deepEqual(result, [
+    { muscle: 'Beine', sets: 25, status: 'viel' },
+    { muscle: 'Gesäß', sets: 12.5, status: 'gut' },
+    { muscle: 'Brust', sets: 12, status: 'gut' },
+    { muscle: 'Trizeps', sets: 6, status: 'wenig' },
+  ]);
 });
