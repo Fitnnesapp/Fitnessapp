@@ -11,6 +11,7 @@ import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
 import { getExercise, secondaryMuscles } from '@/data/exercises';
 import { confirmAction } from '@/lib/confirm';
+import { compareWithPrevious } from '@/lib/logic/compare';
 import { formatDuration } from '@/lib/logic/format';
 import { muscleLoad } from '@/lib/logic/muscle-load';
 import { findRecords } from '@/lib/logic/personal-records';
@@ -38,6 +39,8 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
     () => findRecords([...history].sort((a, b) => a.startedAt - b.startedAt)),
     [history],
   );
+
+  const comparison = useMemo(() => (workoutId ? compareWithPrevious(history, workoutId) : null), [history, workoutId]);
 
   if (!workout) {
     return (
@@ -84,6 +87,34 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
           { label: 'Rekorde', value: String(recordCount) },
         ]}
       />
+
+      {comparison ? (
+        <Card>
+          <AppText variant="eyebrow" color="textSecondary">
+            Im Vergleich zum {new Date(comparison.previous.startedAt).toLocaleDateString('de-DE', { day: 'numeric', month: 'long' })}
+          </AppText>
+          <AppText variant="title" color={comparison.volumeDeltaKg >= 0 ? 'accent' : 'text'}>
+            {comparison.volumePct !== null
+              ? `${comparison.volumePct > 0 ? '+' : ''}${comparison.volumePct} % Volumen`
+              : `${comparison.volumeDeltaKg >= 0 ? '+' : ''}${formatWeight(comparison.volumeDeltaKg, units)}`}
+          </AppText>
+          {comparison.exercises
+            .filter((delta) => delta.topKgDelta > 0 || (delta.topKgDelta === 0 && delta.repsDelta > 0))
+            .slice(0, 3)
+            .map((delta) => (
+              <AppText key={delta.exerciseId} color="textSecondary">
+                {getExercise(delta.exerciseId)?.name ?? delta.exerciseId}:{' '}
+                {delta.topKgDelta > 0 ? `+${formatWeight(delta.topKgDelta, units)}` : `+${delta.repsDelta} Wdh.`} im besten
+                Satz
+              </AppText>
+            ))}
+          {comparison.volumeDeltaKg < 0 ? (
+            <AppText variant="caption" color="textSecondary">
+              Ein leichterer Tag. Auch der gehört dazu: Fortschritt verläuft in Wellen, nicht in einer Linie.
+            </AppText>
+          ) : null}
+        </Card>
+      ) : null}
 
       {summary.muscleGroups.length > 0 ? (
         <Card>
