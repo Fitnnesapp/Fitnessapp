@@ -136,3 +136,10 @@ test('Rumpf-Workouts werden nur ohne Alternative vorgeschlagen, Begründung nenn
   assert.equal(suggestion?.reason, 'Brust ist seit 3 Tagen erholt und bereit.');
   assert.equal(suggestRoutine([core], history, NOW, muscleOf)?.routine.id, 'core');
 });
+
+test('Anderer Vorschlag: ausgeschlossene Workouts werden übersprungen, bis keins mehr übrig ist', () => {
+  const a = routine('a', [['bank', 3]]);
+  const b = routine('b', [['rudern', 3]]);
+  assert.equal(suggestRoutine([a, b], [], NOW, muscleOf, { exclude: ['a'] })?.routine.id, 'b');
+  assert.equal(suggestRoutine([a, b], [], NOW, muscleOf, { exclude: ['a', 'b'] })?.routine.id, 'a');
+});

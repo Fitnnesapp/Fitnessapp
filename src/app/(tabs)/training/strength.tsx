@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GoalCard } from '@/components/goal-card';
 import { RoutineCard } from '@/components/routine-card';
@@ -22,6 +22,7 @@ import { ROUTINES } from '@/data/routines';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { confirmAction } from '@/lib/confirm';
+import { tapFeedback } from '@/lib/haptics';
 import { preferencesFromPlan, routineMinutes, suggestRoutine } from '@/lib/logic/routines';
 import { useGoalsStore } from '@/lib/storage/goals-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
@@ -41,10 +42,18 @@ export default function StrengthScreen() {
   const preferences = useMemo(() => preferencesFromPlan(answers), [answers]);
   const [setting, setSetting] = useState<RoutineSetting | null>(preferences.setting ?? null);
 
+  const [skipped, setSkipped] = useState<string[]>([]);
   const suggestion = useMemo(
-    () => suggestRoutine(ROUTINES, history, now, muscleOf, preferences),
-    [history, now, preferences],
+    () => suggestRoutine(ROUTINES, history, now, muscleOf, { ...preferences, exclude: skipped }),
+    [history, now, preferences, skipped],
   );
+
+  function nextSuggestion() {
+    if (!suggestion) return;
+    const current = suggestion.routine.id;
+    // Wurden schon alle passenden Workouts übersprungen, beginnt die Runde von vorn
+    setSkipped((previous) => (previous.includes(current) ? [current] : [...previous, current]));
+  }
   const routines = ROUTINES.filter((routine) => !setting || routine.setting === setting);
 
   function start(exerciseIds?: string[]) {
@@ -99,6 +108,20 @@ export default function StrengthScreen() {
               </AppText>
             </View>
           </ImageCard>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Anderen Vorschlag zeigen"
+            onPress={() => {
+              tapFeedback();
+              nextSuggestion();
+            }}
+            hitSlop={8}
+            style={({ pressed }) => [styles.another, pressed && styles.pressed]}>
+            <Ionicons name="shuffle" size={16} color={theme.textSecondary} />
+            <AppText variant="label" color="textSecondary">
+              Anderer Vorschlag
+            </AppText>
+          </Pressable>
         </FadeIn>
       ) : null}
 
@@ -189,5 +212,13 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: Spacing.two, alignItems: 'center' },
   chips: { gap: Spacing.two },
   flex: { flex: 1 },
+  another: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
+    paddingTop: Spacing.three,
+  },
+  pressed: { opacity: 0.6 },
   emptyCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
 });

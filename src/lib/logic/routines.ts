@@ -68,6 +68,8 @@ export type RoutinePreferences = {
   setting?: RoutineSetting;
   /** Einsteiger bekommen keine Fortgeschrittenen-Workouts vorgeschlagen. */
   difficulty?: Difficulty;
+  /** Bereits abgelehnte Vorschläge ("Anderer Vorschlag"); sind alle ausgeschlossen, gilt die Liste nicht */
+  exclude?: readonly string[];
 };
 
 export type RoutineSuggestion = { routine: Routine; reason: string };
@@ -91,6 +93,8 @@ export function suggestRoutine(
     const easy = pool.filter((routine) => routine.difficulty === 'Einsteiger');
     if (easy.length > 0) pool = easy;
   }
+  const remaining = pool.filter((routine) => !preferences.exclude?.includes(routine.id));
+  if (remaining.length > 0) pool = remaining;
   // Reine Rumpf-Einheiten ergänzen, sie ersetzen kein Haupttraining
   const main = pool.filter((routine) => routine.focus !== 'Rumpf');
   if (main.length > 0) pool = main;
