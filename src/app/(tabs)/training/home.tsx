@@ -6,10 +6,13 @@ import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
-import { Radius, Spacing } from '@/constants/theme';
+import { ImageCard } from '@/components/ui/image-card';
+import { OnImage, Radius, Spacing } from '@/constants/theme';
+import { sceneForProgramCategory } from '@/data/images';
 import { CATEGORIES, isFreeProgram, PROGRAMS } from '@/data/programs';
 import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
+import { tapFeedback } from '@/lib/haptics';
 import { programMinutes } from '@/lib/logic/timeline';
 import type { ProgramCategory, ProgramDifficulty } from '@/types/home';
 
@@ -55,9 +58,29 @@ export default function HomeProgramsScreen() {
           </AppText>
           <AppText color="textSecondary">Geführt, ohne Geräte. Wähle nach Ziel, Zeit oder Niveau.</AppText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-            {CATEGORIES.map((item) => (
-              <Chip key={item} label={item} selected={category === item} onPress={() => setCategory(category === item ? null : item)} />
-            ))}
+            {CATEGORIES.map((item) => {
+              const selected = category === item;
+              return (
+                <ImageCard
+                  key={item}
+                  source={sceneForProgramCategory(item)}
+                  height={112}
+                  scrim={0.9}
+                  onPress={() => {
+                    tapFeedback();
+                    setCategory(selected ? null : item);
+                  }}
+                  accessibilityLabel={`${item}${selected ? ', ausgewählt' : ''}`}
+                  style={[styles.categoryTile, { borderColor: selected ? theme.accent : 'transparent' }]}>
+                  <View style={styles.categoryLabel}>
+                    {selected ? <Ionicons name="checkmark-circle" size={18} color={OnImage.accent} /> : null}
+                    <AppText variant="heading" style={styles.onImage}>
+                      {item}
+                    </AppText>
+                  </View>
+                </ImageCard>
+              );
+            })}
           </ScrollView>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
             {DURATIONS.map((item) => (
@@ -118,4 +141,7 @@ const styles = StyleSheet.create({
   minutes: { width: 64, height: 64, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center' },
   minutesNumber: { fontSize: 26, lineHeight: 28 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
+  categoryTile: { width: 148, borderWidth: 2, borderRadius: Radius.large + 2 },
+  categoryLabel: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one, marginLeft: -Spacing.two, marginBottom: -Spacing.two },
+  onImage: { color: '#FFFFFF' },
 });
