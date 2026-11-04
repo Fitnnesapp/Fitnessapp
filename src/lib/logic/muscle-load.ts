@@ -80,7 +80,7 @@ export function muscleRecovery(workouts: readonly RecoveryWorkout[], now: number
 
 /**
  * Wirksamer Bereich harter Sätze pro Muskelgruppe und Woche. Mehr Sätze bringen bis etwa
- * 10 bis 20 pro Woche mehr Muskelzuwachs (Schoenfeld, Ogborn & Krieger 2017; Pelland et al. 2024).
+ * 10 bis 20 pro Woche mehr Muskelzuwachs (Schoenfeld, Ogborn & Krieger 2017).
  */
 export const WEEKLY_SET_RANGE = { min: 10, max: 20 } as const;
 

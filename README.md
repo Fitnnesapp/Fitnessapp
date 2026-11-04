@@ -14,7 +14,7 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
 - Tab-Navigation: Training, Verlauf, Profil, mit Platzhalter-Screens für die kommenden Phasen
 - Profil mit Name und Einheiten, lokal gespeichert; Löschen aller Daten
 - **Phase 1 (Kraft-Logger):**
-  - Übungsbibliothek mit 57 Übungen, Suche, Filter nach Muskelgruppe und Equipment, Detailansicht mit Anleitung
+  - Übungsbibliothek mit 62 Übungen, Suche, Filter nach Muskelgruppe und Equipment, Detailansicht mit Anleitung
   - Workout-Flow: Übungen hinzufügen, Sätze mit Gewicht, Wiederholungen und RPE, Aufwärmsätze, Ruhezeit-Timer
   - Autosave: ein laufendes Workout übersteht App-Neustarts
   - Zusammenfassung (Dauer, Volumen, Sätze, Rekorde), Verlauf nach Datum, Fortschrittsgrafik pro Übung
@@ -33,6 +33,18 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
 - **Challenges (offline):** Winter Arc 2026, 100 km im November, Neustart 2027, 30 Tage Gewohnheit; Fortschritt aus dem Verlauf, Etappen, faire Ziele für Spät-Einsteiger
 - **Events:** große Läufe und Fitness-Wettkämpfe im Tab „Entdecken“, live aus `src/data/events.json` auf `main` geladen, offline aus dem Cache
 - **Design-Begründung mit Studien:** [docs/design-psychologie.md](docs/design-psychologie.md)
+- **Ausbau November 2026:**
+  - **Fertige Kraft-Workouts:** 10 kuratierte Workouts für Studio und Zuhause (Ganzkörper, 5×5, Push, Pull, Beine & Po, Rumpf, Kurzhantel, Körpergewicht) mit Sätzen, Zielbereich und Pause je Übung; „Heute empfohlen“ nach Muskelerholung, passend zu Ort und Niveau aus dem Plan
+  - **Progressions-Coach im Workout:** letztes Training je Übung und Ziel für heute (doppelte Progression), mit einem Tipp übernehmen; Ruhezeit startet mit der Pause der Übung
+  - **Muskelkarte:** eigene SVG-Körperkarte vorne/hinten mit Haupt- und Hilfsmuskeln in Übungsdetails, Workouts, Zusammenfassung und Muskelanalyse; antippbar als Filter in der Übungsbibliothek
+  - **Muskel-Erholung** auf dem Start-Tab (erholte Muskeln leuchten), **Wochensätze pro Muskel** mit dem Bereich 10 bis 20 Sätze
+  - **Übungen tauschen** im laufenden Workout (Gerät besetzt) und Alternativen in den Übungsdetails
+  - **Vergleich mit dem letzten ähnlichen Workout** in der Zusammenfassung (Volumen, bester Satz)
+  - **Running-Seite neu:** Bestzeiten, Wettkampf-Prognose 5 km bis Marathon (Riegel-Formel), Lauf-Ideen nach dem 80/20-Prinzip, letzte Läufe
+  - **Beständigkeits-Raster** der letzten 18 Wochen im Fortschritt (aktive Wochen statt lückenloser Tage)
+  - **Datensicherung:** Export aller Daten als JSON-Datei und geprüftes Einspielen auf einem neuen Gerät (ohne Kaufstatus)
+  - Animationen (Ringe, Balken, Einblenden; respektiert „Bewegung reduzieren“) und Haptik bei wichtigen Momenten
+  - Fix: Bildkarten zeigten im Browser nur den linken Bildrand
 - **Phase 8 (Ausbau):**
   - Jahresrückblick (Start-Tab): Workouts, Zeit, Distanz, Volumen, Rekorde, längste Serie, stärkster Monat, Lieblingstag und -übung, wählbares Jahr
   - Vorschlag für heute aus einfachen, nachvollziehbaren Regeln (keine KI); führt nie zu einem Premium-Programm
@@ -71,5 +83,5 @@ npm start        # Dev-Server, dann w für den Browser (localhost:8081) oder mit
 ```bash
 npm run typecheck    # TypeScript prüfen
 npx eslint src       # Lint
-npm test             # Unit-Tests der Logik (Rekorde, Volumen, Einheiten, Lauf-Auswertung)
+npm test             # Unit-Tests der Logik (Rekorde, Volumen, Einheiten, Lauf-Auswertung, Workouts, Erholung, Sicherung)
 ```

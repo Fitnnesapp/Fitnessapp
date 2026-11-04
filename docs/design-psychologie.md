@@ -41,6 +41,19 @@ was auf Sucht oder Verlustangst zielt.** Der Abschnitt „Bewusst vermieden“ g
 (Erfolgsmoment, Rekorde) · 4. Fortschritt mit Wochenrückblick · 5. Profil · 6. Erinnerung zur selbst gewählten Uhrzeit.
 Entdecken bleibt im Aufbau unverändert, übernimmt aber gemeinsame Bausteine wie Schrift und Karten.
 
+## Trainingswissenschaft hinter dem Ausbau (November 2026)
+
+| Grundlage | Kernaussage | Umsetzung in der App |
+|---|---|---|
+| **ACSM-Positionspapier (2009)**, Progression im Krafttraining | Progressive Überlastung ist der zentrale Reiz; Grundübungen zuerst, 1 bis 3 Minuten Pause je nach Last. | Aufbau der fertigen Kraft-Workouts, Pausen je Übung, Ruhezeit startet automatisch mit dieser Pause. |
+| **Plotkin et al. (2022)**, Last- vs. Wiederholungssteigerung | Mehr Wiederholungen und mehr Gewicht führen zu ähnlichen Zuwächsen. | Progressions-Coach: erst eine Wiederholung mehr, ab der Obergrenze mehr Gewicht (doppelte Progression). |
+| **Schoenfeld, Ogborn & Krieger (2016)**, Trainingshäufigkeit | Zwei Einheiten pro Muskel und Woche wirken besser als eine. | „Heute empfohlen“ wählt das Workout, dessen Hauptmuskeln am längsten ausgeruht sind. |
+| **Schoenfeld, Ogborn & Krieger (2017)**, Dosis-Wirkung des Volumens | Mehr wöchentliche Sätze bringen mehr Muskelzuwachs, als Richtwert etwa 10 und mehr Sätze pro Muskel. | Karte „Sätze pro Muskel“ mit markiertem Bereich 10 bis 20, Hilfsmuskeln zählen halb. |
+| **McLester et al. (2003)**, Erholung nach Krafttraining | Nach hartem Training braucht die Leistungsfähigkeit oft 48 bis 72 Stunden. | Muskel-Erholung auf dem Start-Tab als einfache Faustregel, ausdrücklich keine medizinische Aussage. |
+| **Riegel (1981)**, Leistung und Ausdauer | Laufzeiten lassen sich mit T2 = T1 × (D2/D1)^1,06 auf andere Strecken umrechnen. | Wettkampf-Prognose aus dem stärksten Lauf der letzten 120 Tage, nur bei sinnvollen Sprüngen, als Schätzung gekennzeichnet. |
+| **Seiler (2010)**, Intensitätsverteilung im Ausdauersport | Erfolgreiche Ausdauersportler trainieren rund 80 % locker und 20 % intensiv. | Lauf-Ideen mit Kennzeichnung locker, mittel, hart. |
+| **Lally et al. (2010)**, Gewohnheitsbildung | Einzelne ausgelassene Tage schaden der Gewohnheit kaum. | Beständigkeits-Raster zählt aktive Wochen, Ruhetage sind kein Scheitern. |
+
 ## Bewusst vermieden
 
 - Keine Mechaniken, die auf Sucht zielen (endloses Scrollen, Verlustangst, zufällige Belohnungen nach Spielautomaten-Prinzip). Ziel ist eine Gewohnheit, die Menschen guttut, nicht maximale Bildschirmzeit.
@@ -63,6 +76,13 @@ Entdecken bleibt im Aufbau unverändert, übernimmt aber gemeinsame Bausteine wi
 - Ryan, R. M. & Deci, E. L. (2000). Self-determination theory and the facilitation of intrinsic motivation, social development, and well-being. *American Psychologist, 55*(1), 68–78.
 - Wood, W. & Neal, D. T. (2007). A new look at habits and the habit-goal interface. *Psychological Review, 114*(4), 843–863.
 - Mazéas, A., Duclos, M., Pereira, B. & Chalabaev, A. (2022). Evaluating the effectiveness of gamification on physical activity: Systematic review and meta-analysis of randomized controlled trials. *Journal of Medical Internet Research, 24*(1), e26779.
+- American College of Sports Medicine (2009). Progression models in resistance training for healthy adults. *Medicine & Science in Sports & Exercise, 41*(3), 687–708.
+- Plotkin, D. et al. (2022). Progressive overload without progressing load? The effects of load or repetition progression on muscular adaptations. *PeerJ, 10*, e14142.
+- Schoenfeld, B. J., Ogborn, D. & Krieger, J. W. (2016). Effects of resistance training frequency on measures of muscle hypertrophy: A systematic review and meta-analysis. *Sports Medicine, 46*(11), 1689–1697.
+- Schoenfeld, B. J., Ogborn, D. & Krieger, J. W. (2017). Dose-response relationship between weekly resistance training volume and increases in muscle mass: A systematic review and meta-analysis. *Journal of Sports Sciences, 35*(11), 1073–1082.
+- McLester, J. R. et al. (2003). A series of studies: A practical protocol for testing muscular endurance recovery. *Journal of Strength and Conditioning Research, 17*(2), 259–273.
+- Riegel, P. S. (1981). Athletic records and human endurance. *American Scientist, 69*(3), 285–290.
+- Seiler, S. (2010). What is best practice for training intensity and duration distribution in endurance athletes? *International Journal of Sports Physiology and Performance, 5*(3), 276–291.
 
 ## Pflege
 
