@@ -36,7 +36,7 @@ import { closestGoal } from '@/lib/logic/goals';
 import { daysUntilEvent, nextSavedEvent, upcomingEvents } from '@/lib/logic/events';
 import { buildFeed } from '@/lib/logic/feed';
 import { compareWithLastWeek, trainingIdentity } from '@/lib/logic/identity';
-import { dayHeading, greeting, nextBadge, WEEKLY_GOAL_DAYS, weeklyGoal } from '@/lib/logic/motivation';
+import { dayHeading, greeting, nextBadge, weeklyGoal } from '@/lib/logic/motivation';
 import { missedLastPlanned, nextSession, sessionsForDay, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
 import { suggestWorkout, type SuggestionTarget } from '@/lib/logic/suggestions';
 import type { Units } from '@/lib/logic/units';
@@ -100,6 +100,7 @@ export default function DashboardScreen() {
   const theme = useTheme();
   const units = useSettings((state) => state.units);
   const name = useSettings((state) => state.displayName).trim();
+  const goalSetting = useSettings((state) => state.weeklyGoalDays);
   const activities = useActivities();
   const now = useNow(60_000);
   const strengthHistory = useWorkouts((state) => state.history);
@@ -133,8 +134,8 @@ export default function DashboardScreen() {
 
   const week = useMemo(() => weekStats(activities, weekStart(now)), [activities, now]);
   const goal = useMemo(
-    () => weeklyGoal(week.perDay, weekGoalDays(plan, weekStart(now), WEEKLY_GOAL_DAYS)),
-    [week, plan, now],
+    () => weeklyGoal(week.perDay, weekGoalDays(plan, weekStart(now), goalSetting)),
+    [week, plan, now, goalSetting],
   );
   const streak = useMemo(() => streaks(activities, now), [activities, now]);
   const identity = useMemo(() => trainingIdentity(activities, now), [activities, now]);

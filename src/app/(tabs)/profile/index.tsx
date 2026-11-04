@@ -74,6 +74,8 @@ export default function ProfileScreen() {
   const resetChallenges = useChallengeStore((state) => state.reset);
   const resetGoals = useGoalsStore((state) => state.reset);
   const appearance = useSettings((state) => state.appearance);
+  const weeklyGoalDays = useSettings((state) => state.weeklyGoalDays);
+  const setWeeklyGoalDays = useSettings((state) => state.setWeeklyGoalDays);
   const setAppearance = useSettings((state) => state.setAppearance);
   const resetNews = useNewsStore((state) => state.reset);
   const resetSavedEvents = useSavedEvents((state) => state.reset);
@@ -238,6 +240,27 @@ export default function ProfileScreen() {
               />
             ))}
           </View>
+        </View>
+        <View style={styles.field}>
+          <AppText variant="label" color="textSecondary">
+            Wochenziel
+          </AppText>
+          {plan ? (
+            <AppText variant="caption" color="textSecondary">
+              Dein Plan legt das Wochenziel fest: so viele Tage, wie du eingeplant hast.
+            </AppText>
+          ) : (
+            <View style={styles.chips}>
+              {[2, 3, 4, 5, 6].map((days) => (
+                <Chip
+                  key={days}
+                  label={`${days} Tage`}
+                  selected={weeklyGoalDays === days}
+                  onPress={() => setWeeklyGoalDays(days)}
+                />
+              ))}
+            </View>
+          )}
         </View>
         <View style={styles.field}>
           <AppText variant="label" color="textSecondary">

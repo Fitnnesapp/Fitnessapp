@@ -11,7 +11,6 @@ import { useActivities } from '@/hooks/use-activities';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { weekStart, type ActivityType } from '@/lib/logic/activity';
-import { WEEKLY_GOAL_DAYS } from '@/lib/logic/motivation';
 import { weekGoalDays } from '@/lib/logic/plan';
 import type { Units } from '@/lib/logic/units';
 import { bestWeek, lastWeekReview, lifetimeTotals, weeklyTotals } from '@/lib/logic/weekly-review';
@@ -46,7 +45,8 @@ export function ProgressOverview() {
   const activities = useActivities();
 
   const lastStart = weekStart(weekStart(now) - 43_200_000);
-  const goal = weekGoalDays(plan, lastStart, WEEKLY_GOAL_DAYS);
+  const goalSetting = useSettings((state) => state.weeklyGoalDays);
+  const goal = weekGoalDays(plan, lastStart, goalSetting);
   const review = useMemo(() => lastWeekReview(activities, now, goal), [activities, now, goal]);
   const trend = useMemo(() => weeklyTotals(activities, now, TREND_WEEKS), [activities, now]);
   const best = bestWeek(trend);
