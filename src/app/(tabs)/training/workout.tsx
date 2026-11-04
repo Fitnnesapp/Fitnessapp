@@ -37,7 +37,10 @@ export default function WorkoutScreen() {
 
   const now = useNow(1000, active !== null);
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
-  const [restSeconds, setRestSeconds] = useState(90);
+  // Startwert ist die zuletzt selbst gewählte Pause; Vorgaben fertiger Workouts ändern nur dieses Training
+  const preferredRest = useSettings((state) => state.restSeconds);
+  const setPreferredRest = useSettings((state) => state.setRestSeconds);
+  const [restSeconds, setRestSeconds] = useState(preferredRest);
   const [error, setError] = useState<string | null>(null);
 
   // Rekorde gegen den bisherigen Verlauf und die schon erledigten Sätze dieses Workouts prüfen
@@ -94,7 +97,10 @@ export default function WorkoutScreen() {
         endsAt={restEndsAt}
         onChangeEnd={setRestEndsAt}
         duration={restSeconds}
-        onChangeDuration={setRestSeconds}
+        onChangeDuration={(seconds) => {
+          setRestSeconds(seconds);
+          setPreferredRest(seconds);
+        }}
       />
 
       {active.exercises.length === 0 ? (

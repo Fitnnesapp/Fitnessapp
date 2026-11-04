@@ -16,6 +16,8 @@ type SettingsState = {
   appearance: Appearance;
   /** Wochenziel in Trainingstagen, wenn kein Plan aktiv ist */
   weeklyGoalDays: number;
+  /** Zuletzt gewählte Satzpause in Sekunden (Startwert im nächsten Workout) */
+  restSeconds: number;
   /** true, sobald der Speicher vom Gerät geladen wurde */
   hydrated: boolean;
   setDisplayName: (name: string) => void;
@@ -24,6 +26,7 @@ type SettingsState = {
   setStreakReminder: (enabled: boolean) => void;
   setAppearance: (appearance: Appearance) => void;
   setWeeklyGoalDays: (days: number) => void;
+  setRestSeconds: (seconds: number) => void;
   reset: () => void;
 };
 
@@ -34,15 +37,16 @@ const DEFAULTS = {
   streakReminder: false,
   appearance: 'system' as Appearance,
   weeklyGoalDays: 3,
+  restSeconds: 90,
 };
 
 type PersistedSettings = Pick<
   SettingsState,
-  'displayName' | 'units' | 'bodyWeightKg' | 'streakReminder' | 'appearance' | 'weeklyGoalDays'
+  'displayName' | 'units' | 'bodyWeightKg' | 'streakReminder' | 'appearance' | 'weeklyGoalDays' | 'restSeconds'
 >;
 
 /** Version des gespeicherten Formats. Bei Änderungen hochzählen und in `migrate` umwandeln. */
-const SETTINGS_STORE_VERSION = 2;
+const SETTINGS_STORE_VERSION = 3;
 
 /** Alle Einstellungen liegen ausschließlich lokal auf dem Gerät, es gibt keine Netzwerkzugriffe. */
 export const useSettings = create<SettingsState>()(
@@ -55,6 +59,7 @@ export const useSettings = create<SettingsState>()(
       setBodyWeightKg: (bodyWeightKg) => set({ bodyWeightKg }),
       setStreakReminder: (streakReminder) => set({ streakReminder }),
       setAppearance: (appearance) => set({ appearance }),
+      setRestSeconds: (seconds) => set({ restSeconds: Math.min(600, Math.max(15, Math.round(seconds))) }),
       setWeeklyGoalDays: (days) => set({ weeklyGoalDays: Math.min(7, Math.max(1, Math.round(days))) }),
       reset: () => set(DEFAULTS),
     }),
@@ -62,16 +67,26 @@ export const useSettings = create<SettingsState>()(
       name: 'fitnessapp-settings',
       version: SETTINGS_STORE_VERSION,
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: ({ displayName, units, bodyWeightKg, streakReminder, appearance, weeklyGoalDays }): PersistedSettings => ({
+      partialize: ({
         displayName,
         units,
         bodyWeightKg,
         streakReminder,
         appearance,
         weeklyGoalDays,
+        restSeconds,
+      }): PersistedSettings => ({
+        displayName,
+        units,
+        bodyWeightKg,
+        streakReminder,
+        appearance,
+        weeklyGoalDays,
+        restSeconds,
       }),
       // Version 0 → 1: neue Einstellung "Darstellung" (Standard: System)
-      // Version 1 → 2: Wochenziel ohne Plan (Standard: 3 Tage). Bestehende Werte bleiben jeweils erhalten.
+      // Version 1 → 2: Wochenziel ohne Plan (Standard: 3 Tage)
+      // Version 2 → 3: gemerkte Satzpause (Standard: 90 s). Bestehende Werte bleiben jeweils erhalten.
       migrate: (persisted) => ({ ...DEFAULTS, ...(persisted as Partial<PersistedSettings>) }),
       onRehydrateStorage: () => () => useSettings.setState({ hydrated: true }),
     },
