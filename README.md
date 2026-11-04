@@ -49,7 +49,11 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - **Aufwärmsätze mit einem Tipp** passend zum Arbeitsgewicht (ladbare Gewichte, nie unter der leeren Stange)
   - Home-Workouts mit Bildkacheln je Kategorie, Programmdetails im neuen Stil
   - Einmalige Karte „Neu in deiner App“ für bestehende Nutzer; freundlicher Wochenrückblick für neue Nutzer
+  - Workout-Player mit Ring-Timer und Vorschau auf die nächste Übung; Kilometerzeiten als Balken
+  - Übungsfortschritt umschaltbar (Höchstgewicht, geschätztes 1RM, Volumen); Muskeln antippen öffnet passende Übungen
+  - Workouts und Läufe als Text teilen (Teilen-Menü des Systems, nichts wird hochgeladen)
   - Fix: Bildkarten zeigten im Browser nur den linken Bildrand
+  - Fix: Diagrammbeschriftung im Browser serifenlos und nicht mehr abgeschnitten
 - **Phase 8 (Ausbau):**
   - Jahresrückblick (Start-Tab): Workouts, Zeit, Distanz, Volumen, Rekorde, längste Serie, stärkster Monat, Lieblingstag und -übung, wählbares Jahr
   - Vorschlag für heute aus einfachen, nachvollziehbaren Regeln (keine KI); führt nie zu einem Premium-Programm
