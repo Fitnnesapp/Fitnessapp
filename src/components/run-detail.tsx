@@ -9,10 +9,12 @@ import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
+import { Radius, Spacing } from '@/constants/theme';
 import { confirmAction } from '@/lib/confirm';
 import { formatClock } from '@/lib/logic/format';
 import { findRunRecords, kmSplits, paceSecPerKm } from '@/lib/logic/run-stats';
 import { formatDistance, formatElevation, formatPace, paceUnitLabel } from '@/lib/logic/units';
+import { useTheme } from '@/hooks/use-theme';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import type { RunRecordType } from '@/types/running';
@@ -32,6 +34,7 @@ type RunDetailProps = {
 /** Zusammenfassung eines Laufs mit Strecke, Kilometerzeiten und Rekorden. */
 export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
   const router = useRouter();
+  const theme = useTheme();
   const units = useSettings((state) => state.units);
   const history = useRunStore((state) => state.history);
   const deleteRun = useRunStore((state) => state.deleteRun);
@@ -99,16 +102,35 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
       {splits.length > 0 ? (
         <Card>
           <AppText variant="heading">Kilometerzeiten</AppText>
-          {splits.map((split) => (
-            <View key={split.km} style={styles.splitRow}>
-              <AppText color="textSecondary">{split.km}</AppText>
-              <AppText>
-                {formatPace(split.seconds, 'metric')} {paceUnitLabel('metric')}
-              </AppText>
-            </View>
-          ))}
+          {splits.map((split) => {
+            const isFastest = split.seconds === fastest;
+            // Schnellere Kilometer bekommen längere Balken (Kehrwert der Zeit)
+            const share = fastest ? fastest / split.seconds : 0;
+            return (
+              <View
+                key={split.km}
+                style={styles.splitRow}
+                accessible
+                accessibilityLabel={`Kilometer ${split.km}: ${formatPace(split.seconds, 'metric')} ${paceUnitLabel('metric')}${isFastest ? ', schnellster' : ''}`}>
+                <AppText color="textSecondary" style={styles.splitKm}>
+                  {split.km}
+                </AppText>
+                <View style={styles.splitTrack}>
+                  <View
+                    style={[
+                      styles.splitBar,
+                      { width: `${Math.max(8, share * 100)}%`, backgroundColor: isFastest ? theme.accent : theme.accentSoft },
+                    ]}
+                  />
+                </View>
+                <AppText variant="label" color={isFastest ? 'accent' : 'text'} style={styles.splitPace}>
+                  {formatPace(split.seconds, 'metric')}
+                </AppText>
+              </View>
+            );
+          })}
           <AppText variant="caption" color="textSecondary">
-            Pro vollem Kilometer, unabhängig von der Einheit.
+            Minuten pro vollem Kilometer, unabhängig von der Einheit. Längerer Balken heißt schneller.
           </AppText>
         </Card>
       ) : null}
@@ -120,5 +142,9 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
 }
 
 const styles = StyleSheet.create({
-  splitRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  splitRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  splitKm: { width: 22 },
+  splitTrack: { flex: 1, height: 22, justifyContent: 'center' },
+  splitBar: { height: 22, borderRadius: Radius.small },
+  splitPace: { width: 44, textAlign: 'right' },
 });
