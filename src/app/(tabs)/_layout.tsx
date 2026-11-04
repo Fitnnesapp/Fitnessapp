@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname, useRouter, type Href } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
@@ -16,6 +16,21 @@ type IconName = keyof typeof Ionicons.glyphMap;
  */
 export default function TabsLayout() {
   const theme = useTheme();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  /**
+   * Tippt man auf den Tab, in dem man schon ist, geht es zurück zu dessen Startseite (wie in iOS-Apps üblich).
+   * Ohne das blieb man z.B. im Rechner stehen, wenn man auf "Training" tippte.
+   */
+  const backToRoot = (root: string) => ({
+    tabPress: (event: { preventDefault: () => void }) => {
+      if (pathname.startsWith(`${root}/`)) {
+        event.preventDefault();
+        router.dismissTo(root as Href);
+      }
+    },
+  });
   const workoutRunning = useWorkouts((state) => state.active !== null);
   const runRunning = useRunStore((state) => state.active !== null);
   const busy = workoutRunning || runRunning;
@@ -34,9 +49,14 @@ export default function TabsLayout() {
         tabBarStyle: { backgroundColor: theme.surface, borderTopColor: theme.border },
       }}>
       <Tabs.Screen name="dashboard" options={{ title: 'Start', tabBarIcon: icon('home-outline', 'home') }} />
-      <Tabs.Screen name="discover" options={{ title: 'Entdecken', tabBarIcon: icon('compass-outline', 'compass') }} />
+      <Tabs.Screen
+        name="discover"
+        listeners={backToRoot('/discover')}
+        options={{ title: 'Entdecken', tabBarIcon: icon('compass-outline', 'compass') }}
+      />
       <Tabs.Screen
         name="training"
+        listeners={backToRoot('/training')}
         options={{
           title: 'Training',
           tabBarAccessibilityLabel: busy ? 'Training, eine Einheit läuft gerade' : 'Training starten',
@@ -50,8 +70,16 @@ export default function TabsLayout() {
           ),
         }}
       />
-      <Tabs.Screen name="history" options={{ title: 'Fortschritt', tabBarIcon: icon('stats-chart-outline', 'stats-chart') }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profil', tabBarIcon: icon('person-outline', 'person') }} />
+      <Tabs.Screen
+        name="history"
+        listeners={backToRoot('/history')}
+        options={{ title: 'Fortschritt', tabBarIcon: icon('stats-chart-outline', 'stats-chart') }}
+      />
+      <Tabs.Screen
+        name="profile"
+        listeners={backToRoot('/profile')}
+        options={{ title: 'Profil', tabBarIcon: icon('person-outline', 'person') }}
+      />
     </Tabs>
   );
 }
