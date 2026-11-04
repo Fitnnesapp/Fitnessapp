@@ -55,7 +55,7 @@ export default function SearchScreen() {
       return;
     }
     // Suche schließen und das Ziel öffnen
-    router.back();
+    if (router.canGoBack()) router.back();
     router.push(entry.target.href);
   }
 
@@ -82,7 +82,7 @@ export default function SearchScreen() {
             </Pressable>
           ) : null}
         </View>
-        <Pressable accessibilityRole="button" onPress={() => router.back()} hitSlop={10}>
+        <Pressable accessibilityRole="button" onPress={() => (router.canGoBack() ? router.back() : router.replace('/dashboard'))} hitSlop={10}>
           <AppText variant="label" color="accent">
             Fertig
           </AppText>

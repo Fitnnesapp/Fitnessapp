@@ -22,6 +22,7 @@ import {
   WEEKDAY_NAMES,
   type PlanSession,
 } from '@/lib/logic/plan';
+import { confirmAction } from '@/lib/confirm';
 import { hrefForSession } from '@/lib/plan-href';
 import { usePlanStore } from '@/lib/storage/plan-store';
 
@@ -37,6 +38,7 @@ export default function PlanScreen() {
   const theme = useTheme();
   const now = useNow(60_000);
   const plan = usePlanStore((state) => state.plan);
+  const clearPlan = usePlanStore((state) => state.clearPlan);
   const { neu } = useLocalSearchParams<{ neu?: string }>();
 
   if (!plan) {
@@ -189,6 +191,22 @@ export default function PlanScreen() {
 
       {neu ? <Button title="Los geht's" onPress={() => router.replace('/dashboard')} /> : null}
       <Button title="Fragen neu beantworten" variant="secondary" onPress={() => router.push('/plan/setup')} />
+      <Button
+        title="Plan beenden"
+        variant="ghost"
+        onPress={() =>
+          confirmAction({
+            title: 'Plan beenden?',
+            message:
+              'Dein Wochenplan wird entfernt. Workouts, Serie und Abzeichen bleiben erhalten. Du kannst jederzeit einen neuen Plan erstellen.',
+            confirmLabel: 'Beenden',
+            onConfirm: () => {
+              clearPlan();
+              router.replace('/dashboard');
+            },
+          })
+        }
+      />
     </Screen>
   );
 }

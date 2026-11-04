@@ -66,7 +66,9 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
       confirmLabel: 'Löschen',
       onConfirm: () => {
         deleteRun(run!.id);
-        router.back();
+        // Nach dem Löschen zurück, nach einem frisch beendeten Training gibt es keinen sinnvollen Rückweg
+        if (!justFinished && router.canGoBack()) router.back();
+        else router.replace('/history');
       },
     });
   }

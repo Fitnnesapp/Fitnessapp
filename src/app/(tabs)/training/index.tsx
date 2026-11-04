@@ -4,6 +4,7 @@ import { useMemo, type ComponentProps } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
+import { ActiveSessions } from '@/components/active-sessions';
 import { LinkTile } from '@/components/link-tile';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
@@ -20,12 +21,10 @@ import { useNow } from '@/hooks/use-now';
 import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
 import { feedDayLabel, strengthTitle } from '@/lib/logic/feed';
-import { formatClock } from '@/lib/logic/format';
 import { ifThenSentence, sessionsForDay } from '@/lib/logic/plan';
 import { quickestProgram } from '@/lib/logic/quick-win';
 import { repeatOptions, type RepeatOption } from '@/lib/logic/repeat';
 import { preferencesFromPlan, routineMinutes, suggestRoutine } from '@/lib/logic/routines';
-import { activeElapsedAt } from '@/lib/logic/run-stats';
 import { formatDistance, type Units } from '@/lib/logic/units';
 import { hrefForSession } from '@/lib/plan-href';
 import { useHomeSessions } from '@/lib/storage/home-store';
@@ -69,7 +68,7 @@ export default function TrainingScreen() {
   const activities = useActivities();
   const { isPremium } = useSubscription();
   // Sekundentakt nur, solange eine Einheit läuft, sonst reicht eine Minute für "Heute"/"Gestern"
-  const now = useNow(activeWorkout || activeRun ? 1_000 : 60_000);
+  const now = useNow(60_000);
   // Auf die Stunde gerundet, damit der Vorschlag nicht bei jedem Sekundentakt neu berechnet wird
   const hour = Math.floor(now / 3_600_000);
   const answers = plan?.answers;
@@ -113,22 +112,7 @@ export default function TrainingScreen() {
       </View>
 
       {/* 1. Was gerade läuft */}
-      {activeWorkout ? (
-        <ActiveCard
-          icon="barbell"
-          title="Krafttraining läuft"
-          text={`${activeWorkout.exercises.length} ${activeWorkout.exercises.length === 1 ? 'Übung' : 'Übungen'} · seit ${formatClock(now - activeWorkout.startedAt)}`}
-          onPress={() => router.push('/training/workout')}
-        />
-      ) : null}
-      {activeRun ? (
-        <ActiveCard
-          icon="walk"
-          title={activeRun.status === 'paused' ? 'Lauf pausiert' : 'Lauf läuft'}
-          text={`${formatDistance(activeRun.distanceM, units)} · ${formatClock(activeElapsedAt(activeRun, now))}`}
-          onPress={() => router.push('/training/run')}
-        />
-      ) : null}
+      <ActiveSessions />
 
       {/* 2. Heute im Plan: der eigene Wenn-Dann-Satz macht aus der Absicht eine Handlung */}
       {todaySession && plan && !busy ? (
@@ -283,29 +267,6 @@ function KindLabel({ kind, large }: { kind: Kind; large?: boolean }) {
   );
 }
 
-function ActiveCard({ icon, title, text, onPress }: { icon: IconName; title: string; text: string; onPress: () => void }) {
-  const theme = useTheme();
-  return (
-    <Card onPress={onPress} style={[styles.row, styles.active, { borderColor: theme.accent }]}>
-      <View style={[styles.rowIcon, { backgroundColor: theme.accent }]}>
-        <Ionicons name={icon} size={22} color={theme.onAccent} />
-      </View>
-      <View style={styles.flex}>
-        <AppText variant="eyebrow" color="accent">
-          Läuft gerade
-        </AppText>
-        <AppText variant="heading">{title}</AppText>
-        <AppText variant="caption" color="textSecondary" style={styles.tabular}>
-          {text}
-        </AppText>
-      </View>
-      <AppText variant="label" color="accent">
-        Fortsetzen
-      </AppText>
-    </Card>
-  );
-}
-
 function describe(option: RepeatOption, units: Units): { key: string; icon: IconName; title: string; detail: string } {
   if (option.kind === 'strength') {
     const groups = option.exerciseIds.map((id) => getExercise(id)?.muscleGroup).filter((g): g is MuscleGroup => Boolean(g));
@@ -325,7 +286,6 @@ function describe(option: RepeatOption, units: Units): { key: string; icon: Icon
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  tabular: { fontVariant: ['tabular-nums'] },
   header: { gap: Spacing.one },
   headline: { fontSize: 38, lineHeight: 42, fontWeight: '900' },
 
@@ -347,7 +307,6 @@ const styles = StyleSheet.create({
   quickNumber: { fontSize: 28, lineHeight: 30 },
 
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  active: { borderWidth: 2 },
   rowIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
 
   pair: { flexDirection: 'row', gap: Spacing.three },

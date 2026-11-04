@@ -67,7 +67,9 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
       confirmLabel: 'Löschen',
       onConfirm: () => {
         deleteWorkout(workout!.id);
-        router.back();
+        // Nach dem Löschen zurück, nach einem frisch beendeten Training gibt es keinen sinnvollen Rückweg
+        if (!justFinished && router.canGoBack()) router.back();
+        else router.replace('/history');
       },
     });
   }

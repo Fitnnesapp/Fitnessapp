@@ -12,6 +12,8 @@ type PlanState = {
 
   setPlan: (plan: TrainingPlan) => void;
   skipOnboarding: () => void;
+  /** Beendet den aktuellen Plan, der Einstieg erscheint nicht erneut */
+  clearPlan: () => void;
   reset: () => void;
 };
 
@@ -28,6 +30,7 @@ export const usePlanStore = create<PlanState>()(
 
       setPlan: (plan) => set({ plan, onboardingDone: true }),
       skipOnboarding: () => set({ onboardingDone: true }),
+      clearPlan: () => set({ plan: null, onboardingDone: true }),
       reset: () => set({ plan: null, onboardingDone: false }),
     }),
     {

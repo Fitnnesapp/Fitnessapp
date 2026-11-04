@@ -3,6 +3,7 @@ import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, type ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ActiveSessions } from '@/components/active-sessions';
 import { ChallengeCard } from '@/components/challenge-card';
 import { EventCard } from '@/components/event-card';
 import { FeedCard } from '@/components/feed-card';
@@ -223,6 +224,9 @@ export default function DashboardScreen() {
           <Ionicons name="search" size={20} color={theme.text} />
         </Pressable>
       </View>
+
+      {/* Angefangene Einheit immer zuerst: Weitermachen ist die wichtigste Handlung */}
+      <ActiveSessions />
 
       {/* Belohnung zuerst, wenn es etwas zu feiern gibt (echte Leistung, keine Zufallsbelohnung) */}
       {unseen.length > 0 ? (

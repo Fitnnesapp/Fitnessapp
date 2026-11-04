@@ -3,6 +3,8 @@ import { Tabs } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
+import { useRunStore } from '@/lib/storage/run-store';
+import { useWorkouts } from '@/lib/storage/workout-store';
 
 export const unstable_settings = { anchor: 'dashboard' };
 
@@ -14,6 +16,9 @@ type IconName = keyof typeof Ionicons.glyphMap;
  */
 export default function TabsLayout() {
   const theme = useTheme();
+  const workoutRunning = useWorkouts((state) => state.active !== null);
+  const runRunning = useRunStore((state) => state.active !== null);
+  const busy = workoutRunning || runRunning;
 
   const icon = (name: IconName, active: IconName) =>
     function TabIcon({ focused, size }: { focused: boolean; size: number }) {
@@ -34,7 +39,10 @@ export default function TabsLayout() {
         name="training"
         options={{
           title: 'Training',
-          tabBarAccessibilityLabel: 'Training starten',
+          tabBarAccessibilityLabel: busy ? 'Training, eine Einheit läuft gerade' : 'Training starten',
+          // Punkt am Training-Tab, solange ein Workout oder Lauf läuft
+          tabBarBadge: busy ? '' : undefined,
+          tabBarBadgeStyle: { backgroundColor: theme.danger, minWidth: 12, maxHeight: 12, borderRadius: 6, top: 2 },
           tabBarIcon: ({ focused }) => (
             <View style={[styles.action, { backgroundColor: theme.accent, opacity: focused ? 1 : 0.92 }]}>
               <Ionicons name="add" size={28} color="#0B0D10" />

@@ -44,7 +44,9 @@ export function HomeSessionDetail({ sessionId, justFinished = false }: HomeSessi
       confirmLabel: 'Löschen',
       onConfirm: () => {
         deleteSession(session!.id);
-        router.back();
+        // Nach dem Löschen zurück, nach einem frisch beendeten Training gibt es keinen sinnvollen Rückweg
+        if (!justFinished && router.canGoBack()) router.back();
+        else router.replace('/history');
       },
     });
   }

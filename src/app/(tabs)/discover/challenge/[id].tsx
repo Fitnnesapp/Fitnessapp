@@ -43,7 +43,7 @@ export default function ChallengeScreen() {
     return (
       <Screen>
         <AppText>Diese Challenge gibt es nicht mehr.</AppText>
-        <Button title="Zurück" variant="secondary" onPress={() => router.back()} />
+        <Button title="Zurück" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/discover'))} />
       </Screen>
     );
   }
