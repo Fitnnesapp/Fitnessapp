@@ -8,6 +8,7 @@ import { EventCard } from '@/components/event-card';
 import { FeedCard } from '@/components/feed-card';
 import { GoalCard } from '@/components/goal-card';
 import { RecoveryCard } from '@/components/recovery-card';
+import { WhatsNewCard } from '@/components/whats-new-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -302,6 +303,9 @@ export default function DashboardScreen() {
           <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
         </Card>
       )}
+
+      {/* Neue Funktionen einmalig zeigen, nur wer schon trainiert (für Neue ist ohnehin alles neu) */}
+      {activities.length > 0 ? <WhatsNewCard /> : null}
 
       {/* 3. Sichtbarer Fortschritt: große Zahlen, Ziel-Ring, Serie, fairer Vergleich mit dir selbst */}
       <SectionHeader title="Diese Woche" action={{ label: 'Fortschritt', onPress: () => router.push('/history') }} />

@@ -30,6 +30,7 @@ import { requestReminderPermission, remindersSupported } from '@/lib/notificatio
 import { useChallengeStore } from '@/lib/storage/challenge-store';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useGoalsStore } from '@/lib/storage/goals-store';
+import { useNewsStore } from '@/lib/storage/news-store';
 import { useHealthStore } from '@/lib/storage/health-store';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
@@ -65,6 +66,7 @@ export default function ProfileScreen() {
   const resetPlan = usePlanStore((state) => state.reset);
   const resetChallenges = useChallengeStore((state) => state.reset);
   const resetGoals = useGoalsStore((state) => state.reset);
+  const resetNews = useNewsStore((state) => state.reset);
   const health = useHealthStore();
   const streakReminder = useSettings((state) => state.streakReminder);
   const setStreakReminder = useSettings((state) => state.setStreakReminder);
@@ -114,6 +116,7 @@ export default function ProfileScreen() {
         resetPlan();
         resetChallenges();
         resetGoals();
+        resetNews();
         health.revoke();
         setWeightText('');
       },
