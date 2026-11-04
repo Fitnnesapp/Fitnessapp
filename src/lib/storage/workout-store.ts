@@ -18,6 +18,8 @@ type WorkoutState = {
   hydrated: boolean;
 
   startWorkout: (exerciseIds?: string[]) => void;
+  /** Startet ein fertiges Workout: pro Übung die vorgegebene Satzzahl, vorbelegt mit dem letzten Training oder dem Ziel. */
+  startRoutine: (items: { exerciseId: string; sets: number; targetReps: number | null }[]) => void;
   /** Startet ein gespeichertes Workout erneut mit gleichen Übungen und vorbelegten Sätzen. false, wenn es nicht existiert. */
   repeatWorkout: (workoutId: string) => boolean;
   discardWorkout: () => void;
@@ -72,6 +74,26 @@ export const useWorkouts = create<WorkoutState>()(
             exercises: exerciseIds.map((exerciseId) => ({
               exerciseId,
               sets: [prefilledSet(history, exerciseId, units)],
+            })),
+          },
+        });
+      },
+
+      startRoutine: (items) => {
+        const { history } = get();
+        const units = useSettings.getState().units;
+
+        set({
+          active: {
+            id: newId(),
+            startedAt: Date.now(),
+            exercises: items.map(({ exerciseId, sets, targetReps }) => ({
+              exerciseId,
+              sets: Array.from({ length: Math.max(1, sets) }, () => {
+                const prefilled = prefilledSet(history, exerciseId, units);
+                if (prefilled.reps === '' && targetReps !== null) prefilled.reps = String(targetReps);
+                return prefilled;
+              }),
             })),
           },
         });

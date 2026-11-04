@@ -8,9 +8,11 @@ type CardProps = {
   children: ReactNode;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  /** Vorlesetext für Screenreader, wenn die Karte tippbar ist */
+  accessibilityLabel?: string;
 };
 
-export function Card({ children, onPress, style }: CardProps) {
+export function Card({ children, onPress, style, accessibilityLabel }: CardProps) {
   const theme = useTheme();
   const base = [
     styles.card,
@@ -25,7 +27,11 @@ export function Card({ children, onPress, style }: CardProps) {
   }
 
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [base, pressed && styles.pressed]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      onPress={onPress}
+      style={({ pressed }) => [base, pressed && styles.pressed]}>
       {children}
     </Pressable>
   );

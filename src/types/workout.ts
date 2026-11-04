@@ -72,6 +72,29 @@ export type WorkoutTemplate = {
   exerciseIds: string[];
 };
 
+/** Ort, für den ein fertiges Kraft-Workout gedacht ist. */
+export type RoutineSetting = 'Studio' | 'Zuhause';
+
+/** Eine Übung in einem fertigen Workout mit Zielvorgabe. */
+export type RoutineItem = {
+  exerciseId: string;
+  sets: number;
+  /** Zielbereich, z.B. "8–10" oder "30 s" */
+  reps: string;
+  restSeconds: number;
+};
+
+/** Fertiges, kuratiertes Kraft-Workout zum Sofortstart. */
+export type Routine = {
+  id: string;
+  name: string;
+  description: string;
+  focus: 'Ganzkörper' | 'Oberkörper' | 'Push' | 'Pull' | 'Beine' | 'Rumpf';
+  setting: RoutineSetting;
+  difficulty: Difficulty;
+  items: RoutineItem[];
+};
+
 export type RecordType = 'max_weight' | 'max_reps';
 
 /** Ein Satz, der einen persönlichen Rekord bricht. */

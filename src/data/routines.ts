@@ -1,0 +1,175 @@
+import type { Routine, RoutineItem } from '@/types/workout';
+
+const item = (exerciseId: string, sets: number, reps: string, restSeconds: number): RoutineItem => ({
+  exerciseId,
+  sets,
+  reps,
+  restSeconds,
+});
+
+/**
+ * Fertige Kraft-Workouts. Aufbau nach gängigen Empfehlungen (ACSM-Positionspapier 2009,
+ * Schoenfeld et al. 2017): mehrgelenkige Übungen zuerst, 2 bis 5 Sätze, 5 bis 15 Wiederholungen,
+ * längere Pausen bei schweren Grundübungen. Eigene Zusammenstellung, kein fremdes Programm.
+ */
+export const ROUTINES: readonly Routine[] = [
+  {
+    id: 'ganzkoerper-basis',
+    name: 'Ganzkörper Basis',
+    description: 'Der ideale Einstieg ins Studio: jede große Muskelgruppe, sichere Geräte, klare Ziele.',
+    focus: 'Ganzkörper',
+    setting: 'Studio',
+    difficulty: 'Einsteiger',
+    items: [
+      item('beinpresse', 3, '10–12', 90),
+      item('latziehen', 3, '10–12', 90),
+      item('kh-bankdruecken', 3, '8–10', 90),
+      item('rudern-kabel', 3, '10–12', 75),
+      item('kh-schulterdruecken', 2, '10–12', 75),
+      item('plank', 2, '30 s', 45),
+    ],
+  },
+  {
+    id: 'kraft-5x5',
+    name: 'Kraft 5×5',
+    description: 'Drei schwere Grundübungen, fünf Sätze à fünf. Das klassische Rezept für mehr Maximalkraft.',
+    focus: 'Ganzkörper',
+    setting: 'Studio',
+    difficulty: 'Fortgeschritten',
+    items: [item('kniebeuge', 5, '5', 180), item('bankdruecken', 5, '5', 180), item('langhantelrudern', 5, '5', 150)],
+  },
+  {
+    id: 'push-tag',
+    name: 'Push-Tag',
+    description: 'Brust, Schultern und Trizeps. Drücken bis die Hemdsärmel spannen.',
+    focus: 'Push',
+    setting: 'Studio',
+    difficulty: 'Fortgeschritten',
+    items: [
+      item('bankdruecken', 4, '6–8', 150),
+      item('kh-schraegbankdruecken', 3, '8–10', 90),
+      item('schulterdruecken', 3, '6–8', 120),
+      item('seitheben', 3, '12–15', 60),
+      item('trizepsdruecken', 3, '10–12', 60),
+      item('dips', 2, '8–12', 90),
+    ],
+  },
+  {
+    id: 'pull-tag',
+    name: 'Pull-Tag',
+    description: 'Breiter Rücken, starke Arme, gesunde Schultern. Alles, was zieht.',
+    focus: 'Pull',
+    setting: 'Studio',
+    difficulty: 'Fortgeschritten',
+    items: [
+      item('klimmzuege', 4, '5–8', 120),
+      item('langhantelrudern', 3, '6–8', 120),
+      item('rudern-kabel', 3, '10–12', 75),
+      item('face-pulls', 3, '12–15', 60),
+      item('langhantelcurls', 3, '8–10', 75),
+      item('hammercurls', 2, '10–12', 60),
+    ],
+  },
+  {
+    id: 'beine-po',
+    name: 'Beine & Po',
+    description: 'Der Tag, den keiner auslässt: Kniebeuge, Hüftstrecker und Waden.',
+    focus: 'Beine',
+    setting: 'Studio',
+    difficulty: 'Fortgeschritten',
+    items: [
+      item('kniebeuge', 4, '6–8', 180),
+      item('rumaenisches-kreuzheben', 3, '8–10', 120),
+      item('beinpresse', 3, '10–12', 90),
+      item('hip-thrust', 3, '8–10', 90),
+      item('beinbeuger', 3, '10–12', 60),
+      item('wadenheben-stehend', 3, '12–15', 45),
+    ],
+  },
+  {
+    id: 'oberkoerper-kompakt',
+    name: 'Oberkörper kompakt',
+    description: 'Brust, Rücken, Schultern und Arme in einer runden Einheit. Gut für volle Tage.',
+    focus: 'Oberkörper',
+    setting: 'Studio',
+    difficulty: 'Einsteiger',
+    items: [
+      item('kh-bankdruecken', 3, '10–12', 75),
+      item('latziehen', 3, '10–12', 75),
+      item('kh-schulterdruecken', 3, '10–12', 75),
+      item('rudermaschine', 3, '10–12', 75),
+      item('kh-curls', 2, '10–12', 60),
+      item('trizepsdruecken', 2, '10–12', 60),
+    ],
+  },
+  {
+    id: 'kurzhantel-zuhause',
+    name: 'Kurzhantel zu Hause',
+    description: 'Zwei Hanteln, ein Stück Boden, ein komplettes Krafttraining.',
+    focus: 'Ganzkörper',
+    setting: 'Zuhause',
+    difficulty: 'Einsteiger',
+    items: [
+      item('goblet-squat', 3, '10–12', 75),
+      item('kh-bankdruecken', 3, '8–12', 75),
+      item('kh-rudern', 3, '10–12', 60),
+      item('ausfallschritte', 3, '10 je Bein', 60),
+      item('kh-schulterdruecken', 3, '10–12', 60),
+      item('kh-curls', 2, '12', 45),
+      item('plank', 2, '40 s', 45),
+    ],
+  },
+  {
+    id: 'koerpergewicht-kraft',
+    name: 'Kraft ohne Geräte',
+    description: 'Nur dein Körper. Echte Kraftübungen mit Sätzen und Wiederholungen statt Intervall-Hektik.',
+    focus: 'Ganzkörper',
+    setting: 'Zuhause',
+    difficulty: 'Einsteiger',
+    items: [
+      item('luftkniebeuge', 3, '15–20', 60),
+      item('liegestuetze', 3, '8–15', 75),
+      item('glute-bridge', 3, '15', 45),
+      item('superman', 3, '12', 45),
+      item('baenkdips', 3, '10–12', 60),
+      item('plank', 3, '30–45 s', 45),
+    ],
+  },
+  {
+    id: 'koerpergewicht-pro',
+    name: 'Körpergewicht Pro',
+    description: 'Für alle, denen normale Liegestütze zu leicht geworden sind.',
+    focus: 'Ganzkörper',
+    setting: 'Zuhause',
+    difficulty: 'Fortgeschritten',
+    items: [
+      item('bulgarian-split-squat', 3, '10 je Bein', 75),
+      item('pike-liegestuetze', 3, '6–10', 90),
+      item('einbeinige-bridge', 3, '12 je Bein', 45),
+      item('liegestuetze', 3, '15–25', 75),
+      item('wandsitzen', 2, '45–60 s', 60),
+      item('russian-twists', 3, '20', 45),
+    ],
+  },
+  {
+    id: 'rumpf-stahl',
+    name: 'Rumpf aus Stahl',
+    description: 'Stabiler Rumpf, besserer Rücken, stärkere Grundübungen. Kurz und knackig.',
+    focus: 'Rumpf',
+    setting: 'Zuhause',
+    difficulty: 'Fortgeschritten',
+    items: [
+      item('plank', 3, '45 s', 45),
+      item('russian-twists', 3, '20', 45),
+      item('crunches', 3, '15–20', 45),
+      item('superman', 3, '12', 45),
+      item('ab-wheel', 3, '6–10', 60),
+    ],
+  },
+];
+
+const BY_ID = new Map(ROUTINES.map((routine) => [routine.id, routine]));
+
+export function getRoutine(id: string): Routine | undefined {
+  return BY_ID.get(id);
+}
