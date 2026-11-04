@@ -10,6 +10,8 @@ import { TextField } from '@/components/ui/text-field';
 import { Spacing } from '@/constants/theme';
 import { EQUIPMENT, EXERCISES, MUSCLE_GROUPS } from '@/data/exercises';
 import { useTheme } from '@/hooks/use-theme';
+import { formatWeight } from '@/lib/logic/units';
+import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 import type { Equipment, MuscleGroup } from '@/types/workout';
 
@@ -21,6 +23,22 @@ export default function ExercisesScreen() {
   const picking = params.pick === '1' || swapIndex !== null;
   const addExercise = useWorkouts((state) => state.addExercise);
   const replaceExercise = useWorkouts((state) => state.replaceExercise);
+  const history = useWorkouts((state) => state.history);
+  const units = useSettings((state) => state.units);
+  // Letzter Arbeitssatz je Übung, damit man beim Auswählen sofort sieht, wo man steht
+  const lastSets = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const workout of [...history].sort((a, b) => b.startedAt - a.startedAt)) {
+      for (const exercise of workout.exercises) {
+        if (map.has(exercise.exerciseId)) continue;
+        const working = exercise.sets.filter((set) => !set.isWarmup && set.reps > 0);
+        const last = working[working.length - 1];
+        if (!last) continue;
+        map.set(exercise.exerciseId, last.weightKg > 0 ? `${formatWeight(last.weightKg, units)} × ${last.reps}` : `${last.reps} Wdh.`);
+      }
+    }
+    return map;
+  }, [history, units]);
 
   const [query, setQuery] = useState('');
   const [muscle, setMuscle] = useState<MuscleGroup | null>(
@@ -103,6 +121,11 @@ export default function ExercisesScreen() {
           <AppText variant="caption" color="textSecondary">
             {item.muscleGroup} · {item.equipment} · {item.difficulty}
           </AppText>
+          {lastSets.has(item.id) ? (
+            <AppText variant="caption" color="accent">
+              Zuletzt: {lastSets.get(item.id)}
+            </AppText>
+          ) : null}
         </Card>
       )}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
