@@ -18,6 +18,7 @@ import { muscleLoad } from '@/lib/logic/muscle-load';
 import { findRecords } from '@/lib/logic/personal-records';
 import { formatWeight } from '@/lib/logic/units';
 import { summarizeWorkout } from '@/lib/logic/workout-stats';
+import { canShare, shareText } from '@/lib/share';
 import { useGoalsStore } from '@/lib/storage/goals-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { getWorkout, useWorkouts } from '@/lib/storage/workout-store';
@@ -165,6 +166,33 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
           </Card>
         );
       })}
+
+      {canShare() ? (
+        <Button
+          title="Workout teilen"
+          variant="secondary"
+          onPress={() =>
+            void shareText(
+              [
+                `Kraft-Workout · ${formatDuration(summary.durationMs)} · ${summary.workingSets} Sätze · ${formatWeight(summary.volumeKg, units)} Volumen`,
+                ...workout.exercises.map((entry) => {
+                  const top = entry.sets
+                    .filter((set) => !set.isWarmup)
+                    .reduce<{ weightKg: number; reps: number } | null>(
+                      (best, set) => (!best || set.weightKg > best.weightKg ? set : best),
+                      null,
+                    );
+                  const name = getExercise(entry.exerciseId)?.name ?? entry.exerciseId;
+                  return top ? `${name}: ${formatWeight(top.weightKg, units)} × ${top.reps}` : name;
+                }),
+                recordCount > 0 ? `${recordCount} ${recordCount === 1 ? 'neuer Rekord' : 'neue Rekorde'}` : '',
+              ]
+                .filter(Boolean)
+                .join('\n'),
+            )
+          }
+        />
+      ) : null}
 
       <Card>
         <AppText variant="heading">Als Vorlage speichern</AppText>

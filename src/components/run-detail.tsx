@@ -15,6 +15,7 @@ import { formatClock } from '@/lib/logic/format';
 import { findRunRecords, kmSplits, paceSecPerKm } from '@/lib/logic/run-stats';
 import { formatDistance, formatElevation, formatPace, paceUnitLabel } from '@/lib/logic/units';
 import { useTheme } from '@/hooks/use-theme';
+import { canShare, shareText } from '@/lib/share';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import type { RunRecordType } from '@/types/running';
@@ -135,6 +136,19 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
         </Card>
       ) : null}
 
+      {canShare() ? (
+        <Button
+          title="Lauf teilen"
+          variant="secondary"
+          onPress={() =>
+            void shareText(
+              `Lauf · ${formatDistance(run.distanceM, units)} in ${formatClock(run.durationSeconds * 1000)} · ` +
+                `Ø ${formatPace(avgPace, units)} ${paceUnitLabel(units)}` +
+                (fastest !== null ? ` · schnellster km ${formatPace(fastest, 'metric')}` : ''),
+            )
+          }
+        />
+      ) : null}
       {justFinished ? <Button title="Fertig" onPress={() => router.replace('/training/running')} /> : null}
       <Button title="Lauf löschen" variant="danger" onPress={confirmDelete} />
     </Screen>
