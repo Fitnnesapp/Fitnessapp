@@ -208,6 +208,11 @@ export default function HistoryScreen() {
               {formatDuration(summary.durationMs)} · {formatWeight(summary.volumeKg, units)} · {summary.workingSets}{' '}
               {summary.workingSets === 1 ? 'Satz' : 'Sätze'}
             </AppText>
+            {workout.note ? (
+              <AppText variant="caption" color="textSecondary" numberOfLines={1} style={styles.note}>
+                „{workout.note}“
+              </AppText>
+            ) : null}
           </Card>
         );
       }}
@@ -217,6 +222,7 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
+  note: { fontStyle: 'italic' },
   content: { padding: Spacing.four, paddingBottom: Spacing.six },
   sectionHeader: { marginTop: Spacing.three, marginBottom: Spacing.two },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
