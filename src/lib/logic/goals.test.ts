@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import type { StrengthWorkout } from '../../types/workout.ts';
-import { bestWeight, goalProgress, validateGoal, type StrengthGoal } from './goals.ts';
+import { bestWeight, closestGoal, goalProgress, validateGoal, type StrengthGoal } from './goals.ts';
 
 const w = (startedAt: number, exerciseId: string, sets: [number, number, boolean?][]): StrengthWorkout => ({
   id: String(startedAt),
@@ -52,4 +52,15 @@ test('Zieleingabe wird geprüft', () => {
   assert.match(validateGoal(300, 80) ?? '', /sehr großer Sprung/);
   assert.equal(validateGoal(100, 80), null);
   assert.equal(validateGoal(40, 0), null);
+});
+
+test('Nächstes Ziel: offen und am weitesten fortgeschritten', () => {
+  const history = [w(20, 'bank', [[90, 3]]), w(20, 'kniebeuge', [[60, 5]]), w(20, 'rudern', [[70, 5]])];
+  const goals: StrengthGoal[] = [
+    { ...goal, id: 'a', exerciseId: 'bank', targetKg: 100 },
+    { ...goal, id: 'b', exerciseId: 'kniebeuge', targetKg: 100 },
+    { ...goal, id: 'c', exerciseId: 'rudern', targetKg: 70 },
+  ];
+  assert.equal(closestGoal(goals, history)?.id, 'a');
+  assert.equal(closestGoal([goals[2]], history), null);
 });

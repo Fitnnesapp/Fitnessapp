@@ -69,3 +69,14 @@ export function validateGoal(targetKg: number | null, currentKg: number): string
   if (targetKg > (currentKg > 0 ? currentKg * 2 + 20 : 300)) return 'Das ist ein sehr großer Sprung. Setz dir lieber ein näheres Zwischenziel.';
   return null;
 }
+
+/** Das offene Ziel, das am nächsten dran ist (Goal-Gradient: kurz vor dem Ziel steigt der Einsatz). */
+export function closestGoal(goals: readonly StrengthGoal[], history: readonly StrengthWorkout[]): StrengthGoal | null {
+  let best: { goal: StrengthGoal; ratio: number } | null = null;
+  for (const goal of goals) {
+    const progress = goalProgress(goal, history);
+    if (progress.achieved) continue;
+    if (!best || progress.ratio > best.ratio) best = { goal, ratio: progress.ratio };
+  }
+  return best?.goal ?? null;
+}

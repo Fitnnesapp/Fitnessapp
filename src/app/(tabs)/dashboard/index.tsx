@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ChallengeCard } from '@/components/challenge-card';
 import { EventCard } from '@/components/event-card';
 import { FeedCard } from '@/components/feed-card';
+import { GoalCard } from '@/components/goal-card';
 import { RecoveryCard } from '@/components/recovery-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { FREEZES_PER_MONTH, streaks, weekStart, weekStats } from '@/lib/logic/activity';
 import { BADGES } from '@/lib/logic/badges';
+import { closestGoal } from '@/lib/logic/goals';
 import { daysUntilEvent, upcomingEvents } from '@/lib/logic/events';
 import { buildFeed } from '@/lib/logic/feed';
 import { compareWithLastWeek, trainingIdentity } from '@/lib/logic/identity';
@@ -39,6 +41,7 @@ import { hrefForSession } from '@/lib/plan-href';
 import { useEvents, useEventsStore } from '@/lib/storage/events-store';
 import { successFeedback } from '@/lib/haptics';
 import { useGamification } from '@/lib/storage/gamification-store';
+import { useGoalsStore } from '@/lib/storage/goals-store';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
 import { useRunStore } from '@/lib/storage/run-store';
@@ -96,6 +99,8 @@ export default function DashboardScreen() {
   const activities = useActivities();
   const now = useNow(60_000);
   const strengthHistory = useWorkouts((state) => state.history);
+  const goals = useGoalsStore((state) => state.goals);
+  const nextGoal = useMemo(() => closestGoal(goals, strengthHistory), [goals, strengthHistory]);
   const homeSessions = useHomeSessions((state) => state.sessions);
   const runHistory = useRunStore((state) => state.history);
   const earned = useGamification((state) => state.earned);
@@ -434,6 +439,13 @@ export default function DashboardScreen() {
               {upcomingBadge.description} · {formatProgress(upcoming.current)} von {upcoming.target}
             </AppText>
           </Card>
+        </>
+      ) : null}
+
+      {nextGoal ? (
+        <>
+          {!(upcoming && upcomingBadge) ? <SectionHeader title="Als Nächstes" /> : null}
+          <GoalCard goal={nextGoal} />
         </>
       ) : null}
 
