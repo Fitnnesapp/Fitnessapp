@@ -10,6 +10,7 @@ import { useHealthStore } from './health-store';
 import { useHomeSessions } from './home-store';
 import { usePlanStore } from './plan-store';
 import { useRunStore } from './run-store';
+import { useSavedEvents } from './saved-events-store';
 import { useSettings } from './settings-store';
 import { useWorkouts } from './workout-store';
 
@@ -42,5 +43,6 @@ export async function restoreBackup(entries: [BackupKey, string][]): Promise<voi
     useChallengeStore.persist.rehydrate(),
     useHealthStore.persist.rehydrate(),
     useGoalsStore.persist.rehydrate(),
+    useSavedEvents.persist.rehydrate(),
   ]);
 }

@@ -125,3 +125,51 @@ export function dateBadge(event: FitnessEvent): { day: string; month: string } {
   const [, m, d] = event.date.split('-').map(Number);
   return { day: String(d), month: MONTHS_SHORT[m - 1] };
 }
+
+export type EventFocus = { phase: string; tip: string };
+
+/**
+ * Vorbereitung auf ein gemerktes Event nach Wochen bis zum Start. Grob nach gängiger
+ * Periodisierung: Grundlage, spezifisches Training, Formaufbau und Tapering (Bosquet et al. 2007:
+ * 2 Wochen weniger Umfang bei gleicher Intensität verbessern die Wettkampfleistung).
+ */
+export function eventFocus(event: FitnessEvent, now: number): EventFocus {
+  const days = daysUntilEvent(event, now);
+  const run = event.kind === 'lauf';
+  if (days === 0)
+    return { phase: 'Wettkampftag', tip: 'Heute ist dein Tag. Ruhig starten, gleichmäßig bleiben und genießen.' };
+  if (days <= 7)
+    return { phase: 'Letzte Woche', tip: 'Nur noch locker bewegen, gut schlafen, nichts Neues ausprobieren.' };
+  if (days <= 14)
+    return {
+      phase: 'Tapering',
+      tip: run
+        ? 'Umfang um etwa ein Drittel senken, kurze zügige Abschnitte behalten. So kommst du frisch an den Start.'
+        : 'Trainingsumfang senken, Intensität halten. Technik an den Stationen festigen.',
+    };
+  if (days <= 42)
+    return {
+      phase: 'Formaufbau',
+      tip: run
+        ? 'Einmal pro Woche im geplanten Wettkampftempo laufen, dazu ein langer Lauf.'
+        : 'Wettkampfnahe Einheiten: Laufen und Stationen im Wechsel trainieren.',
+    };
+  if (days <= 84)
+    return {
+      phase: 'Spezifisches Training',
+      tip: run
+        ? 'Langen Lauf Woche für Woche verlängern, eine Tempoeinheit pro Woche.'
+        : 'Kraftausdauer aufbauen und regelmäßig laufen.',
+    };
+  return {
+    phase: 'Grundlage',
+    tip: run
+      ? 'Viele lockere Kilometer sammeln, Umfang langsam steigern (etwa 10 % pro Woche).'
+      : 'Grundkraft und Ausdauer aufbauen, regelmäßig trainieren.',
+  };
+}
+
+/** Nächstes gemerktes Event, das noch nicht vorbei ist. */
+export function nextSavedEvent(events: FitnessEvent[], savedIds: readonly string[], now: number): FitnessEvent | null {
+  return upcomingEvents(events, now).find((event) => savedIds.includes(event.id)) ?? null;
+}

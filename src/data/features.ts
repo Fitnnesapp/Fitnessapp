@@ -72,6 +72,14 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/training/strength',
   },
   {
+    id: 'saved-events',
+    kind: 'funktion',
+    title: 'Event merken und darauf hintrainieren',
+    subtitle: 'Countdown auf dem Start-Tab mit der passenden Vorbereitungsphase',
+    keywords: ['Wettkampf vorbereiten', 'Marathon Vorbereitung', 'Countdown', 'Tapering', 'Lesezeichen'],
+    href: '/discover',
+  },
+  {
     id: 'backup',
     kind: 'funktion',
     title: 'Datensicherung',

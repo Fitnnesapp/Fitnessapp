@@ -2,7 +2,15 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { countdownLabel, dateBadge, parseEvents, upcomingEvents, type FitnessEvent } from './events.ts';
+import {
+  countdownLabel,
+  dateBadge,
+  eventFocus,
+  nextSavedEvent,
+  parseEvents,
+  upcomingEvents,
+  type FitnessEvent,
+} from './events.ts';
 
 const valid = {
   id: 'a',
@@ -81,4 +89,27 @@ test('die mitgelieferte Event-Liste ist vollständig gültig', () => {
   const raw = JSON.parse(readFileSync(new URL('../../data/events.json', import.meta.url), 'utf8'));
   const parsed = parseEvents(raw);
   assert.equal(parsed?.length, raw.events.length);
+});
+
+test('Vorbereitungsphase nach Tagen bis zum Event', () => {
+  const at = (date: string) => ({ ...(valid as FitnessEvent), date });
+  const now = new Date(2026, 10, 4, 12).getTime();
+  assert.equal(eventFocus(at('2026-11-04'), now).phase, 'Wettkampftag');
+  assert.equal(eventFocus(at('2026-11-10'), now).phase, 'Letzte Woche');
+  assert.equal(eventFocus(at('2026-11-15'), now).phase, 'Tapering');
+  assert.equal(eventFocus(at('2026-12-06'), now).phase, 'Formaufbau');
+  assert.equal(eventFocus(at('2027-01-20'), now).phase, 'Spezifisches Training');
+  assert.equal(eventFocus(at('2027-04-25'), now).phase, 'Grundlage');
+  assert.match(eventFocus({ ...at('2026-11-15'), kind: 'fitness' }, now).tip, /Stationen/);
+});
+
+test('Nächstes gemerktes Event, vergangene zählen nicht', () => {
+  const now = new Date(2026, 10, 4, 12).getTime();
+  const events = [
+    { ...(valid as FitnessEvent), id: 'alt', date: '2026-10-01' },
+    { ...(valid as FitnessEvent), id: 'b', date: '2026-12-06' },
+    { ...(valid as FitnessEvent), id: 'c', date: '2026-11-20' },
+  ];
+  assert.equal(nextSavedEvent(events, ['alt', 'b'], now)?.id, 'b');
+  assert.equal(nextSavedEvent(events, ['alt'], now), null);
 });

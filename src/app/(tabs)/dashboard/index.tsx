@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ActiveSessions } from '@/components/active-sessions';
 import { ChallengeCard } from '@/components/challenge-card';
 import { EventCard } from '@/components/event-card';
+import { EventGoalCard } from '@/components/event-goal-card';
 import { FeedCard } from '@/components/feed-card';
 import { GoalCard } from '@/components/goal-card';
 import { RecoveryCard } from '@/components/recovery-card';
@@ -32,7 +33,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { FREEZES_PER_MONTH, streaks, weekStart, weekStats } from '@/lib/logic/activity';
 import { BADGES } from '@/lib/logic/badges';
 import { closestGoal } from '@/lib/logic/goals';
-import { daysUntilEvent, upcomingEvents } from '@/lib/logic/events';
+import { daysUntilEvent, nextSavedEvent, upcomingEvents } from '@/lib/logic/events';
 import { buildFeed } from '@/lib/logic/feed';
 import { compareWithLastWeek, trainingIdentity } from '@/lib/logic/identity';
 import { dayHeading, greeting, nextBadge, WEEKLY_GOAL_DAYS, weeklyGoal } from '@/lib/logic/motivation';
@@ -44,6 +45,7 @@ import { useEvents, useEventsStore } from '@/lib/storage/events-store';
 import { successFeedback } from '@/lib/haptics';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useGoalsStore } from '@/lib/storage/goals-store';
+import { useSavedEvents } from '@/lib/storage/saved-events-store';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
 import { useRunStore } from '@/lib/storage/run-store';
@@ -118,7 +120,12 @@ export default function DashboardScreen() {
   }, [refreshEvents]);
 
   // Ankündigung: das nächste Event der kommenden zwei Wochen
-  const nextEvent = useMemo(() => upcomingEvents(events, now, 1).find((e) => daysUntilEvent(e, now) <= 14), [events, now]);
+  const savedEvents = useSavedEvents((state) => state.saved);
+  const myEvent = useMemo(() => nextSavedEvent(events, Object.keys(savedEvents), now), [events, savedEvents, now]);
+  const nextEvent = useMemo(
+    () => (myEvent ? undefined : upcomingEvents(events, now, 1).find((e) => daysUntilEvent(e, now) <= 14)),
+    [events, now, myEvent],
+  );
   // Eine Challenge: die eigene, sonst eine laufende als Einladung
   const featuredChallenge =
     challengeEntries.find((e) => e.joined && !e.progress?.completed) ??
@@ -394,6 +401,9 @@ export default function DashboardScreen() {
           </View>
         </Card>
       </FadeIn>
+
+      {/* Gemerktes Event: festes Datum vor Augen, mit der passenden Vorbereitungsphase */}
+      {myEvent ? <EventGoalCard event={myEvent} now={now} /> : null}
 
       {/* Erholung: was kann ich heute trainieren? */}
       <RecoveryCard />
