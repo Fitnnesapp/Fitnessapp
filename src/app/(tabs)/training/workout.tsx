@@ -104,9 +104,20 @@ export default function WorkoutScreen() {
         return (
           <Card key={`${entry.exerciseId}-${exerciseIndex}`}>
             <View style={styles.exerciseHeader}>
-              <AppText variant="heading" style={styles.exerciseName}>
-                {exercise?.name ?? entry.exerciseId}
-              </AppText>
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel={`${exercise?.name ?? entry.exerciseId}: Anleitung und Verlauf`}
+                onPress={() => router.push({ pathname: '/training/exercise/[id]', params: { id: entry.exerciseId } })}
+                style={styles.exerciseName}>
+                <AppText variant="heading">{exercise?.name ?? entry.exerciseId}</AppText>
+              </Pressable>
+              {exerciseIndex > 0 ? (
+                <IconButton
+                  icon="arrow-up"
+                  label={`${exercise?.name ?? 'Übung'} nach oben verschieben`}
+                  onPress={() => store.moveExerciseUp(exerciseIndex)}
+                />
+              ) : null}
               {!entry.sets.some((set) => set.done) && exercise ? (
                 <IconButton
                   icon="swap-horizontal"
@@ -236,7 +247,15 @@ export default function WorkoutScreen() {
   );
 }
 
-function IconButton({ icon, label, onPress }: { icon: 'swap-horizontal' | 'trash-outline'; label: string; onPress: () => void }) {
+function IconButton({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: 'swap-horizontal' | 'trash-outline' | 'arrow-up';
+  label: string;
+  onPress: () => void;
+}) {
   const theme = useTheme();
   return (
     <Pressable

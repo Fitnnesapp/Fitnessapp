@@ -30,6 +30,8 @@ type WorkoutState = {
   finishWorkout: () => string | null;
   addExercise: (exerciseId: string) => void;
   removeExercise: (exerciseIndex: number) => void;
+  /** Verschiebt eine Übung um eine Position nach oben */
+  moveExerciseUp: (exerciseIndex: number) => void;
   /** Tauscht eine Übung ohne erledigte Sätze gegen eine andere, Satzzahl und Vorgabe bleiben. */
   replaceExercise: (exerciseIndex: number, exerciseId: string) => void;
   addSet: (exerciseIndex: number) => void;
@@ -147,6 +149,14 @@ export const useWorkouts = create<WorkoutState>()(
         const { active } = get();
         if (!active) return;
         set({ active: { ...active, exercises: active.exercises.filter((_, i) => i !== exerciseIndex) } });
+      },
+
+      moveExerciseUp: (exerciseIndex) => {
+        const { active } = get();
+        if (!active || exerciseIndex <= 0 || exerciseIndex >= active.exercises.length) return;
+        const exercises = [...active.exercises];
+        [exercises[exerciseIndex - 1], exercises[exerciseIndex]] = [exercises[exerciseIndex], exercises[exerciseIndex - 1]];
+        set({ active: { ...active, exercises } });
       },
 
       replaceExercise: (exerciseIndex, exerciseId) => {
