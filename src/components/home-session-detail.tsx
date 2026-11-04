@@ -89,6 +89,13 @@ export function HomeSessionDetail({ sessionId, justFinished = false }: HomeSessi
       </AppText>
 
       {justFinished ? <Button title="Fertig" onPress={() => router.replace('/training/home')} /> : null}
+      {!justFinished && program ? (
+        <Button
+          title={`${program.name} nochmal machen`}
+          variant="secondary"
+          onPress={() => router.push({ pathname: '/training/program/[id]', params: { id: program.id } })}
+        />
+      ) : null}
       <Button title="Workout löschen" variant="danger" onPress={confirmDelete} />
     </Screen>
   );
