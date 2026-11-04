@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Screen } from '@/components/ui/screen';
-import { Radius, Spacing } from '@/constants/theme';
+import { OnImage, Radius, Spacing } from '@/constants/theme';
 import { getChallenge } from '@/data/challenges';
 import { sceneForChallenge } from '@/data/images';
 import { useActivities } from '@/hooks/use-activities';
@@ -21,11 +21,12 @@ import {
   challengeWindow,
   daysUntil,
   formatValue,
+  isCustomChallenge,
   targetOnJoin,
   unitLabel,
 } from '@/lib/logic/challenges';
 import { successFeedback } from '@/lib/haptics';
-import { useChallengeStore } from '@/lib/storage/challenge-store';
+import { useChallengeById, useChallengeStore } from '@/lib/storage/challenge-store';
 
 /** Einzelne Challenge: Beschreibung, Fortschritts-Ring, Etappen und Teilnahme. */
 export default function ChallengeScreen() {
@@ -34,10 +35,12 @@ export default function ChallengeScreen() {
   const theme = useTheme();
   const now = useNow(60_000);
   const activities = useActivities();
-  const challenge = getChallenge(id);
+  const custom = useChallengeById(id);
+  const challenge = getChallenge(id) ?? custom;
   const joined = useChallengeStore((state) => (id ? state.joined[id] : undefined));
   const join = useChallengeStore((state) => state.join);
   const leave = useChallengeStore((state) => state.leave);
+  const removeCustom = useChallengeStore((state) => state.removeCustom);
 
   if (!challenge) {
     return (
@@ -63,6 +66,19 @@ export default function ChallengeScreen() {
 
   function onLeave() {
     if (!challenge) return;
+    if (isCustomChallenge(challenge)) {
+      confirmAction({
+        title: 'Eigene Challenge löschen?',
+        message: 'Die Challenge wird entfernt. Deine Workouts bleiben erhalten.',
+        confirmLabel: 'Löschen',
+        onConfirm: () => {
+          removeCustom(challenge.id);
+          if (router.canGoBack()) router.back();
+          else router.replace('/discover');
+        },
+      });
+      return;
+    }
     confirmAction({
       title: 'Challenge verlassen?',
       message: 'Deine Workouts bleiben erhalten. Du kannst später wieder beitreten.',
@@ -74,7 +90,7 @@ export default function ChallengeScreen() {
   return (
     <Screen>
       <ImageCard source={sceneForChallenge(challenge.id)} height={260}>
-        <AppText variant="label" style={{ color: theme.accent }}>
+        <AppText variant="label" style={{ color: OnImage.accent }}>
           {challenge.tagline.toUpperCase()}
         </AppText>
         <AppText variant="hero" style={styles.onImage}>
@@ -139,7 +155,11 @@ export default function ChallengeScreen() {
       <AppText color="textSecondary">{challenge.description}</AppText>
 
       {joined ? (
-        <Button title="Challenge verlassen" variant="ghost" onPress={onLeave} />
+        <Button
+          title={isCustomChallenge(challenge) ? 'Challenge löschen' : 'Challenge verlassen'}
+          variant="ghost"
+          onPress={onLeave}
+        />
       ) : status === 'ended' ? (
         <AppText color="textSecondary">Diese Challenge ist beendet.</AppText>
       ) : (

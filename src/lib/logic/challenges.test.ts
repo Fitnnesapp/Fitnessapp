@@ -6,6 +6,8 @@ import {
   challengeProgress,
   challengeStatus,
   challengeWindow,
+  createCustomChallenge,
+  isCustomChallenge,
   measure,
   targetOnJoin,
   type Challenge,
@@ -116,4 +118,30 @@ test('ohne Einheit ermutigt die Nachricht zum Start', () => {
   const p = challengeProgress(ROLLING, { joinedAt: at(10, 24, 9), target: 20 }, [], at(10, 24, 10));
   assert.equal(p.value, 0);
   assert.match(p.message, /Anfang/);
+});
+
+test('Eigene Challenge: Name, Grenzen und Trainingstage höchstens so viele wie Tage', () => {
+  const now = new Date(2026, 10, 4, 12).getTime();
+  const c = createCustomChallenge({ name: '', metric: 'runKm', target: 52, days: 30 }, now);
+  assert.equal(c.target, 50);
+  assert.equal(c.name, '50 Laufkilometer in 30 Tagen');
+  assert.deepEqual(c.window, { kind: 'rolling', days: 30 });
+  assert.equal(isCustomChallenge(c), true);
+  assert.equal(createCustomChallenge({ name: 'Mein Monat', metric: 'activeDays', target: 40, days: 30 }, now).target, 30);
+  assert.equal(createCustomChallenge({ name: ' Kurz ', metric: 'workouts', target: 0, days: 7 }, now).name, 'Kurz');
+});
+
+test('Eigene Challenge zählt Trainings ab dem Beitritt', () => {
+  const now = new Date(2026, 10, 4, 12).getTime();
+  const c = createCustomChallenge({ name: '', metric: 'workouts', target: 4, days: 7 }, now);
+  const act = (startedAt: number): Activity => ({
+    id: String(startedAt),
+    type: 'strength',
+    startedAt,
+    durationSeconds: 1800,
+    distanceM: 0,
+  });
+  const activities = [act(now - 86_400_000 * 3), act(now + 3_600_000)];
+  const progress = challengeProgress(c, { joinedAt: now, target: c.target }, activities, now + 7_200_000);
+  assert.equal(progress.value, 1);
 });

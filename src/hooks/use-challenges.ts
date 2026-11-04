@@ -29,11 +29,12 @@ const DAY_MS = 86400000;
 export function useChallenges(): { entries: ChallengeEntry[]; now: number } {
   const activities = useActivities();
   const joinedMap = useChallengeStore((state) => state.joined);
+  const custom = useChallengeStore((state) => state.custom);
   const now = useNow(60_000);
 
   const entries = useMemo(() => {
     const list: ChallengeEntry[] = [];
-    for (const challenge of CHALLENGES) {
+    for (const challenge of [...CHALLENGES, ...custom]) {
       const joined = joinedMap[challenge.id];
       const status = challengeStatus(challenge, now, joined);
       if (status === 'ended') {
@@ -50,7 +51,7 @@ export function useChallenges(): { entries: ChallengeEntry[]; now: number } {
       if (!!a.joined !== !!b.joined) return a.joined ? -1 : 1;
       return challengeWindow(a.challenge, a.joined?.joinedAt).start - challengeWindow(b.challenge, b.joined?.joinedAt).start;
     });
-  }, [activities, joinedMap, now]);
+  }, [activities, joinedMap, custom, now]);
 
   return { entries, now };
 }

@@ -174,3 +174,48 @@ export function unitLabel(metric: ChallengeMetric, count: number): string {
 export function formatValue(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(1).replace('.', ',');
 }
+
+export type CustomChallengeInput = { name: string; metric: ChallengeMetric; target: number; days: number };
+
+/** Sinnvolle Grenzen für eigene Challenges je Messgröße (Ziel) und Dauer in Tagen. */
+export const CUSTOM_LIMITS: Record<ChallengeMetric, { min: number; max: number; step: number; start: number }> = {
+  activeDays: { min: 2, max: 365, step: 1, start: 12 },
+  workouts: { min: 2, max: 365, step: 1, start: 12 },
+  runKm: { min: 5, max: 2000, step: 5, start: 50 },
+  minutes: { min: 30, max: 20000, step: 30, start: 600 },
+};
+export const CUSTOM_DURATIONS = [7, 14, 30, 60, 90] as const;
+
+const METRIC_TEXT: Record<ChallengeMetric, string> = {
+  activeDays: 'Trainingstage',
+  workouts: 'Workouts',
+  runKm: 'Laufkilometer',
+  minutes: 'Trainingsminuten',
+};
+
+/**
+ * Eigene Challenge, die ab dem Beitritt läuft. Das Ziel wird begrenzt; bei Trainingstagen höchstens
+ * so viele wie die Dauer Tage hat.
+ */
+export function createCustomChallenge(input: CustomChallengeInput, now: number): Challenge {
+  const limits = CUSTOM_LIMITS[input.metric];
+  const days = Math.min(365, Math.max(1, Math.round(input.days)));
+  let target = Math.min(limits.max, Math.max(limits.min, Math.round(input.target / limits.step) * limits.step));
+  if (input.metric === 'activeDays') target = Math.min(target, days);
+  const name = input.name.trim().slice(0, 40) || `${target} ${METRIC_TEXT[input.metric]} in ${days} Tagen`;
+  return {
+    id: `eigen-${now.toString(36)}`,
+    name,
+    tagline: `Eigene Challenge · ${days} Tage`,
+    description:
+      `Deine eigene Challenge: ${target} ${METRIC_TEXT[input.metric]} in ${days} Tagen ab heute. ` +
+      'Jedes passende Training zählt automatisch.',
+    icon: 'flag',
+    metric: input.metric,
+    window: { kind: 'rolling', days },
+    target,
+    stages: ['Losgelegt', 'Halbzeit', 'Endspurt', 'Geschafft'],
+  };
+}
+
+export const isCustomChallenge = (challenge: Challenge): boolean => challenge.id.startsWith('eigen-');

@@ -88,6 +88,14 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/training/timer',
   },
   {
+    id: 'custom-challenge',
+    kind: 'funktion',
+    title: 'Eigene Challenge erstellen',
+    subtitle: 'Ziel, Messgröße und Zeitraum selbst wählen',
+    keywords: ['Challenge erstellen', 'eigenes Ziel', '30 Tage', 'Herausforderung', 'Monatsziel'],
+    href: '/discover/challenge/new',
+  },
+  {
     id: 'backup',
     kind: 'funktion',
     title: 'Datensicherung',

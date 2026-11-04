@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { ChallengeTile } from '@/components/challenge-tile';
 import { EventCard } from '@/components/event-card';
 import { AppText } from '@/components/ui/app-text';
+import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
@@ -59,6 +60,12 @@ export default function DiscoverScreen() {
           />
         ))}
       </ScrollView>
+
+      <Button
+        title="Eigene Challenge erstellen"
+        variant="secondary"
+        onPress={() => router.push('/discover/challenge/new')}
+      />
 
       <AppText variant="heading">Events</AppText>
       <AppText variant="caption" color="textSecondary">
