@@ -12,6 +12,7 @@ import { PremiumPrompt } from '@/components/premium-prompt';
 import { ProgressOverview } from '@/components/progress-overview';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
 import { SectionHeader } from '@/components/ui/section-header';
 import { Spacing } from '@/constants/theme';
 import { getProgram } from '@/data/programs';
@@ -36,6 +37,13 @@ type Entry =
   | { kind: 'strength'; startedAt: number; workout: StrengthWorkout }
   | { kind: 'home'; startedAt: number; session: HomeSession }
   | { kind: 'run'; startedAt: number; run: RunSession };
+
+const KIND_FILTERS: { value: Entry['kind'] | null; label: string }[] = [
+  { value: null, label: 'Alle' },
+  { value: 'strength', label: 'Kraft' },
+  { value: 'home', label: 'Home' },
+  { value: 'run', label: 'Läufe' },
+];
 
 /** Ohne Premium sind die letzten 30 Tage sichtbar. Ältere Workouts bleiben gespeichert. */
 const FREE_HISTORY_DAYS = 30;
@@ -69,6 +77,7 @@ export default function HistoryScreen() {
   const earnedCount = useGamification((state) => Object.keys(state.earned).length);
   const [now] = useState(() => Date.now());
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [kind, setKind] = useState<Entry['kind'] | null>(null);
   // Eigene große Überschrift statt Kopfzeile: oben den Abstand zur Statusleiste einrechnen
   const insets = useSafeAreaInsets();
 
@@ -78,7 +87,9 @@ export default function HistoryScreen() {
       ...history.map((workout): Entry => ({ kind: 'strength', startedAt: workout.startedAt, workout })),
       ...sessions.map((session): Entry => ({ kind: 'home', startedAt: session.startedAt, session })),
       ...runs.map((run): Entry => ({ kind: 'run', startedAt: run.startedAt, run })),
-    ].sort((a, b) => b.startedAt - a.startedAt);
+    ]
+      .filter((entry) => !kind || entry.kind === kind)
+      .sort((a, b) => b.startedAt - a.startedAt);
 
     const limit = now - FREE_HISTORY_DAYS * 86400000;
     const shown = isPremium ? entries : entries.filter((entry) => entry.startedAt >= limit);
@@ -92,7 +103,7 @@ export default function HistoryScreen() {
       byDay.set(key, section);
     }
     return { sections: [...byDay.values()], hidden: hiddenCount };
-  }, [history, sessions, runs, isPremium, now]);
+  }, [history, sessions, runs, isPremium, now, kind]);
 
   const counts = useMemo(() => new Map(sections.map((s) => [s.key, s.data.length])), [sections]);
   const visible = selectedDay ? sections.filter((s) => s.key === selectedDay) : sections;
@@ -136,6 +147,16 @@ export default function HistoryScreen() {
           </View>
           <MuscleBalanceCard />
           <SectionHeader title="Aktivitäten" />
+          <View style={styles.chips}>
+            {KIND_FILTERS.map((filter) => (
+              <Chip
+                key={filter.label}
+                label={filter.label}
+                selected={kind === filter.value}
+                onPress={() => setKind(filter.value)}
+              />
+            ))}
+          </View>
           <MonthCalendar counts={counts} selected={selectedDay} onSelect={setSelectedDay} />
         </View>
       }
@@ -143,8 +164,12 @@ export default function HistoryScreen() {
       stickySectionHeadersEnabled={false}
       ListEmptyComponent={
         <Card>
-          <AppText variant="heading">{selectedDay ? 'Kein Workout an diesem Tag' : 'Noch keine Workouts'}</AppText>
-          <AppText color="textSecondary">Sobald du ein Workout beendest, erscheint es hier.</AppText>
+          <AppText variant="heading">
+            {selectedDay ? 'Kein Eintrag an diesem Tag' : kind ? 'Noch nichts in dieser Kategorie' : 'Noch keine Workouts'}
+          </AppText>
+          <AppText color="textSecondary">
+            {kind ? 'Wähle „Alle“, um jede Trainingsart zu sehen.' : 'Sobald du ein Workout beendest, erscheint es hier.'}
+          </AppText>
         </Card>
       }
       renderSectionHeader={({ section }) => (
@@ -159,7 +184,7 @@ export default function HistoryScreen() {
           return (
             <Card onPress={() => router.push({ pathname: '/history/[id]', params: { id: run.id } })}>
               <View style={styles.row}>
-                <TypeTitle kind="run" label="Lauf" />
+                <TypeTitle kind="run" label={run.manual ? 'Lauf · nachgetragen' : 'Lauf'} />
                 <AppText color="textSecondary">{formatTime(run.startedAt)}</AppText>
               </View>
               <AppText variant="caption">
@@ -231,4 +256,5 @@ const styles = StyleSheet.create({
   footer: { marginTop: Spacing.four },
   header: { gap: Spacing.three },
   tiles: { flexDirection: 'row', gap: Spacing.two },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
 });
