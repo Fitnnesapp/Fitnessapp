@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ConsistencyCard } from '@/components/consistency-card';
 import { LinkTile } from '@/components/link-tile';
 import { MonthCalendar } from '@/components/month-calendar';
 import { MuscleBalanceCard } from '@/components/muscle-balance-card';
@@ -114,6 +115,7 @@ export default function HistoryScreen() {
       ListHeaderComponent={
         <View style={styles.header}>
           <ProgressOverview />
+          <ConsistencyCard />
           <SectionHeader title="Erfolge" />
           <View style={styles.tiles}>
             <LinkTile
