@@ -1,5 +1,6 @@
+import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
@@ -21,6 +22,7 @@ const STATUS_TEXT: Record<WeeklySets['status'], string> = { wenig: 'mehr geht', 
 
 /** Harte Sätze je Muskelgruppe in dieser Woche, mit dem wirksamen Bereich von 10 bis 20 Sätzen. */
 export function WeeklySetsCard() {
+  const router = useRouter();
   const theme = useTheme();
   const now = useNow(60_000);
   const history = useWorkouts((state) => state.history);
@@ -57,14 +59,15 @@ export function WeeklySetsCard() {
       </AppText>
       <AppText variant="caption" color="textSecondary">
         Für Muskelaufbau wirken etwa {WEEKLY_SET_RANGE.min} bis {WEEKLY_SET_RANGE.max} harte Sätze pro Woche und Muskel
-        (helles Feld). Hilfsmuskeln zählen halb.
+        (helles Feld). Hilfsmuskeln zählen halb. Tippe auf einen Muskel für passende Übungen.
       </AppText>
       {rows.map((row) => (
-        <View
+        <Pressable
           key={row.muscle}
-          style={styles.row}
-          accessible
-          accessibilityLabel={`${row.muscle}: ${row.sets} Sätze, ${STATUS_TEXT[row.status]}`}>
+          style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+          accessibilityRole="button"
+          accessibilityLabel={`${row.muscle}: ${row.sets} Sätze, ${STATUS_TEXT[row.status]}. Übungen anzeigen`}
+          onPress={() => router.push({ pathname: '/training/exercises', params: { muscle: row.muscle } })}>
           <AppText style={styles.name}>{row.muscle}</AppText>
           <View style={[styles.track, { backgroundColor: theme.surfaceAlt }]}>
             <View style={[styles.zone, { left: `${left}%`, width: `${width}%`, backgroundColor: theme.accentSoft }]} />
@@ -81,7 +84,7 @@ export function WeeklySetsCard() {
           <AppText variant="label" color={row.status === 'gut' ? 'accent' : 'textSecondary'} style={styles.value}>
             {String(row.sets).replace('.', ',')}
           </AppText>
-        </View>
+        </Pressable>
       ))}
     </Card>
   );
@@ -94,4 +97,5 @@ const styles = StyleSheet.create({
   zone: { position: 'absolute', top: 0, bottom: 0 },
   fill: { height: 6, marginLeft: 3, borderRadius: Radius.pill },
   value: { width: 36, textAlign: 'right' },
+  pressed: { opacity: 0.7 },
 });

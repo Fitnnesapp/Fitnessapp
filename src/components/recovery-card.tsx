@@ -65,7 +65,12 @@ export function RecoveryCard() {
             : `Bereit: ${ready.slice(0, 4).join(', ')}${ready.length > 4 ? ' …' : ''}`}
       </AppText>
       <View style={styles.body}>
-        <MuscleMap load={load} height={150} legendLabels={['bereit', 'erholt sich']} />
+        <MuscleMap
+          load={load}
+          height={150}
+          legendLabels={['bereit', 'erholt sich']}
+          onSelectMuscle={(muscle) => router.push({ pathname: '/training/exercises', params: { muscle } })}
+        />
       </View>
       {tired.length > 0 ? (
         <AppText variant="caption" color="textSecondary">
