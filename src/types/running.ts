@@ -51,6 +51,8 @@ export type RunSession = {
   elevationGainM: number;
   bests: RunBests;
   points: TrackPoint[];
+  /** Ohne GPS nachgetragen, z.B. vom Laufband (seit Speicherversion 1, optional) */
+  manual?: true;
 };
 
 export type RunRecordType = 'longest_distance' | 'fastest_1k' | 'fastest_5k' | 'fastest_10k';

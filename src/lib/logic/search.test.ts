@@ -95,3 +95,7 @@ test('Neue Funktionen sind über Alltagsbegriffe auffindbar', () => {
 test('Eigene Übung wird über Alltagssprache gefunden', () => {
   assert.equal(top('meine übung fehlt'), 'custom-exercise');
 });
+
+test('Laufband führt zum Nachtragen', () => {
+  assert.equal(top('laufband'), 'manual-run');
+});

@@ -114,6 +114,14 @@ export default function RunningScreen() {
         </FadeIn>
       )}
 
+      {!active ? (
+        <Button
+          title="Lauf ohne GPS nachtragen"
+          variant="ghost"
+          onPress={() => router.push('/training/run-manual')}
+        />
+      ) : null}
+
       {denied ? (
         <Card>
           <AppText color="danger" accessibilityRole="alert">

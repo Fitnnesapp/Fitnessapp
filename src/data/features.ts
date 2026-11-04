@@ -88,6 +88,14 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/training/exercise/new',
   },
   {
+    id: 'manual-run',
+    kind: 'funktion',
+    title: 'Lauf nachtragen',
+    subtitle: 'Laufband oder ohne Handy gelaufen: Distanz und Zeit eintragen',
+    keywords: ['Laufband', 'Treadmill', 'ohne GPS', 'vergessen aufzuzeichnen', 'manuell', 'Uhr'],
+    href: '/training/run-manual',
+  },
+  {
     id: 'interval-timer',
     kind: 'funktion',
     title: 'Intervall-Timer',

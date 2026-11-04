@@ -90,15 +90,30 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
         </Card>
       ) : null}
 
-      <RouteMap points={run.points} />
+      {run.manual ? (
+        <Card style={styles.manual}>
+          <AppText variant="label" color="textSecondary">
+            OHNE GPS NACHGETRAGEN
+          </AppText>
+          <AppText variant="caption" color="textSecondary">
+            Distanz und Zeit hast du selbst eingetragen. Strecke, Kilometerzeiten und Höhenmeter gibt es dafür nicht.
+          </AppText>
+        </Card>
+      ) : (
+        <RouteMap points={run.points} />
+      )}
 
       <StatGrid
         items={[
           { label: 'Distanz', value: formatDistance(run.distanceM, units) },
           { label: 'Zeit', value: formatClock(run.durationSeconds * 1000) },
           { label: 'Ø Pace', value: formatPace(avgPace, units), unit: paceUnitLabel(units) },
-          { label: 'Bester Kilometer', value: formatPace(fastest, units), unit: paceUnitLabel(units) },
-          { label: 'Höhenmeter', value: formatElevation(run.elevationGainM, units) },
+          ...(run.manual
+            ? []
+            : [
+                { label: 'Bester Kilometer', value: formatPace(fastest, units), unit: paceUnitLabel(units) },
+                { label: 'Höhenmeter', value: formatElevation(run.elevationGainM, units) },
+              ]),
         ]}
       />
 
@@ -161,6 +176,7 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
 }
 
 const styles = StyleSheet.create({
+  manual: { gap: Spacing.one },
   splitRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   splitKm: { width: 22 },
   splitTrack: { flex: 1, height: 22, justifyContent: 'center' },
