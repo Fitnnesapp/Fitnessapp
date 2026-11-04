@@ -6,8 +6,10 @@ import { KettlebellHero } from '@/components/illustrations/kettlebell-hero';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { ImageCard } from '@/components/ui/image-card';
 import { Screen } from '@/components/ui/screen';
-import { Radius, Spacing } from '@/constants/theme';
+import { OnImage, Radius, Spacing } from '@/constants/theme';
+import { SCENES } from '@/data/images';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { dayHeading } from '@/lib/logic/motivation';
@@ -40,11 +42,27 @@ export default function PlanScreen() {
   if (!plan) {
     return (
       <Screen>
-        <AppText variant="title">Noch kein Plan</AppText>
-        <AppText color="textSecondary">
-          Beantworte ein paar kurze Fragen, dann bekommst du einen Wochenplan, der zu deinem Ziel und deiner Zeit passt.
-        </AppText>
+        <ImageCard
+          source={SCENES['goal-fitness']}
+          height={280}
+          onPress={() => router.push('/plan/setup')}
+          accessibilityLabel="Plan erstellen">
+          <AppText variant="eyebrow" style={{ color: OnImage.accent }}>
+            IN EINER MINUTE
+          </AppText>
+          <AppText variant="display" style={styles.emptyTitle}>
+            Dein eigener Wochenplan
+          </AppText>
+          <AppText style={styles.emptyText}>
+            Ein paar kurze Fragen zu Ziel, Orten, Tagen und Zeit. Daraus entsteht ein Plan mit festen Tagen, den du
+            jederzeit anpassen kannst.
+          </AppText>
+        </ImageCard>
         <Button title="Plan erstellen" onPress={() => router.push('/plan/setup')} />
+        <AppText variant="caption" color="textSecondary">
+          Feste Tage und Uhrzeiten („Wenn es Dienstag 18 Uhr ist, dann trainiere ich“) erhöhen in Studien deutlich, wie
+          oft Vorsätze umgesetzt werden (Gollwitzer & Sheeran 2006). Deine Angaben bleiben auf diesem Gerät.
+        </AppText>
       </Screen>
     );
   }
@@ -176,6 +194,8 @@ export default function PlanScreen() {
 }
 
 const styles = StyleSheet.create({
+  emptyTitle: { color: '#FFFFFF', fontSize: 32, lineHeight: 36, fontWeight: '900' },
+  emptyText: { color: '#FFFFFF', opacity: 0.85 },
   flex: { flex: 1 },
   celebrate: { alignItems: 'center', gap: Spacing.two },
   center: { textAlign: 'center' },
