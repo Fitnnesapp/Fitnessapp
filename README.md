@@ -65,6 +65,14 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - **Notizen** zu Krafttrainings, auch im Feed; Kraftziel direkt bei der Übung im Workout
   - **Einstellungen:** Darstellung (Automatisch/Dunkel/Hell), Wochenziel ohne Plan, gemerkte Satzpause
   - Speicher-Migrationen: Einstellungen v3, Workouts v2, Challenges v2, neu: gemerkte Events v1
+- **Ausbau (4. November, Abend):**
+  - **Eigene Übungen** (Name, Hauptmuskel, Equipment, Notiz) mit Rekorden, Fortschritt, Zielen und Muskelanalyse; direkt aus der Auswahl im Workout anlegbar; löschbar, solange ungenutzt; Filter „Eigene“
+  - **Läufe ohne GPS nachtragen** (Laufband, Uhr), mit Plausibilitätsprüfung; zählen für Verlauf, Ziele, Challenges und Prognose, nicht für 1/5/10-km-Bestzeiten
+  - **Wochenziel fürs Laufen** in km bzw. mi mit Vorschlag (Schnitt der letzten vier Wochen plus 10 %)
+  - **Pace-Rechner** mit Zwischenzeiten für 5 km bis Marathon
+  - Übungsdetails mit den letzten fünf Einheiten samt Sätzen; zuletzt trainierte Übungen als Schnellauswahl im Workout
+  - Verlauf filterbar nach Trainingsart
+  - Speicher-Migrationen: Einstellungen v4, Läufe v1, neu: eigene Übungen v1
 - **Phase 8 (Ausbau):**
   - Jahresrückblick (Start-Tab): Workouts, Zeit, Distanz, Volumen, Rekorde, längste Serie, stärkster Monat, Lieblingstag und -übung, wählbares Jahr
   - Vorschlag für heute aus einfachen, nachvollziehbaren Regeln (keine KI); führt nie zu einem Premium-Programm
