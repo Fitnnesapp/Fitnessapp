@@ -96,6 +96,22 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/discover/challenge/new',
   },
   {
+    id: 'weekly-goal',
+    kind: 'funktion',
+    title: 'Wochenziel einstellen',
+    subtitle: 'Wie viele Trainingstage pro Woche du anpeilst (ohne Plan)',
+    keywords: ['Ziel pro Woche', 'Tage pro Woche', 'Wochenziel ändern', 'Ring'],
+    href: '/profile',
+  },
+  {
+    id: 'appearance',
+    kind: 'funktion',
+    title: 'Darstellung: Hell oder Dunkel',
+    subtitle: 'Automatisch wie das System oder fest hell bzw. dunkel',
+    keywords: ['Dark Mode', 'Hellmodus', 'Dunkelmodus', 'Farben', 'Design', 'Theme'],
+    href: '/profile',
+  },
+  {
     id: 'backup',
     kind: 'funktion',
     title: 'Datensicherung',

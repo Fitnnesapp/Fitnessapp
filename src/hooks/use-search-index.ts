@@ -9,6 +9,7 @@ import { ROUTINES } from '@/data/routines';
 import { useNow } from '@/hooks/use-now';
 import { upcomingEvents } from '@/lib/logic/events';
 import type { SearchItem } from '@/lib/logic/search';
+import { useChallengeStore } from '@/lib/storage/challenge-store';
 import { useEvents } from '@/lib/storage/events-store';
 
 export type SearchEntry = SearchItem & { target: { href: Href } | { url: string } };
@@ -16,6 +17,7 @@ export type SearchEntry = SearchItem & { target: { href: Href } | { url: string 
 /** Alles, was die Suche findet: Funktionen, Kraft-Workouts, Übungen, Programme, Challenges und kommende Events. */
 export function useSearchIndex(): SearchEntry[] {
   const events = useEvents();
+  const custom = useChallengeStore((state) => state.custom);
   const now = useNow(60 * 60_000);
 
   return useMemo(() => {
@@ -54,7 +56,7 @@ export function useSearchIndex(): SearchEntry[] {
       });
     }
 
-    for (const c of CHALLENGES) {
+    for (const c of [...CHALLENGES, ...custom]) {
       entries.push({
         id: `challenge-${c.id}`,
         kind: 'challenge',
@@ -76,5 +78,5 @@ export function useSearchIndex(): SearchEntry[] {
       });
     }
     return entries;
-  }, [events, now]);
+  }, [events, now, custom]);
 }
