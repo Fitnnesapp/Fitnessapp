@@ -2,6 +2,7 @@ import { Redirect, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { ProgressionHint } from '@/components/progression-hint';
 import { RestTimer } from '@/components/rest-timer';
 import { SetRow } from '@/components/set-row';
 import { AppText } from '@/components/ui/app-text';
@@ -15,6 +16,7 @@ import { confirmAction } from '@/lib/confirm';
 import { finalizeDraft } from '@/lib/logic/draft';
 import { formatClock } from '@/lib/logic/format';
 import { findRecords } from '@/lib/logic/personal-records';
+import { progressionTip, type ProgressionTip } from '@/lib/logic/progression';
 import { weightUnitLabel } from '@/lib/logic/units';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
@@ -36,6 +38,17 @@ export default function WorkoutScreen() {
     const draft = finalizeDraft(active, units, active.startedAt);
     return findRecords([...history].sort((a, b) => a.startedAt - b.startedAt).concat(draft));
   }, [active, history, units]);
+
+  // Progressions-Tipp je Übung aus dem bisherigen Verlauf (das laufende Workout zählt nicht mit)
+  const exerciseKey = active?.exercises.map((entry) => entry.exerciseId).join('|') ?? '';
+  const tips = useMemo(() => {
+    const result = new Map<string, ProgressionTip>();
+    for (const id of exerciseKey.split('|')) {
+      const exercise = getExercise(id);
+      if (exercise && !result.has(id)) result.set(id, progressionTip(history, id, exercise, units));
+    }
+    return result;
+  }, [exerciseKey, history, units]);
 
   if (!active) return <Redirect href="/training/strength" />;
 
@@ -104,6 +117,34 @@ export default function WorkoutScreen() {
                 style={styles.removeButton}
               />
             </View>
+
+            {(() => {
+              const tip = tips.get(entry.exerciseId);
+              if (!tip) return null;
+              const open = entry.sets.filter((set) => !set.done && !set.isWarmup);
+              const weightText = tip.weight !== null ? String(tip.weight) : null;
+              const differs = open.some(
+                (set) => (weightText !== null && set.weight !== weightText) || (tip.reps !== null && set.reps !== String(tip.reps)),
+              );
+              return (
+                <ProgressionHint
+                  tip={tip}
+                  unit={unit}
+                  onApply={
+                    differs
+                      ? () => {
+                          for (const set of open) {
+                            store.updateSet(exerciseIndex, set.id, {
+                              ...(weightText !== null ? { weight: weightText } : {}),
+                              ...(tip.reps !== null ? { reps: String(tip.reps) } : {}),
+                            });
+                          }
+                        }
+                      : undefined
+                  }
+                />
+              );
+            })()}
 
             {entry.sets.map((set) => {
               if (!set.isWarmup) workingIndex += 1;
