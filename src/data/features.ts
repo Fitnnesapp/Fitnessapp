@@ -112,6 +112,14 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/training/running',
   },
   {
+    id: 'templates',
+    kind: 'funktion',
+    title: 'Eigene Vorlage zusammenstellen',
+    subtitle: 'Übungen auswählen, sortieren und mit einem Tipp starten',
+    keywords: ['Trainingsplan erstellen', 'Workout speichern', 'Vorlage bearbeiten', 'Split', 'Push Pull Beine eigene'],
+    href: '/training/strength',
+  },
+  {
     id: 'interval-timer',
     kind: 'funktion',
     title: 'Intervall-Timer',

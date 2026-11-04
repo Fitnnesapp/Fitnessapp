@@ -13,6 +13,7 @@ import { Spacing } from '@/constants/theme';
 import { EQUIPMENT, EXERCISES, getExercise, MUSCLE_GROUPS } from '@/data/exercises';
 import { useTheme } from '@/hooks/use-theme';
 import { formatWeight } from '@/lib/logic/units';
+import { addToTemplate } from '@/lib/logic/templates';
 import { recentExerciseIds } from '@/lib/logic/workout-stats';
 import { useCustomExercises } from '@/lib/storage/custom-exercise-store';
 import { useSettings } from '@/lib/storage/settings-store';
@@ -22,9 +23,12 @@ import type { Equipment, MuscleGroup } from '@/types/workout';
 export default function ExercisesScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const params = useLocalSearchParams<{ pick?: string; swap?: string; muscle?: string }>();
+  const params = useLocalSearchParams<{ pick?: string; swap?: string; muscle?: string; template?: string }>();
   const swapIndex = params.swap !== undefined ? Number(params.swap) : null;
-  const picking = params.pick === '1' || swapIndex !== null;
+  // Auswahl für eine Vorlage (Editor) statt fürs laufende Workout
+  const template = useWorkouts((state) => state.templates.find((t) => t.id === params.template));
+  const setTemplateExercises = useWorkouts((state) => state.setTemplateExercises);
+  const picking = params.pick === '1' || swapIndex !== null || template !== undefined;
   const addExercise = useWorkouts((state) => state.addExercise);
   const replaceExercise = useWorkouts((state) => state.replaceExercise);
   const history = useWorkouts((state) => state.history);
@@ -49,7 +53,10 @@ export default function ExercisesScreen() {
   }, [history, units]);
 
   // Schnellauswahl beim Hinzufügen: zuletzt trainierte Übungen, die noch nicht im Workout sind
-  const activeIds = useMemo(() => active?.exercises.map((entry) => entry.exerciseId) ?? [], [active]);
+  const activeIds = useMemo(
+    () => template?.exerciseIds ?? active?.exercises.map((entry) => entry.exerciseId) ?? [],
+    [template, active],
+  );
   const recent = useMemo(
     () => (picking ? recentExerciseIds(history, 8, activeIds).filter((id) => getExercise(id)) : []),
     [picking, history, activeIds],
@@ -85,7 +92,10 @@ export default function ExercisesScreen() {
   }
 
   function select(id: string) {
-    if (swapIndex !== null && Number.isInteger(swapIndex)) {
+    if (template) {
+      setTemplateExercises(template.id, addToTemplate(template.exerciseIds, id));
+      router.back();
+    } else if (swapIndex !== null && Number.isInteger(swapIndex)) {
       replaceExercise(swapIndex, id);
       router.back();
     } else if (picking) {
@@ -105,6 +115,11 @@ export default function ExercisesScreen() {
       keyExtractor={(exercise) => exercise.id}
       ListHeaderComponent={
         <View style={styles.filters}>
+          {template ? (
+            <AppText variant="caption" color="textSecondary">
+              Übung für „{template.name}“ auswählen
+            </AppText>
+          ) : null}
           {recent.length > 0 ? (
             <View style={styles.recent}>
               <AppText variant="label" color="textSecondary">

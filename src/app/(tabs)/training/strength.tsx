@@ -36,7 +36,7 @@ export default function StrengthScreen() {
   const router = useRouter();
   const theme = useTheme();
   const now = useNow(60_000);
-  const { active, history, templates, startWorkout } = useWorkouts();
+  const { active, history, templates, startWorkout, createTemplate } = useWorkouts();
   const answers = usePlanStore((state) => state.plan?.answers);
   const goals = useGoalsStore((state) => state.goals);
   const preferences = useMemo(() => preferencesFromPlan(answers), [answers]);
@@ -145,12 +145,21 @@ export default function StrengthScreen() {
         <RoutineCard key={routine.id} routine={routine} onPress={() => openRoutine(routine.id)} />
       ))}
 
-      <SectionHeader title="Meine Vorlagen" />
+      <SectionHeader
+        title="Meine Vorlagen"
+        action={{
+          label: 'Neue Vorlage',
+          onPress: () => {
+            const id = createTemplate('Neue Vorlage');
+            router.push({ pathname: '/training/template/[id]', params: { id } });
+          },
+        }}
+      />
       {templates.length === 0 ? (
         <Card style={styles.emptyCard}>
           <Ionicons name="bookmark-outline" size={22} color={theme.accent} />
           <AppText color="textSecondary" style={styles.flex}>
-            Nach einem Workout kannst du es als Vorlage speichern und hier mit einem Tipp neu starten.
+            Stell dir eine Vorlage mit „Neue Vorlage“ zusammen oder speichere ein beendetes Workout als Vorlage.
           </AppText>
         </Card>
       ) : null}

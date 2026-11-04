@@ -103,3 +103,7 @@ test('Laufband führt zum Nachtragen', () => {
 test('Tempo für eine Zielzeit führt zum Pace-Rechner', () => {
   assert.equal(top('pace rechner'), 'pace-calculator');
 });
+
+test('Vorlage bearbeiten führt zu den Vorlagen', () => {
+  assert.equal(top('vorlage bearbeiten'), 'templates');
+});

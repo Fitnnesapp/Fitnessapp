@@ -48,6 +48,10 @@ type WorkoutState = {
   saveTemplate: (name: string, exerciseIds: string[]) => void;
   deleteTemplate: (id: string) => void;
   renameTemplate: (id: string, name: string) => void;
+  /** Leere Vorlage anlegen, gibt ihre ID zurück */
+  createTemplate: (name: string) => string;
+  /** Übungen einer Vorlage ersetzen (Editor) */
+  setTemplateExercises: (id: string, exerciseIds: string[]) => void;
   reset: () => void;
 };
 
@@ -274,6 +278,14 @@ export const useWorkouts = create<WorkoutState>()(
         if (!trimmed) return;
         set({ templates: get().templates.map((t) => (t.id === id ? { ...t, name: trimmed } : t)) });
       },
+
+      createTemplate: (name) => {
+        const id = newId();
+        set({ templates: [...get().templates, { id, name: name.trim().slice(0, 40) || 'Neue Vorlage', exerciseIds: [] }] });
+        return id;
+      },
+      setTemplateExercises: (id, exerciseIds) =>
+        set({ templates: get().templates.map((t) => (t.id === id ? { ...t, exerciseIds } : t)) }),
 
       reset: () => set(INITIAL),
     }),
