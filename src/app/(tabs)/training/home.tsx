@@ -98,6 +98,17 @@ export default function HomeProgramsScreen() {
         </View>
       }
       ListEmptyComponent={<AppText color="textSecondary">Kein Programm passt zu diesen Filtern.</AppText>}
+      ListFooterComponent={
+        <Card onPress={() => router.push('/training/timer')} style={styles.footer}>
+          <Ionicons name="timer-outline" size={22} color={theme.accent} />
+          <View style={styles.flex}>
+            <AppText variant="heading">Eigene Intervalle</AppText>
+            <AppText variant="caption" color="textSecondary">
+              Tabata, EMOM oder eigene Zeiten mit dem Intervall-Timer
+            </AppText>
+          </View>
+        </Card>
+      }
       renderItem={({ item }) => {
         const locked = !isPremium && !isFreeProgram(item.id);
         return (
@@ -140,6 +151,7 @@ const styles = StyleSheet.create({
   card: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   minutes: { width: 64, height: 64, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center' },
   minutesNumber: { fontSize: 26, lineHeight: 28 },
+  footer: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginTop: Spacing.three },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
   categoryTile: { width: 148, borderWidth: 2, borderRadius: Radius.large + 2 },
   categoryLabel: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one, marginLeft: -Spacing.two, marginBottom: -Spacing.two },

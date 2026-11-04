@@ -167,6 +167,11 @@ export default function RunningScreen() {
 
       <SectionHeader title="Lauf-Ideen" />
       <AppText color="textSecondary">Rund 80 % locker, 20 % fordernd: so trainieren auch Profis.</AppText>
+      <Button
+        title="Intervall-Timer für Tempoläufe"
+        variant="secondary"
+        onPress={() => router.push('/training/timer')}
+      />
       {RUN_IDEAS.map((idea) => (
         <Card key={idea.id}>
           <View style={styles.ideaHead}>
