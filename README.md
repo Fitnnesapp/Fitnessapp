@@ -54,6 +54,17 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - Workouts und Läufe als Text teilen (Teilen-Menü des Systems, nichts wird hochgeladen)
   - Fix: Bildkarten zeigten im Browser nur den linken Bildrand
   - Fix: Diagrammbeschriftung im Browser serifenlos und nicht mehr abgeschnitten
+- **Verknüpfungen und Ausbau (4. November, Nachmittag):**
+  - **Fix Rückfragen:** eigener Dialog im App-Design statt `window.confirm`. In eingebetteten Ansichten waren Browser-Dialoge gesperrt, dadurch ließen sich Challenges nicht verlassen und Einträge nicht löschen
+  - Laufende Einheiten auf Start- und Training-Tab sichtbar, Punkt am Training-Tab; Tippen auf den aktiven Tab führt zu dessen Startseite
+  - Plan beenden, sichere Rückwege nach dem Löschen, „Jetzt starten“ im Plan öffnet das passende fertige Workout
+  - Übungen aus den Details direkt starten oder zum laufenden Workout hinzufügen; Workout im Verlauf nochmal machen; Übungen im Workout umsortieren
+  - **Eigene Challenges** (Messgröße, Ziel, 7 bis 90 Tage), löschbar
+  - **Events merken** mit Countdown und Vorbereitungsphase (Grundlage bis Tapering) auf dem Start-Tab
+  - **Intervall-Timer** (Tabata, HIIT, EMOM, Sprints, eigene Zeiten)
+  - **Notizen** zu Krafttrainings, auch im Feed; Kraftziel direkt bei der Übung im Workout
+  - **Einstellungen:** Darstellung (Automatisch/Dunkel/Hell), Wochenziel ohne Plan, gemerkte Satzpause
+  - Speicher-Migrationen: Einstellungen v3, Workouts v2, Challenges v2, neu: gemerkte Events v1
 - **Phase 8 (Ausbau):**
   - Jahresrückblick (Start-Tab): Workouts, Zeit, Distanz, Volumen, Rekorde, längste Serie, stärkster Monat, Lieblingstag und -übung, wählbares Jahr
   - Vorschlag für heute aus einfachen, nachvollziehbaren Regeln (keine KI); führt nie zu einem Premium-Programm
