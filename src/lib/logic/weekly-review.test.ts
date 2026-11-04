@@ -61,7 +61,7 @@ test('Rückblick: Ziel geschafft, übertroffen, Pause', () => {
   const two = [act(at(2026, 10, 13)), act(at(2026, 10, 14))];
   assert.equal(lastWeekReview(two, NOW, 2).message, 'Wochenziel geschafft. Genau so baut sich eine Gewohnheit auf.');
   assert.equal(lastWeekReview(two, NOW, 1).message, 'Ziel übertroffen: 2 Trainingstage statt 1.');
-  const pause = lastWeekReview([], NOW, 3);
+  const pause = lastWeekReview([act(at(2026, 9, 1))], NOW, 3);
   assert.equal(pause.message, 'Letzte Woche war Pause. Diese Woche ist ein neuer Anfang.');
   assert.equal(pause.longest, null);
 });
@@ -79,4 +79,20 @@ test('aktivste Woche, bei Gleichstand die neuere', () => {
 test('Gesamtbilanz zählt Trainingstage nur einmal', () => {
   const list = [act(at(2026, 10, 12, 7), 20), act(at(2026, 10, 12, 18), 40, 'running', 3000), act(at(2026, 10, 13), 30)];
   assert.deepEqual(lifetimeTotals(list), { sessions: 3, minutes: 90, distanceM: 3000, activeDays: 2 });
+});
+
+test('Neue Nutzer bekommen keinen "Pause"-Rückblick', () => {
+  const now = new Date(2026, 10, 4, 12).getTime();
+  assert.match(lastWeekReview([], now, 3).message, /erste Einheit startet ihn/);
+  const activity = (id: string, startedAt: number): Activity => ({
+    id,
+    type: 'strength',
+    startedAt,
+    durationSeconds: 1800,
+    distanceM: 0,
+  });
+  const thisWeek = [activity('a', new Date(2026, 10, 3, 18).getTime())];
+  assert.match(lastWeekReview(thisWeek, now, 3).message, /erster Wochenrückblick kommt am Montag/);
+  const older = [activity('b', new Date(2026, 9, 20, 18).getTime())];
+  assert.match(lastWeekReview(older, now, 3).message, /Letzte Woche war Pause/);
 });

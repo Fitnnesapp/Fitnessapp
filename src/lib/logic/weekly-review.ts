@@ -62,7 +62,10 @@ export function lastWeekReview(activities: Activity[], now: number, goalDays: nu
   const longest = inWeek.reduce<Activity | null>((best, a) => (best === null || a.durationSeconds > best.durationSeconds ? a : best), null);
 
   let message: string;
-  if (inWeek.length === 0) message = 'Letzte Woche war Pause. Diese Woche ist ein neuer Anfang.';
+  const hasEarlier = activities.some((a) => a.startedAt < start);
+  if (activities.length === 0) message = 'Hier erscheint jeden Montag dein Wochenrückblick. Die erste Einheit startet ihn.';
+  else if (inWeek.length === 0 && !hasEarlier) message = 'Dein erster Wochenrückblick kommt am Montag. Weiter so!';
+  else if (inWeek.length === 0) message = 'Letzte Woche war Pause. Diese Woche ist ein neuer Anfang.';
   else if (activeDays > goal) message = `Ziel übertroffen: ${activeDays} Trainingstage statt ${goal}.`;
   else if (goalReached) message = 'Wochenziel geschafft. Genau so baut sich eine Gewohnheit auf.';
   else message = `${activeDays} von ${goal} Tagen. Jeder Tag hat gezählt.`;
