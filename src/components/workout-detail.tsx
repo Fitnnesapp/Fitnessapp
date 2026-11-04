@@ -12,11 +12,13 @@ import { TextField } from '@/components/ui/text-field';
 import { getExercise, secondaryMuscles } from '@/data/exercises';
 import { confirmAction } from '@/lib/confirm';
 import { compareWithPrevious } from '@/lib/logic/compare';
+import { goalProgress } from '@/lib/logic/goals';
 import { formatDuration } from '@/lib/logic/format';
 import { muscleLoad } from '@/lib/logic/muscle-load';
 import { findRecords } from '@/lib/logic/personal-records';
 import { formatWeight } from '@/lib/logic/units';
 import { summarizeWorkout } from '@/lib/logic/workout-stats';
+import { useGoalsStore } from '@/lib/storage/goals-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { getWorkout, useWorkouts } from '@/lib/storage/workout-store';
 
@@ -30,6 +32,7 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
   const router = useRouter();
   const units = useSettings((state) => state.units);
   const { history, deleteWorkout, saveTemplate } = useWorkouts();
+  const goals = useGoalsStore((state) => state.goals);
   const workout = getWorkout(history, workoutId);
 
   const [templateName, setTemplateName] = useState('');
@@ -74,7 +77,12 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
         <CelebrationCard
           sessionId={workout.id}
           headline="Stark!"
-          records={recordCount > 0 ? [recordCount === 1 ? '1 neuer Rekord' : `${recordCount} neue Rekorde`] : []}
+          records={[
+            ...(recordCount > 0 ? [recordCount === 1 ? '1 neuer Rekord' : `${recordCount} neue Rekorde`] : []),
+            ...goals
+              .filter((goal) => goalProgress(goal, history).achievedAt === workout.startedAt)
+              .map((goal) => `Ziel erreicht: ${getExercise(goal.exerciseId)?.name ?? 'Übung'} ${formatWeight(goal.targetKg, units)}`),
+          ]}
         />
       ) : null}
       <DetailHeader startedAt={workout.startedAt} title="Kraft-Workout" />

@@ -159,7 +159,7 @@ export default function ProfileScreen() {
       {/* 2. Bestleistungen: eigene Rekorde sichtbar machen */}
       {hasBests ? (
         <>
-          <SectionHeader title="Bestleistungen" />
+          <SectionHeader title="Bestleistungen" action={{ label: 'Rekordbuch', onPress: () => router.push('/history/records') }} />
           <View style={styles.bests}>
             {bests.heaviest ? (
               <BestTile
