@@ -45,6 +45,8 @@ type WorkoutState = {
   updateSet: (exerciseIndex: number, setId: string, patch: Partial<Omit<DraftSet, 'id'>>) => void;
 
   deleteWorkout: (id: string) => void;
+  /** Ersetzt ein gespeichertes Workout (Korrektur von Sätzen) */
+  replaceWorkout: (workout: StrengthWorkout) => void;
   saveTemplate: (name: string, exerciseIds: string[]) => void;
   deleteTemplate: (id: string) => void;
   renameTemplate: (id: string, name: string) => void;
@@ -268,6 +270,8 @@ export const useWorkouts = create<WorkoutState>()(
       },
 
       deleteWorkout: (id) => set({ history: get().history.filter((w) => w.id !== id) }),
+      replaceWorkout: (workout) =>
+        set({ history: get().history.map((w) => (w.id === workout.id ? workout : w)) }),
 
       saveTemplate: (name, exerciseIds) =>
         set({ templates: [...get().templates, { id: newId(), name: name.trim(), exerciseIds }] }),

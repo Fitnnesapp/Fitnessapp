@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 
 import { CelebrationCard } from '@/components/celebration-card';
 import { MuscleMap } from '@/components/muscle-map';
+import { WorkoutSetEditor } from '@/components/workout-set-editor';
 import { DetailHeader, StatGrid } from '@/components/detail-layout';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
   const workout = getWorkout(history, workoutId);
 
   const [templateName, setTemplateName] = useState('');
+  const [editingSets, setEditingSets] = useState(false);
   const [noteText, setNoteText] = useState(() => getWorkout(history, workoutId)?.note ?? '');
   const [noteSaved, setNoteSaved] = useState(false);
   const [templateSaved, setTemplateSaved] = useState(false);
@@ -149,7 +151,9 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
         </Card>
       ) : null}
 
-      {workout.exercises.map((entry, index) => {
+      {editingSets ? <WorkoutSetEditor workout={workout} onDone={() => setEditingSets(false)} /> : null}
+
+      {(editingSets ? [] : workout.exercises).map((entry, index) => {
         const exercise = getExercise(entry.exerciseId);
         let workingIndex = 0;
 
@@ -171,6 +175,10 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
           </Card>
         );
       })}
+
+      {!editingSets ? (
+        <Button title="Sätze korrigieren" variant="ghost" onPress={() => setEditingSets(true)} />
+      ) : null}
 
       {!justFinished ? (
         <Button
