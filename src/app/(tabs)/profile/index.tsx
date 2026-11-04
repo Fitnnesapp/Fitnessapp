@@ -57,6 +57,9 @@ const UNITS: { value: UnitsPreference; label: string }[] = [
  * Profil (Redesign 2.0), aufgebaut wie der "Du"-Bereich großer Sport-Apps: zuerst wer du bist
  * (Identität, Bilanz, Bestleistungen), dann dein Plan, dann Einstellungen und Datenschutz.
  */
+/** Schnellauswahl fürs Laufziel in km bzw. Meilen */
+const RUN_GOAL_STEPS = [10, 20, 30, 40];
+
 export default function ProfileScreen() {
   const router = useRouter();
   const theme = useTheme();
@@ -81,6 +84,8 @@ export default function ProfileScreen() {
   const resetNews = useNewsStore((state) => state.reset);
   const resetSavedEvents = useSavedEvents((state) => state.reset);
   const resetCustomExercises = useCustomExercises((state) => state.reset);
+  const runGoalM = useSettings((state) => state.weeklyRunGoalM);
+  const setRunGoalM = useSettings((state) => state.setWeeklyRunGoalM);
   const health = useHealthStore();
   const streakReminder = useSettings((state) => state.streakReminder);
   const setStreakReminder = useSettings((state) => state.setStreakReminder);
@@ -264,6 +269,30 @@ export default function ProfileScreen() {
               ))}
             </View>
           )}
+        </View>
+        <View style={styles.field}>
+          <AppText variant="label" color="textSecondary">
+            Laufziel pro Woche
+          </AppText>
+          <View style={styles.chips}>
+            <Chip label="Keins" selected={runGoalM === null} onPress={() => setRunGoalM(null)} />
+            {RUN_GOAL_STEPS.map((value) => {
+              const meters = value * (units === 'metric' ? 1000 : 1609.344);
+              return (
+                <Chip
+                  key={value}
+                  label={`${value} ${units === 'metric' ? 'km' : 'mi'}`}
+                  selected={runGoalM !== null && Math.abs(runGoalM - meters) < 1}
+                  onPress={() => setRunGoalM(meters)}
+                />
+              );
+            })}
+          </View>
+          {runGoalM !== null && !RUN_GOAL_STEPS.some((value) => Math.abs(runGoalM - value * (units === 'metric' ? 1000 : 1609.344)) < 1) ? (
+            <AppText variant="caption" color="textSecondary">
+              Aktuell: {formatDistance(runGoalM, units)}. Feiner einstellen auf der Running-Seite.
+            </AppText>
+          ) : null}
         </View>
         <View style={styles.field}>
           <AppText variant="label" color="textSecondary">
