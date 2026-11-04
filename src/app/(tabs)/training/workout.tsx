@@ -21,6 +21,7 @@ import { formatClock } from '@/lib/logic/format';
 import { goalProgress } from '@/lib/logic/goals';
 import { findRecords } from '@/lib/logic/personal-records';
 import { progressionTip, type ProgressionTip } from '@/lib/logic/progression';
+import { plateHint } from '@/lib/logic/strength-calc';
 import { formatWeight, parseNumber, weightUnitLabel } from '@/lib/logic/units';
 import { warmupSets } from '@/lib/logic/warmup';
 import { useGoalsStore } from '@/lib/storage/goals-store';
@@ -243,6 +244,24 @@ export default function WorkoutScreen() {
               );
             })}
 
+            {(() => {
+              // Auflegehilfe für Langhantel-Übungen: Scheiben pro Seite für den nächsten offenen Satz
+              if (exercise?.equipment !== 'Langhantel') return null;
+              const next = entry.sets.find((set) => !set.done);
+              const hint = next ? plateHint(parseNumber(next.weight), units) : null;
+              if (!hint) return null;
+              return (
+                <View style={styles.plates} accessibilityLabel={`Pro Seite auflegen: ${hint.text} ${unit}`}>
+                  <Ionicons name="disc-outline" size={16} color={theme.textSecondary} />
+                  <AppText variant="caption" color="textSecondary" style={styles.flex}>
+                    Pro Seite: {hint.text} {unit}
+                    {hint.exact ? '' : ` (ergibt ${String(hint.loaded).replace('.', ',')} ${unit})`} ·{' '}
+                    {units === 'metric' ? '20' : '45'}-{unit}-Stange
+                  </AppText>
+                </View>
+              );
+            })()}
+
             <Button title="Satz hinzufügen" variant="secondary" onPress={() => store.addSet(exerciseIndex)} />
             <AppText variant="caption" color="textSecondary">
               Tipp: Auf die Satznummer tippen markiert einen Aufwärmsatz, lang drücken löscht den Satz.
@@ -300,6 +319,8 @@ function IconButton({
 }
 
 const styles = StyleSheet.create({
+  plates: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
+  flex: { flex: 1 },
   header: { gap: Spacing.one },
   exerciseHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   exerciseName: { flex: 1 },

@@ -114,3 +114,22 @@ export function platesPerSide(target: number, bar: number, plates: number[]): Pl
   remaining = Math.max(0, toInt(target) - loadedInt);
   return { perSide, loaded: loadedInt / 100, missing: remaining / 100 };
 }
+
+/**
+ * Kurzhinweis fürs Auflegen im Workout, z.B. "20 + 10 + 1,25" pro Seite auf der Standardstange.
+ * null, wenn kein Gewicht über der leeren Stange eingetragen ist.
+ */
+export function plateHint(
+  weight: number | null,
+  units: Units,
+): { text: string; exact: boolean; loaded: number } | null {
+  const bar = BARS[units][0];
+  if (weight === null || weight <= bar) return null;
+  const result = platesPerSide(weight, bar, PLATES[units]);
+  if (result.perSide.length === 0) return null;
+  return {
+    text: result.perSide.map((plate) => String(plate).replace('.', ',')).join(' + '),
+    exact: result.missing === 0,
+    loaded: result.loaded,
+  };
+}

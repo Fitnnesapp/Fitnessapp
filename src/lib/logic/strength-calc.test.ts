@@ -7,6 +7,7 @@ import {
   BARS,
   estimateOneRepMax,
   percentTable,
+  plateHint,
   PLATES,
   platesPerSide,
   roundDownToStep,
@@ -102,4 +103,12 @@ test('bestes geschätztes 1RM über alle Arbeitssätze, Aufwärmsätze zählen n
   ];
   assert.deepEqual(bestOneRepMax(history, 'bank'), { oneRepMaxKg: 101.3, weightKg: 80, reps: 8, at: 1 });
   assert.equal(bestOneRepMax(history, 'fehlt'), null);
+});
+
+test('Scheiben-Hinweis im Workout', () => {
+  assert.deepEqual(plateHint(82.5, 'metric'), { text: '25 + 5 + 1,25', exact: true, loaded: 82.5 });
+  assert.deepEqual(plateHint(61, 'metric'), { text: '20', exact: false, loaded: 60 });
+  assert.equal(plateHint(20, 'metric'), null);
+  assert.equal(plateHint(null, 'metric'), null);
+  assert.deepEqual(plateHint(135, 'imperial'), { text: '45', exact: true, loaded: 135 });
 });
