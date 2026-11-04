@@ -10,12 +10,13 @@ import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
+import { TextField } from '@/components/ui/text-field';
 import { Spacing } from '@/constants/theme';
 import { getExercise } from '@/data/exercises';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { confirmAction } from '@/lib/confirm';
-import { finalizeDraft } from '@/lib/logic/draft';
+import { finalizeDraft, NOTE_MAX_LENGTH } from '@/lib/logic/draft';
 import { formatClock } from '@/lib/logic/format';
 import { goalProgress } from '@/lib/logic/goals';
 import { findRecords } from '@/lib/logic/personal-records';
@@ -248,6 +249,15 @@ export default function WorkoutScreen() {
         title="Übung hinzufügen"
         variant="secondary"
         onPress={() => router.push({ pathname: '/training/exercises', params: { pick: '1' } })}
+      />
+
+      <TextField
+        label="Notiz (optional)"
+        value={active.note ?? ''}
+        onChangeText={store.setActiveNote}
+        placeholder="z.B. Schulter zwickt, neues Studio, super Tag"
+        multiline
+        maxLength={NOTE_MAX_LENGTH}
       />
 
       {error ? (

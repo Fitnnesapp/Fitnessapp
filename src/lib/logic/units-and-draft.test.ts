@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { finalizeDraft } from './draft.ts';
+import { cleanNote, finalizeDraft } from './draft.ts';
 import { displayToKg, formatWeight, kgToDisplay, parseNumber } from './units.ts';
 import { exerciseProgress, lastWorkingSet, summarizeWorkout } from './workout-stats.ts';
 
@@ -95,4 +95,11 @@ test('Fortschritt enthält geschätztes 1RM und Volumen ohne Aufwärmsätze', ()
 test('lastWorkingSet findet den letzten Arbeitssatz des neuesten Workouts', () => {
   assert.equal(lastWorkingSet(history, 'bank')?.weightKg, 65);
   assert.equal(lastWorkingSet(history, 'unbekannt'), null);
+});
+
+test('Notiz: wird gekürzt übernommen, leere Notiz entfällt', () => {
+  assert.equal(finalizeDraft({ ...draft, note: '  Schulter zwickt  ' }, 'metric', 61000).note, 'Schulter zwickt');
+  assert.equal('note' in finalizeDraft({ ...draft, note: '   ' }, 'metric', 61000), false);
+  assert.equal(cleanNote('x'.repeat(600))?.length, 500);
+  assert.equal(cleanNote(undefined), undefined);
 });

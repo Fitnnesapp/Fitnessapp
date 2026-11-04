@@ -13,6 +13,7 @@ import { getExercise, secondaryMuscles } from '@/data/exercises';
 import { confirmAction } from '@/lib/confirm';
 import { compareWithPrevious } from '@/lib/logic/compare';
 import { goalProgress } from '@/lib/logic/goals';
+import { NOTE_MAX_LENGTH } from '@/lib/logic/draft';
 import { formatDuration } from '@/lib/logic/format';
 import { muscleLoad } from '@/lib/logic/muscle-load';
 import { findRecords } from '@/lib/logic/personal-records';
@@ -32,11 +33,13 @@ type WorkoutDetailProps = {
 export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetailProps) {
   const router = useRouter();
   const units = useSettings((state) => state.units);
-  const { history, active, deleteWorkout, saveTemplate, repeatWorkout } = useWorkouts();
+  const { history, active, deleteWorkout, saveTemplate, repeatWorkout, setWorkoutNote } = useWorkouts();
   const goals = useGoalsStore((state) => state.goals);
   const workout = getWorkout(history, workoutId);
 
   const [templateName, setTemplateName] = useState('');
+  const [noteText, setNoteText] = useState(() => getWorkout(history, workoutId)?.note ?? '');
+  const [noteSaved, setNoteSaved] = useState(false);
   const [templateSaved, setTemplateSaved] = useState(false);
 
   const records = useMemo(
@@ -205,6 +208,35 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
           }
         />
       ) : null}
+
+      <Card>
+        <AppText variant="heading">Notiz</AppText>
+        <TextField
+          label="Was war heute besonders?"
+          value={noteText}
+          onChangeText={(text) => {
+            setNoteText(text);
+            setNoteSaved(false);
+          }}
+          placeholder="z.B. Schulter zwickt, neues Studio, super Tag"
+          multiline
+          maxLength={NOTE_MAX_LENGTH}
+        />
+        {noteText.trim() !== (workout.note ?? '') ? (
+          <Button
+            title="Notiz speichern"
+            variant="secondary"
+            onPress={() => {
+              setWorkoutNote(workout.id, noteText);
+              setNoteSaved(true);
+            }}
+          />
+        ) : noteSaved ? (
+          <AppText variant="caption" color="accent">
+            Gespeichert.
+          </AppText>
+        ) : null}
+      </Card>
 
       <Card>
         <AppText variant="heading">Als Vorlage speichern</AppText>

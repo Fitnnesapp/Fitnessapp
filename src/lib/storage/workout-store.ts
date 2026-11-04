@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { finalizeDraft } from '@/lib/logic/draft';
+import { cleanNote, finalizeDraft, NOTE_MAX_LENGTH } from '@/lib/logic/draft';
 import { draftFromWorkout } from '@/lib/logic/repeat';
 import { targetReps } from '@/lib/logic/routines';
 import { kgToDisplay, type Units } from '@/lib/logic/units';
@@ -35,6 +35,10 @@ type WorkoutState = {
   /** Tauscht eine Übung ohne erledigte Sätze gegen eine andere, Satzzahl und Vorgabe bleiben. */
   replaceExercise: (exerciseIndex: number, exerciseId: string) => void;
   addSet: (exerciseIndex: number) => void;
+  /** Notiz zum laufenden Workout */
+  setActiveNote: (note: string) => void;
+  /** Notiz eines gespeicherten Workouts ändern (leer entfernt sie) */
+  setWorkoutNote: (workoutId: string, note: string) => void;
   /** Fügt Aufwärmsätze (Anzeigeeinheit) vor den Arbeitssätzen ein. */
   addWarmupSets: (exerciseIndex: number, sets: { weight: number; reps: number }[]) => void;
   removeSet: (exerciseIndex: number, setId: string) => void;
@@ -65,7 +69,7 @@ function prefilledSet(history: StrengthWorkout[], exerciseId: string, units: Uni
 }
 
 const INITIAL = { active: null, history: [], templates: [] };
-export const WORKOUT_STORE_VERSION = 1;
+export const WORKOUT_STORE_VERSION = 2;
 
 export const useWorkouts = create<WorkoutState>()(
   persist(
@@ -177,6 +181,23 @@ export const useWorkouts = create<WorkoutState>()(
         set({ active: { ...active, exercises: active.exercises.map((e, i) => (i === exerciseIndex ? replaced : e)) } });
       },
 
+      setActiveNote: (note) => {
+        const { active } = get();
+        if (!active) return;
+        set({ active: { ...active, note: note.slice(0, NOTE_MAX_LENGTH) } });
+      },
+
+      setWorkoutNote: (workoutId, note) => {
+        const cleaned = cleanNote(note);
+        set({
+          history: get().history.map((workout) => {
+            if (workout.id !== workoutId) return workout;
+            const { note: _old, ...rest } = workout;
+            return cleaned ? { ...rest, note: cleaned } : rest;
+          }),
+        });
+      },
+
       addWarmupSets: (exerciseIndex, warmups) => {
         const { active } = get();
         const entry = active?.exercises[exerciseIndex];
@@ -253,6 +274,7 @@ export const useWorkouts = create<WorkoutState>()(
     {
       name: 'fitnessapp-workouts',
       // Version 1: Übungen im laufenden Workout können eine optionale Vorgabe (target) haben.
+      // Version 2: optionale Notiz (note) an laufenden und gespeicherten Workouts.
       // Ältere Daten bleiben unverändert gültig, die Migration übernimmt sie wie sie sind.
       version: WORKOUT_STORE_VERSION,
       migrate: (persisted) => persisted as Pick<WorkoutState, 'active' | 'history' | 'templates'>,

@@ -44,6 +44,8 @@ export type ActiveWorkout = {
   id: string;
   startedAt: number;
   exercises: DraftExercise[];
+  /** Freitext zum Training (seit Speicherversion 2, optional) */
+  note?: string;
 };
 
 /** Abgeschlossener Satz, Gewicht immer in kg gespeichert. */
@@ -66,6 +68,8 @@ export type StrengthWorkout = {
   startedAt: number;
   endedAt: number;
   exercises: LoggedExercise[];
+  /** Freitext zum Training, z.B. "Schulter zwickt" (seit Speicherversion 2, optional) */
+  note?: string;
 };
 
 export type WorkoutTemplate = {
