@@ -19,12 +19,14 @@ import { finalizeDraft } from '@/lib/logic/draft';
 import { formatClock } from '@/lib/logic/format';
 import { findRecords } from '@/lib/logic/personal-records';
 import { progressionTip, type ProgressionTip } from '@/lib/logic/progression';
-import { weightUnitLabel } from '@/lib/logic/units';
+import { parseNumber, weightUnitLabel } from '@/lib/logic/units';
+import { warmupSets } from '@/lib/logic/warmup';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
 export default function WorkoutScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const units = useSettings((state) => state.units);
   const store = useWorkouts();
   const { active, history } = store;
@@ -164,6 +166,26 @@ export default function WorkoutScreen() {
               );
             })()}
 
+            {(() => {
+              if (!exercise || entry.sets.some((set) => set.isWarmup || set.done)) return null;
+              const firstWorking = entry.sets.find((set) => !set.isWarmup);
+              const weight = firstWorking ? parseNumber(firstWorking.weight) : null;
+              const warmups = weight !== null ? warmupSets(weight, exercise.equipment, units) : [];
+              if (warmups.length === 0) return null;
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${warmups.length} Aufwärmsätze hinzufügen`}
+                  onPress={() => store.addWarmupSets(exerciseIndex, warmups)}
+                  style={({ pressed }) => [styles.warmup, pressed && styles.pressed]}>
+                  <Ionicons name="flame-outline" size={16} color={theme.accent} />
+                  <AppText variant="label" color="accent">
+                    Aufwärmen: {warmups.map((w) => `${String(w.weight).replace('.', ',')} × ${w.reps}`).join(' · ')}
+                  </AppText>
+                </Pressable>
+              );
+            })()}
+
             {entry.sets.map((set) => {
               if (!set.isWarmup) workingIndex += 1;
 
@@ -234,4 +256,5 @@ const styles = StyleSheet.create({
   exerciseName: { flex: 1 },
   iconButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.7 },
+  warmup: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one, paddingVertical: Spacing.one },
 });

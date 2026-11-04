@@ -33,6 +33,8 @@ type WorkoutState = {
   /** Tauscht eine Übung ohne erledigte Sätze gegen eine andere, Satzzahl und Vorgabe bleiben. */
   replaceExercise: (exerciseIndex: number, exerciseId: string) => void;
   addSet: (exerciseIndex: number) => void;
+  /** Fügt Aufwärmsätze (Anzeigeeinheit) vor den Arbeitssätzen ein. */
+  addWarmupSets: (exerciseIndex: number, sets: { weight: number; reps: number }[]) => void;
   removeSet: (exerciseIndex: number, setId: string) => void;
   updateSet: (exerciseIndex: number, setId: string, patch: Partial<Omit<DraftSet, 'id'>>) => void;
 
@@ -163,6 +165,20 @@ export const useWorkouts = create<WorkoutState>()(
           }),
         };
         set({ active: { ...active, exercises: active.exercises.map((e, i) => (i === exerciseIndex ? replaced : e)) } });
+      },
+
+      addWarmupSets: (exerciseIndex, warmups) => {
+        const { active } = get();
+        const entry = active?.exercises[exerciseIndex];
+        if (!active || !entry || warmups.length === 0) return;
+        const added: DraftSet[] = warmups.map((warmup) => ({
+          ...emptySet(),
+          weight: String(warmup.weight),
+          reps: String(warmup.reps),
+          isWarmup: true,
+        }));
+        const updated = { ...entry, sets: [...added, ...entry.sets] };
+        set({ active: { ...active, exercises: active.exercises.map((e, i) => (i === exerciseIndex ? updated : e)) } });
       },
 
       addSet: (exerciseIndex) => {
