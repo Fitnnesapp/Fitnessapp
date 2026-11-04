@@ -17,10 +17,12 @@ import { useTheme } from '@/hooks/use-theme';
 import { confirmAction } from '@/lib/confirm';
 import { finalizeDraft } from '@/lib/logic/draft';
 import { formatClock } from '@/lib/logic/format';
+import { goalProgress } from '@/lib/logic/goals';
 import { findRecords } from '@/lib/logic/personal-records';
 import { progressionTip, type ProgressionTip } from '@/lib/logic/progression';
-import { parseNumber, weightUnitLabel } from '@/lib/logic/units';
+import { formatWeight, parseNumber, weightUnitLabel } from '@/lib/logic/units';
 import { warmupSets } from '@/lib/logic/warmup';
+import { useGoalsStore } from '@/lib/storage/goals-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
@@ -30,6 +32,7 @@ export default function WorkoutScreen() {
   const units = useSettings((state) => state.units);
   const store = useWorkouts();
   const { active, history } = store;
+  const goals = useGoalsStore((state) => state.goals);
 
   const now = useNow(1000, active !== null);
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
@@ -143,6 +146,17 @@ export default function WorkoutScreen() {
                 }
               />
             </View>
+            {(() => {
+              const goal = goals.find((g) => g.exerciseId === entry.exerciseId);
+              if (!goal) return null;
+              const progress = goalProgress(goal, history);
+              if (progress.achieved) return null;
+              return (
+                <AppText variant="caption" color="accent">
+                  Dein Ziel: {formatWeight(goal.targetKg, units)} · noch {formatWeight(progress.remainingKg, units)}
+                </AppText>
+              );
+            })()}
             {entry.target ? (
               <AppText variant="caption" color="textSecondary">
                 Ziel: {entry.sets.filter((set) => !set.isWarmup).length} × {entry.target.reps} · {entry.target.restSeconds} s Pause
