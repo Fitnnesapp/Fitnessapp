@@ -12,7 +12,7 @@ import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { streaks, weekStart } from '@/lib/logic/activity';
 import { celebrate, ordinalText, weekEffectText } from '@/lib/logic/celebration';
-import { formatValue } from '@/lib/logic/challenges';
+import { challengeStatus, formatValue } from '@/lib/logic/challenges';
 import { nextSession, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
 import { successFeedback } from '@/lib/haptics';
 import { usePlanStore } from '@/lib/storage/plan-store';
@@ -43,7 +43,13 @@ export function CelebrationCard({ sessionId, headline, records = [] }: Celebrati
   const upcoming = plan ? nextSession(plan, now) : null;
   const { entries: challengeEntries } = useChallenges();
   const activeChallenges = challengeEntries
-    .filter((entry) => entry.joined && entry.progress && !entry.progress.completed)
+    .filter(
+      (entry) =>
+        entry.joined &&
+        entry.progress &&
+        !entry.progress.completed &&
+        challengeStatus(entry.challenge, now, entry.joined) === 'active',
+    )
     .slice(0, 2);
 
   // Kurze Einblendung: Abzeichen wächst, Inhalt blendet ein. Bei "Bewegung reduzieren" sofort sichtbar.
