@@ -44,6 +44,11 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - **Beständigkeits-Raster** der letzten 18 Wochen im Fortschritt (aktive Wochen statt lückenloser Tage)
   - **Datensicherung:** Export aller Daten als JSON-Datei und geprüftes Einspielen auf einem neuen Gerät (ohne Kaufstatus)
   - Animationen (Ringe, Balken, Einblenden; respektiert „Bewegung reduzieren“) und Haptik bei wichtigen Momenten
+  - **Kraftziele:** Zielgewicht je Übung mit Fortschrittsbalken, nächstes Ziel auf dem Start-Tab, Erfolgsmoment beim Erreichen
+  - **Rekordbuch:** bester Satz, geschätztes 1RM und meiste Wiederholungen je Übung
+  - **Aufwärmsätze mit einem Tipp** passend zum Arbeitsgewicht (ladbare Gewichte, nie unter der leeren Stange)
+  - Home-Workouts mit Bildkacheln je Kategorie, Programmdetails im neuen Stil
+  - Einmalige Karte „Neu in deiner App“ für bestehende Nutzer; freundlicher Wochenrückblick für neue Nutzer
   - Fix: Bildkarten zeigten im Browser nur den linken Bildrand
 - **Phase 8 (Ausbau):**
   - Jahresrückblick (Start-Tab): Workouts, Zeit, Distanz, Volumen, Rekorde, längste Serie, stärkster Monat, Lieblingstag und -übung, wählbares Jahr
