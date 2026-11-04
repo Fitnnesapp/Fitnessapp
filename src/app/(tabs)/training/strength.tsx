@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GoalCard } from '@/components/goal-card';
 import { RoutineCard } from '@/components/routine-card';
+import { TemplateCard } from '@/components/template-card';
 import { WeeklySetsCard } from '@/components/weekly-sets-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,6 @@ import { SCENES } from '@/data/images';
 import { ROUTINES } from '@/data/routines';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
-import { confirmAction } from '@/lib/confirm';
 import { tapFeedback } from '@/lib/haptics';
 import { preferencesFromPlan, routineMinutes, suggestRoutine } from '@/lib/logic/routines';
 import { useGoalsStore } from '@/lib/storage/goals-store';
@@ -36,7 +36,7 @@ export default function StrengthScreen() {
   const router = useRouter();
   const theme = useTheme();
   const now = useNow(60_000);
-  const { active, history, templates, startWorkout, deleteTemplate } = useWorkouts();
+  const { active, history, templates, startWorkout } = useWorkouts();
   const answers = usePlanStore((state) => state.plan?.answers);
   const goals = useGoalsStore((state) => state.goals);
   const preferences = useMemo(() => preferencesFromPlan(answers), [answers]);
@@ -165,32 +165,7 @@ export default function StrengthScreen() {
       ) : null}
 
       {templates.map((template) => (
-        <Card key={template.id}>
-          <AppText variant="heading">{template.name}</AppText>
-          <AppText variant="caption" color="textSecondary">
-            {template.exerciseIds.map((id) => getExercise(id)?.name ?? id).join(', ')}
-          </AppText>
-          <View style={styles.actions}>
-            <Button
-              title="Starten"
-              disabled={active !== null}
-              onPress={() => start(template.exerciseIds)}
-              style={styles.flex}
-            />
-            <Button
-              title="Löschen"
-              variant="ghost"
-              onPress={() =>
-                confirmAction({
-                  title: 'Vorlage löschen?',
-                  message: `„${template.name}“ wird entfernt. Bereits gespeicherte Workouts bleiben erhalten.`,
-                  confirmLabel: 'Löschen',
-                  onConfirm: () => deleteTemplate(template.id),
-                })
-              }
-            />
-          </View>
-        </Card>
+        <TemplateCard key={template.id} template={template} onStart={() => start(template.exerciseIds)} />
       ))}
     </Screen>
   );

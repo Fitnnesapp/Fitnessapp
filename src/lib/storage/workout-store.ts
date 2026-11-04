@@ -47,6 +47,7 @@ type WorkoutState = {
   deleteWorkout: (id: string) => void;
   saveTemplate: (name: string, exerciseIds: string[]) => void;
   deleteTemplate: (id: string) => void;
+  renameTemplate: (id: string, name: string) => void;
   reset: () => void;
 };
 
@@ -268,6 +269,11 @@ export const useWorkouts = create<WorkoutState>()(
         set({ templates: [...get().templates, { id: newId(), name: name.trim(), exerciseIds }] }),
 
       deleteTemplate: (id) => set({ templates: get().templates.filter((t) => t.id !== id) }),
+      renameTemplate: (id, name) => {
+        const trimmed = name.trim().slice(0, 40);
+        if (!trimmed) return;
+        set({ templates: get().templates.map((t) => (t.id === id ? { ...t, name: trimmed } : t)) });
+      },
 
       reset: () => set(INITIAL),
     }),
