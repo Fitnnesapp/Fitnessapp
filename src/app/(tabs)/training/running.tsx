@@ -218,6 +218,7 @@ export default function RunningScreen() {
                 <AppText variant="heading">{formatDistance(run.distanceM, units)}</AppText>
                 <AppText variant="caption" color="textSecondary">
                   {formatDate(run.startedAt)}
+                  {run.manual ? ' · nachgetragen' : ''}
                 </AppText>
               </View>
               <AppText variant="caption" color="textSecondary">
