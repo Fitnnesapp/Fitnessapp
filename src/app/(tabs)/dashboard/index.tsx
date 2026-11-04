@@ -334,6 +334,13 @@ export default function DashboardScreen() {
                 {goal.reached ? 'Wochenziel erreicht' : plan ? 'Wochenziel laut Plan' : 'Wochenziel'}
               </AppText>
               <AppText variant="heading">{goal.message}</AppText>
+              {!plan ? (
+                <Pressable accessibilityRole="link" onPress={() => router.push('/profile')} hitSlop={8}>
+                  <AppText variant="label" color="accent">
+                    Ziel ändern
+                  </AppText>
+                </Pressable>
+              ) : null}
             </View>
           </View>
 
