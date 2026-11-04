@@ -11,6 +11,7 @@ export default function HistoryLayout() {
       <Stack.Screen name="[id]" options={{ title: 'Workout' }} />
       <Stack.Screen name="badges" options={{ title: 'Abzeichen' }} />
       <Stack.Screen name="year" options={{ title: 'Jahresrückblick' }} />
+      <Stack.Screen name="records" options={{ title: 'Rekordbuch' }} />
     </Stack>
   );
 }

@@ -126,6 +126,14 @@ export default function HistoryScreen() {
             />
             <LinkTile icon="calendar-number-outline" title="Rückblick" text="Dein Jahr in Zahlen" onPress={() => router.push('/history/year')} />
           </View>
+          <View style={styles.tiles}>
+            <LinkTile
+              icon="trophy-outline"
+              title="Rekordbuch"
+              text="Bestwerte und 1RM je Übung"
+              onPress={() => router.push('/history/records')}
+            />
+          </View>
           <MuscleBalanceCard />
           <SectionHeader title="Aktivitäten" />
           <MonthCalendar counts={counts} selected={selectedDay} onSelect={setSelectedDay} />

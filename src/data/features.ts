@@ -56,6 +56,14 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/training/running',
   },
   {
+    id: 'records',
+    kind: 'funktion',
+    title: 'Rekordbuch',
+    subtitle: 'Bester Satz und geschätztes Maximalgewicht (1RM) je Übung',
+    keywords: ['Bestwerte', 'Maximalgewicht', 'Rekorde', 'wie viel drücke ich', 'Bestleistung', 'PR'],
+    href: '/history/records',
+  },
+  {
     id: 'backup',
     kind: 'funktion',
     title: 'Datensicherung',
