@@ -3,12 +3,12 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { ActiveSessions } from '@/components/active-sessions';
 import { GoalCard } from '@/components/goal-card';
 import { RoutineCard } from '@/components/routine-card';
 import { TemplateCard } from '@/components/template-card';
 import { WeeklySetsCard } from '@/components/weekly-sets-card';
 import { AppText } from '@/components/ui/app-text';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { FadeIn } from '@/components/ui/fade-in';
@@ -70,16 +70,7 @@ export default function StrengthScreen() {
       </AppText>
 
       {active ? (
-        <Card>
-          <AppText variant="label" color="accent">
-            WORKOUT LÄUFT
-          </AppText>
-          <AppText color="textSecondary">
-            Du hast ein angefangenes Workout mit {active.exercises.length}{' '}
-            {active.exercises.length === 1 ? 'Übung' : 'Übungen'}.
-          </AppText>
-          <Button title="Fortsetzen" onPress={() => router.push('/training/workout')} />
-        </Card>
+        <ActiveSessions />
       ) : suggestion ? (
         <FadeIn>
           <ImageCard

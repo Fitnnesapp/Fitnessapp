@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 
+import { ActiveSessions } from '@/components/active-sessions';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -81,13 +82,7 @@ export default function RunningScreen() {
       </AppText>
 
       {active ? (
-        <Card>
-          <AppText variant="label" color="accent">
-            LAUF LÄUFT
-          </AppText>
-          <AppText color="textSecondary">Du hast einen angefangenen Lauf. Die Aufzeichnung geht dort weiter.</AppText>
-          <Button title="Zum Lauf" onPress={() => router.push('/training/run')} />
-        </Card>
+        <ActiveSessions />
       ) : (
         <FadeIn>
           <ImageCard
