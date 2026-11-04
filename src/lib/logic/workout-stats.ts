@@ -133,3 +133,18 @@ export function compactSets(sets: { weightKg: number; reps: number }[], formatWe
     )
     .join(' · ');
 }
+
+/** Zuletzt trainierte Übungen ohne Doppelte, neueste zuerst. */
+export function recentExerciseIds(history: StrengthWorkout[], limit = 8, exclude: readonly string[] = []): string[] {
+  const seen = new Set<string>(exclude);
+  const result: string[] = [];
+  for (const workout of [...history].sort((a, b) => b.startedAt - a.startedAt)) {
+    for (const exercise of workout.exercises) {
+      if (seen.has(exercise.exerciseId)) continue;
+      seen.add(exercise.exerciseId);
+      result.push(exercise.exerciseId);
+      if (result.length >= limit) return result;
+    }
+  }
+  return result;
+}

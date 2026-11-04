@@ -3,7 +3,7 @@ import { test } from 'node:test';
 
 import { cleanNote, finalizeDraft } from './draft.ts';
 import { displayToKg, formatWeight, kgToDisplay, parseNumber } from './units.ts';
-import { compactSets, exerciseLog, exerciseProgress, lastWorkingSet, summarizeWorkout } from './workout-stats.ts';
+import { compactSets, exerciseLog, exerciseProgress, lastWorkingSet, recentExerciseIds, summarizeWorkout } from './workout-stats.ts';
 
 test('parseNumber akzeptiert Komma und Punkt', () => {
   assert.equal(parseNumber('7,5'), 7.5);
@@ -144,4 +144,18 @@ test('Sätze kompakt: gleiche Gewichte gebündelt, ohne Gewicht als Wiederholung
     '80 kg × 8, 8 · 85 kg × 5 · 80 kg × 10',
   );
   assert.equal(compactSets([{ weightKg: 0, reps: 12 }, { weightKg: 0, reps: 10 }], kg), '12, 10 Wdh.');
+});
+
+test('Zuletzt trainierte Übungen: neueste zuerst, ohne Doppelte und Ausgeschlossene', () => {
+  const workout = (id: string, startedAt: number, ids: string[]) => ({
+    id,
+    type: 'strength' as const,
+    startedAt,
+    endedAt: startedAt,
+    exercises: ids.map((exerciseId) => ({ exerciseId, sets: [] })),
+  });
+  const history = [workout('a', 1, ['bank', 'rudern']), workout('b', 2, ['kniebeuge', 'bank'])];
+  assert.deepEqual(recentExerciseIds(history), ['kniebeuge', 'bank', 'rudern']);
+  assert.deepEqual(recentExerciseIds(history, 2), ['kniebeuge', 'bank']);
+  assert.deepEqual(recentExerciseIds(history, 8, ['bank']), ['kniebeuge', 'rudern']);
 });

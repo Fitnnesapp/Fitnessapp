@@ -10,9 +10,10 @@ import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { TextField } from '@/components/ui/text-field';
 import { Spacing } from '@/constants/theme';
-import { EQUIPMENT, EXERCISES, MUSCLE_GROUPS } from '@/data/exercises';
+import { EQUIPMENT, EXERCISES, getExercise, MUSCLE_GROUPS } from '@/data/exercises';
 import { useTheme } from '@/hooks/use-theme';
 import { formatWeight } from '@/lib/logic/units';
+import { recentExerciseIds } from '@/lib/logic/workout-stats';
 import { useCustomExercises } from '@/lib/storage/custom-exercise-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
@@ -27,6 +28,7 @@ export default function ExercisesScreen() {
   const addExercise = useWorkouts((state) => state.addExercise);
   const replaceExercise = useWorkouts((state) => state.replaceExercise);
   const history = useWorkouts((state) => state.history);
+  const active = useWorkouts((state) => state.active);
   const units = useSettings((state) => state.units);
   const custom = useCustomExercises((state) => state.exercises);
   // Eigene Übungen zuerst, sie sind meist genau die, die man sucht
@@ -45,6 +47,13 @@ export default function ExercisesScreen() {
     }
     return map;
   }, [history, units]);
+
+  // Schnellauswahl beim Hinzufügen: zuletzt trainierte Übungen, die noch nicht im Workout sind
+  const activeIds = useMemo(() => active?.exercises.map((entry) => entry.exerciseId) ?? [], [active]);
+  const recent = useMemo(
+    () => (picking ? recentExerciseIds(history, 8, activeIds).filter((id) => getExercise(id)) : []),
+    [picking, history, activeIds],
+  );
 
   const [query, setQuery] = useState('');
   const [muscle, setMuscle] = useState<MuscleGroup | null>(
@@ -94,6 +103,18 @@ export default function ExercisesScreen() {
       keyExtractor={(exercise) => exercise.id}
       ListHeaderComponent={
         <View style={styles.filters}>
+          {recent.length > 0 ? (
+            <View style={styles.recent}>
+              <AppText variant="label" color="textSecondary">
+                ZULETZT TRAINIERT
+              </AppText>
+              <View style={styles.wrap}>
+                {recent.map((id) => (
+                  <Chip key={id} label={getExercise(id)?.name ?? id} selected={false} onPress={() => select(id)} />
+                ))}
+              </View>
+            </View>
+          ) : null}
           <TextField label="Suchen" value={query} onChangeText={setQuery} placeholder="z.B. Bankdrücken" />
           <Card style={styles.mapCard}>
             <MuscleMap
@@ -178,4 +199,6 @@ const styles = StyleSheet.create({
   countRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
   flex: { flex: 1 },
+  recent: { gap: Spacing.two },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
 });
