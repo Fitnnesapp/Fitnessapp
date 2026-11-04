@@ -4,12 +4,15 @@ import { AccessibilityInfo, Animated, Platform, StyleSheet, View } from 'react-n
 
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { Radius, Spacing } from '@/constants/theme';
 import { useActivities } from '@/hooks/use-activities';
+import { useChallenges } from '@/hooks/use-challenges';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { streaks, weekStart } from '@/lib/logic/activity';
 import { celebrate, ordinalText, weekEffectText } from '@/lib/logic/celebration';
+import { formatValue } from '@/lib/logic/challenges';
 import { nextSession, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
 import { successFeedback } from '@/lib/haptics';
 import { usePlanStore } from '@/lib/storage/plan-store';
@@ -38,6 +41,10 @@ export function CelebrationCard({ sessionId, headline, records = [] }: Celebrati
   const result = useMemo(() => celebrate(activities, sessionId, goalDays), [activities, sessionId, goalDays]);
   const streak = useMemo(() => streaks(activities, now), [activities, now]);
   const upcoming = plan ? nextSession(plan, now) : null;
+  const { entries: challengeEntries } = useChallenges();
+  const activeChallenges = challengeEntries
+    .filter((entry) => entry.joined && entry.progress && !entry.progress.completed)
+    .slice(0, 2);
 
   // Kurze Einblendung: Abzeichen wächst, Inhalt blendet ein. Bei "Bewegung reduzieren" sofort sichtbar.
   // useState statt useRef: der Wert wird beim Zeichnen gelesen (React-Compiler-Regel)
@@ -109,6 +116,23 @@ export function CelebrationCard({ sessionId, headline, records = [] }: Celebrati
           </View>
         ) : null}
 
+        {/* Laufende Challenges, die diese Einheit vorangebracht hat */}
+        {activeChallenges.length > 0 ? (
+          <View style={styles.challenges}>
+            {activeChallenges.map((entry) => (
+              <View key={entry.challenge.id} style={styles.challengeRow}>
+                <AppText variant="caption" color="textSecondary" style={styles.challengeName} numberOfLines={1}>
+                  {entry.challenge.name}
+                </AppText>
+                <ProgressBar progress={entry.progress?.ratio ?? 0} height={6} style={styles.challengeBar} />
+                <AppText variant="caption" color="accent">
+                  {formatValue(entry.progress?.value ?? 0)}/{entry.joined?.target}
+                </AppText>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         {upcoming ? (
           <View style={[styles.next, { borderTopColor: theme.border }]}>
             <AppText variant="eyebrow" color="textSecondary" style={styles.center}>
@@ -126,6 +150,10 @@ export function CelebrationCard({ sessionId, headline, records = [] }: Celebrati
 }
 
 const styles = StyleSheet.create({
+  challenges: { alignSelf: 'stretch', gap: Spacing.two },
+  challengeRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  challengeName: { width: 110 },
+  challengeBar: { flex: 1 },
   card: { alignItems: 'center', borderWidth: 2, paddingVertical: Spacing.five, gap: Spacing.three },
   badge: { width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center' },
   body: { alignSelf: 'stretch', alignItems: 'center', gap: Spacing.two },
