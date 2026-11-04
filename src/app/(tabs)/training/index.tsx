@@ -242,6 +242,20 @@ export default function TrainingScreen() {
         <LinkTile icon="trophy-outline" title="Rekordbuch" text="Bestwerte, 1RM, Ziele" onPress={() => router.push('/history/records')} />
         <LinkTile icon="timer-outline" title="Timer" text="Tabata, EMOM, Intervalle" onPress={() => router.push('/training/timer')} />
       </View>
+      <View style={styles.pair}>
+        <LinkTile
+          icon="create-outline"
+          title="Lauf nachtragen"
+          text="Laufband oder ohne GPS"
+          onPress={() => router.push('/training/run-manual')}
+        />
+        <LinkTile
+          icon="albums-outline"
+          title="Vorlagen"
+          text="Eigene Workouts zusammenstellen"
+          onPress={() => router.push('/training/strength')}
+        />
+      </View>
     </Screen>
   );
 }
