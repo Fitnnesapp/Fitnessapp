@@ -8,7 +8,8 @@ import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
-import { getExercise, secondaryMuscles } from '@/data/exercises';
+import { EXERCISES, getExercise, secondaryMuscles } from '@/data/exercises';
+import { alternativesFor } from '@/lib/logic/alternatives';
 import { formatDate } from '@/lib/logic/format';
 import { muscleLoad } from '@/lib/logic/muscle-load';
 import { findRecords } from '@/lib/logic/personal-records';
@@ -40,6 +41,7 @@ export default function ExerciseDetailScreen() {
     );
   }
 
+  const alternatives = alternativesFor(exercise, EXERCISES, 3);
   const best = progress.length > 0 ? Math.max(...progress.map((p) => p.maxWeightKg)) : null;
 
   return (
@@ -111,6 +113,26 @@ export default function ExerciseDetailScreen() {
             }
           />
         </Card>
+      ) : null}
+
+      {alternatives.length > 0 ? (
+        <>
+          <AppText variant="heading">Alternativen</AppText>
+          <AppText variant="caption" color="textSecondary">
+            Gleiche Muskelgruppe, anderes Gerät: praktisch, wenn etwas besetzt ist oder zu Hause fehlt.
+          </AppText>
+          {alternatives.map((other) => (
+            <Card
+              key={other.id}
+              onPress={() => router.push({ pathname: '/training/exercise/[id]', params: { id: other.id } })}
+              accessibilityLabel={`${other.name}, ${other.equipment}`}>
+              <AppText variant="heading">{other.name}</AppText>
+              <AppText variant="caption" color="textSecondary">
+                {other.equipment} · {other.difficulty}
+              </AppText>
+            </Card>
+          ))}
+        </>
       ) : null}
     </Screen>
   );

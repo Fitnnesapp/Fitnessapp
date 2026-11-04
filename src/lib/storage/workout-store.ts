@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { finalizeDraft } from '@/lib/logic/draft';
 import { draftFromWorkout } from '@/lib/logic/repeat';
+import { targetReps } from '@/lib/logic/routines';
 import { kgToDisplay, type Units } from '@/lib/logic/units';
 import { lastWorkingSet } from '@/lib/logic/workout-stats';
 import type { ActiveWorkout, DraftSet, StrengthWorkout, WorkoutTemplate } from '@/types/workout';
@@ -29,6 +30,8 @@ type WorkoutState = {
   finishWorkout: () => string | null;
   addExercise: (exerciseId: string) => void;
   removeExercise: (exerciseIndex: number) => void;
+  /** Tauscht eine Übung ohne erledigte Sätze gegen eine andere, Satzzahl und Vorgabe bleiben. */
+  replaceExercise: (exerciseIndex: number, exerciseId: string) => void;
   addSet: (exerciseIndex: number) => void;
   removeSet: (exerciseIndex: number, setId: string) => void;
   updateSet: (exerciseIndex: number, setId: string, patch: Partial<Omit<DraftSet, 'id'>>) => void;
@@ -142,6 +145,24 @@ export const useWorkouts = create<WorkoutState>()(
         const { active } = get();
         if (!active) return;
         set({ active: { ...active, exercises: active.exercises.filter((_, i) => i !== exerciseIndex) } });
+      },
+
+      replaceExercise: (exerciseIndex, exerciseId) => {
+        const { active, history } = get();
+        const entry = active?.exercises[exerciseIndex];
+        if (!active || !entry || entry.sets.some((set) => set.done)) return;
+        const units = useSettings.getState().units;
+        const replaced = {
+          ...entry,
+          exerciseId,
+          sets: entry.sets.map((old) => {
+            const fresh = { ...prefilledSet(history, exerciseId, units), isWarmup: old.isWarmup };
+            const goal = entry.target ? targetReps(entry.target.reps) : null;
+            if (fresh.reps === '' && goal !== null) fresh.reps = String(goal);
+            return fresh;
+          }),
+        };
+        set({ active: { ...active, exercises: active.exercises.map((e, i) => (i === exerciseIndex ? replaced : e)) } });
       },
 
       addSet: (exerciseIndex) => {

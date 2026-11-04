@@ -1,6 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ProgressionHint } from '@/components/progression-hint';
 import { RestTimer } from '@/components/rest-timer';
@@ -12,6 +13,7 @@ import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
 import { getExercise } from '@/data/exercises';
 import { useNow } from '@/hooks/use-now';
+import { useTheme } from '@/hooks/use-theme';
 import { confirmAction } from '@/lib/confirm';
 import { finalizeDraft } from '@/lib/logic/draft';
 import { formatClock } from '@/lib/logic/format';
@@ -103,9 +105,21 @@ export default function WorkoutScreen() {
               <AppText variant="heading" style={styles.exerciseName}>
                 {exercise?.name ?? entry.exerciseId}
               </AppText>
-              <Button
-                title="Entfernen"
-                variant="ghost"
+              {!entry.sets.some((set) => set.done) && exercise ? (
+                <IconButton
+                  icon="swap-horizontal"
+                  label={`${exercise.name} tauschen, z.B. wenn das Gerät besetzt ist`}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/training/exercises',
+                      params: { swap: String(exerciseIndex), muscle: exercise.muscleGroup },
+                    })
+                  }
+                />
+              ) : null}
+              <IconButton
+                icon="trash-outline"
+                label="Übung entfernen"
                 onPress={() =>
                   confirmAction({
                     title: 'Übung entfernen?',
@@ -114,7 +128,6 @@ export default function WorkoutScreen() {
                     onConfirm: () => store.removeExercise(exerciseIndex),
                   })
                 }
-                style={styles.removeButton}
               />
             </View>
             {entry.target ? (
@@ -201,9 +214,24 @@ export default function WorkoutScreen() {
   );
 }
 
+function IconButton({ icon, label, onPress }: { icon: 'swap-horizontal' | 'trash-outline'; label: string; onPress: () => void }) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      hitSlop={6}
+      onPress={onPress}
+      style={({ pressed }) => [styles.iconButton, { backgroundColor: theme.surfaceAlt }, pressed && styles.pressed]}>
+      <Ionicons name={icon} size={18} color={theme.textSecondary} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   header: { gap: Spacing.one },
   exerciseHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two },
   exerciseName: { flex: 1 },
-  removeButton: { minHeight: 36, paddingHorizontal: Spacing.two },
+  iconButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  pressed: { opacity: 0.7 },
 });

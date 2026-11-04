@@ -16,12 +16,16 @@ import type { Equipment, MuscleGroup } from '@/types/workout';
 export default function ExercisesScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { pick } = useLocalSearchParams<{ pick?: string }>();
-  const picking = pick === '1';
+  const params = useLocalSearchParams<{ pick?: string; swap?: string; muscle?: string }>();
+  const swapIndex = params.swap !== undefined ? Number(params.swap) : null;
+  const picking = params.pick === '1' || swapIndex !== null;
   const addExercise = useWorkouts((state) => state.addExercise);
+  const replaceExercise = useWorkouts((state) => state.replaceExercise);
 
   const [query, setQuery] = useState('');
-  const [muscle, setMuscle] = useState<MuscleGroup | null>(null);
+  const [muscle, setMuscle] = useState<MuscleGroup | null>(
+    MUSCLE_GROUPS.find((group) => group === params.muscle) ?? null,
+  );
   const [equipment, setEquipment] = useState<Equipment | null>(null);
 
   const results = useMemo(() => {
@@ -35,7 +39,10 @@ export default function ExercisesScreen() {
   }, [query, muscle, equipment]);
 
   function select(id: string) {
-    if (picking) {
+    if (swapIndex !== null && Number.isInteger(swapIndex)) {
+      replaceExercise(swapIndex, id);
+      router.back();
+    } else if (picking) {
       addExercise(id);
       router.back();
     } else {
