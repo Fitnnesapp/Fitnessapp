@@ -34,7 +34,7 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
 - **Events:** große Läufe und Fitness-Wettkämpfe im Tab „Entdecken“, live aus `src/data/events.json` auf `main` geladen, offline aus dem Cache
 - **Design-Begründung mit Studien:** [docs/design-psychologie.md](docs/design-psychologie.md)
 - **Ausbau November 2026:**
-  - **Fertige Kraft-Workouts:** 10 kuratierte Workouts für Studio und Zuhause (Ganzkörper, 5×5, Push, Pull, Beine & Po, Rumpf, Kurzhantel, Körpergewicht) mit Sätzen, Zielbereich und Pause je Übung; „Heute empfohlen“ nach Muskelerholung, passend zu Ort und Niveau aus dem Plan
+  - **Fertige Kraft-Workouts:** 12 kuratierte Workouts für Studio und Zuhause (Ganzkörper, 5×5, Push, Pull, Beine & Po, Rumpf, Kurzhantel, Körpergewicht) mit Sätzen, Zielbereich und Pause je Übung; „Heute empfohlen“ nach Muskelerholung, passend zu Ort und Niveau aus dem Plan
   - **Progressions-Coach im Workout:** letztes Training je Übung und Ziel für heute (doppelte Progression), mit einem Tipp übernehmen; Ruhezeit startet mit der Pause der Übung
   - **Muskelkarte:** eigene SVG-Körperkarte vorne/hinten mit Haupt- und Hilfsmuskeln in Übungsdetails, Workouts, Zusammenfassung und Muskelanalyse; antippbar als Filter in der Übungsbibliothek
   - **Muskel-Erholung** auf dem Start-Tab (erholte Muskeln leuchten), **Wochensätze pro Muskel** mit dem Bereich 10 bis 20 Sätze
