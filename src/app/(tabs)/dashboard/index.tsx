@@ -101,6 +101,9 @@ export default function DashboardScreen() {
   const units = useSettings((state) => state.units);
   const name = useSettings((state) => state.displayName).trim();
   const goalSetting = useSettings((state) => state.weeklyGoalDays);
+  const runGoalM = useSettings((state) => state.weeklyRunGoalM);
+  const runGoalText =
+    runGoalM !== null ? formatProgress(Math.round((runGoalM / (units === 'metric' ? 1000 : 1609.344)) * 10) / 10) : '';
   const activities = useActivities();
   const now = useNow(60_000);
   const strengthHistory = useWorkouts((state) => state.history);
@@ -375,6 +378,26 @@ export default function DashboardScreen() {
             })}
           </View>
 
+          {runGoalM !== null ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={`Laufziel: ${distance.value} von ${runGoalText} ${distance.unit}`}
+              onPress={() => router.push('/training/running')}
+              style={({ pressed }) => [styles.runGoal, pressed && { opacity: 0.6 }]}>
+              <View style={styles.inline}>
+                <Ionicons
+                  name={week.distanceM >= runGoalM ? 'checkmark-circle' : 'walk-outline'}
+                  size={18}
+                  color={theme.accent}
+                />
+                <AppText variant="caption" color="textSecondary" style={styles.flex}>
+                  Laufziel: {distance.value} von {runGoalText} {distance.unit}
+                </AppText>
+              </View>
+              <ProgressBar progress={Math.min(1, week.distanceM / runGoalM)} height={6} />
+            </Pressable>
+          ) : null}
+
           {comparison.message ? (
             <View style={styles.inline}>
               <Ionicons name="trending-up" size={18} color={theme.accent} />
@@ -497,6 +520,7 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  runGoal: { gap: Spacing.two },
   flex: { flex: 1 },
   centerText: { textAlign: 'center' },
   fullWidth: { alignSelf: 'stretch' },
