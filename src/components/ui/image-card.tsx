@@ -60,7 +60,8 @@ export function ImageCard({ source, height, children, onPress, accessibilityLabe
 const styles = StyleSheet.create({
   wrap: { borderRadius: Radius.large, overflow: 'hidden' },
   radius: { borderRadius: Radius.large },
-  image: { justifyContent: 'flex-end' },
+  // Feste Breite, sonst nimmt das innere Bild im Browser seine Originalbreite an und zeigt nur den linken Rand
+  image: { width: '100%', justifyContent: 'flex-end' },
   content: { padding: Spacing.four, gap: Spacing.two },
   pressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
 });
