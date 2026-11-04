@@ -80,6 +80,14 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/discover',
   },
   {
+    id: 'interval-timer',
+    kind: 'funktion',
+    title: 'Intervall-Timer',
+    subtitle: 'Tabata, EMOM, HIIT oder eigene Intervalle mit Signaltönen',
+    keywords: ['Stoppuhr', 'Tabata', 'EMOM', 'Seilspringen', 'Zirkeltraining', 'Countdown', 'Intervalle'],
+    href: '/training/timer',
+  },
+  {
     id: 'backup',
     kind: 'funktion',
     title: 'Datensicherung',

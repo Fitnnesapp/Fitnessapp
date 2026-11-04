@@ -74,3 +74,34 @@ export function activeSecondsAt(timeline: Segment[], elapsedMs: number): number 
   const elapsedSeconds = Math.min(elapsedMs / 1000, total);
   return Math.max(0, Math.floor(elapsedSeconds - prepare));
 }
+
+export type IntervalSettings = { workSeconds: number; restSeconds: number; rounds: number };
+
+/** Grenzen für den freien Intervall-Timer, damit keine unsinnigen Eingaben entstehen. */
+export const INTERVAL_LIMITS = {
+  workSeconds: { min: 5, max: 600, step: 5 },
+  restSeconds: { min: 0, max: 300, step: 5 },
+  rounds: { min: 1, max: 50, step: 1 },
+} as const;
+
+/** Hält einen Wert innerhalb der Grenzen und auf dem Raster (z.B. 5-Sekunden-Schritte). */
+export function clampInterval(key: keyof IntervalSettings, value: number): number {
+  const { min, max, step } = INTERVAL_LIMITS[key];
+  const snapped = Math.round(value / step) * step;
+  return Math.min(max, Math.max(min, snapped));
+}
+
+/** Freier Intervall-Timer als Programm mit einer Übung pro Runde, nutzt denselben Ablauf wie die Home-Workouts. */
+export function intervalProgram(settings: IntervalSettings): Program {
+  return {
+    id: 'interval-timer',
+    name: 'Intervall-Timer',
+    description: '',
+    category: 'HIIT',
+    difficulty: 'Einsteiger',
+    workSeconds: clampInterval('workSeconds', settings.workSeconds),
+    restSeconds: clampInterval('restSeconds', settings.restSeconds),
+    rounds: clampInterval('rounds', settings.rounds),
+    steps: [{ name: 'Belastung', instruction: 'Volle Konzentration, saubere Technik.' }],
+  };
+}

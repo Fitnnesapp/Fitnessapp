@@ -240,7 +240,7 @@ export default function TrainingScreen() {
       </View>
       <View style={styles.pair}>
         <LinkTile icon="trophy-outline" title="Rekordbuch" text="Bestwerte, 1RM, Ziele" onPress={() => router.push('/history/records')} />
-        <LinkTile icon="search-outline" title="Suche" text="Alles in der App finden" onPress={() => router.push('/search')} />
+        <LinkTile icon="timer-outline" title="Timer" text="Tabata, EMOM, Intervalle" onPress={() => router.push('/training/timer')} />
       </View>
     </Screen>
   );
