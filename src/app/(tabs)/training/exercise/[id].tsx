@@ -35,6 +35,9 @@ export default function ExerciseDetailScreen() {
   const exercise = getExercise(id);
   const units = useSettings((state) => state.units);
   const history = useWorkouts((state) => state.history);
+  const activeWorkout = useWorkouts((state) => state.active);
+  const addExercise = useWorkouts((state) => state.addExercise);
+  const startWorkout = useWorkouts((state) => state.startWorkout);
   const [metric, setMetric] = useState<Metric>('max');
 
   const progress = useMemo(() => exerciseProgress(history, id), [history, id]);
@@ -61,6 +64,30 @@ export default function ExerciseDetailScreen() {
       <AppText color="textSecondary">
         {exercise.muscleGroup} · {exercise.equipment} · {exercise.difficulty}
       </AppText>
+
+      {/* Direkt ins Training: zum laufenden Workout hinzufügen oder mit dieser Übung starten */}
+      {activeWorkout ? (
+        activeWorkout.exercises.some((entry) => entry.exerciseId === exercise.id) ? (
+          <Button title="Ist im laufenden Workout" variant="secondary" onPress={() => router.push('/training/workout')} />
+        ) : (
+          <Button
+            title="Zum laufenden Workout hinzufügen"
+            onPress={() => {
+              addExercise(exercise.id);
+              router.push('/training/workout');
+            }}
+          />
+        )
+      ) : (
+        <Button
+          title="Mit dieser Übung starten"
+          variant="secondary"
+          onPress={() => {
+            startWorkout([exercise.id]);
+            router.push('/training/workout');
+          }}
+        />
+      )}
 
       <Card>
         <MuscleMap

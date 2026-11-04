@@ -32,7 +32,7 @@ type WorkoutDetailProps = {
 export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetailProps) {
   const router = useRouter();
   const units = useSettings((state) => state.units);
-  const { history, deleteWorkout, saveTemplate } = useWorkouts();
+  const { history, active, deleteWorkout, saveTemplate, repeatWorkout } = useWorkouts();
   const goals = useGoalsStore((state) => state.goals);
   const workout = getWorkout(history, workoutId);
 
@@ -168,6 +168,16 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
           </Card>
         );
       })}
+
+      {!justFinished ? (
+        <Button
+          title={active ? 'Erst das laufende Workout beenden' : 'Dieses Workout nochmal machen'}
+          disabled={active !== null}
+          onPress={() => {
+            if (repeatWorkout(workout.id)) router.push('/training/workout');
+          }}
+        />
+      ) : null}
 
       {canShare() ? (
         <Button

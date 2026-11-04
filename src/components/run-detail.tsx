@@ -138,6 +138,9 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
         </Card>
       ) : null}
 
+      {!justFinished ? (
+        <Button title="Neuen Lauf starten" onPress={() => router.push('/training/running')} />
+      ) : null}
       {canShare() ? (
         <Button
           title="Lauf teilen"
