@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { KettlebellHero } from '@/components/illustrations/kettlebell-hero';
+import { IconBadge } from '@/components/ui/icon-badge';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -78,7 +78,7 @@ export default function PlanScreen() {
     <Screen>
       {neu ? (
         <View style={styles.celebrate}>
-          <KettlebellHero size={150} />
+          <IconBadge icon="checkmark" size={96} />
           <AppText variant="title" style={styles.center}>
             Dein Plan steht.
           </AppText>

@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState, type ComponentProps } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
-import { KettlebellHero } from '@/components/illustrations/kettlebell-hero';
+import { IconBadge } from '@/components/ui/icon-badge';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
@@ -243,7 +243,7 @@ export default function PlanSetupScreen() {
       <ScrollView style={styles.flex} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         {step === 'welcome' ? (
           <View style={styles.welcome}>
-            <KettlebellHero size={220} />
+            <IconBadge icon="calendar" size={120} />
             <AppText variant="label" color="accent">
               WILLKOMMEN
             </AppText>

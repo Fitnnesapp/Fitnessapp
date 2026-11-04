@@ -5,9 +5,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ActiveSessions } from '@/components/active-sessions';
 import { ChallengeCard } from '@/components/challenge-card';
-import { EventCard } from '@/components/event-card';
 import { EventGoalCard } from '@/components/event-goal-card';
-import { FeedCard } from '@/components/feed-card';
+import { QuickGrid } from '@/components/quick-grid';
 import { GoalCard } from '@/components/goal-card';
 import { RecoveryCard } from '@/components/recovery-card';
 import { WhatsNewCard } from '@/components/whats-new-card';
@@ -24,7 +23,6 @@ import { Stat } from '@/components/ui/stat';
 import { OnImage, Radius, Spacing } from '@/constants/theme';
 import { getExercise } from '@/data/exercises';
 import { sceneForKind } from '@/data/images';
-import { getProgram } from '@/data/programs';
 import { useActivities } from '@/hooks/use-activities';
 import { useBadgeContext } from '@/hooks/use-badge-context';
 import { useChallenges } from '@/hooks/use-challenges';
@@ -33,8 +31,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { FREEZES_PER_MONTH, streaks, weekStart, weekStats } from '@/lib/logic/activity';
 import { BADGES } from '@/lib/logic/badges';
 import { closestGoal } from '@/lib/logic/goals';
-import { daysUntilEvent, nextSavedEvent, upcomingEvents } from '@/lib/logic/events';
-import { buildFeed } from '@/lib/logic/feed';
+import { nextSavedEvent } from '@/lib/logic/events';
 import { compareWithLastWeek, trainingIdentity } from '@/lib/logic/identity';
 import { dayHeading, greeting, nextBadge, weeklyGoal } from '@/lib/logic/motivation';
 import { missedLastPlanned, nextSession, sessionsForDay, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
@@ -46,9 +43,7 @@ import { successFeedback } from '@/lib/haptics';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useGoalsStore } from '@/lib/storage/goals-store';
 import { useSavedEvents } from '@/lib/storage/saved-events-store';
-import { useHomeSessions } from '@/lib/storage/home-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
-import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
@@ -109,8 +104,6 @@ export default function DashboardScreen() {
   const strengthHistory = useWorkouts((state) => state.history);
   const goals = useGoalsStore((state) => state.goals);
   const nextGoal = useMemo(() => closestGoal(goals, strengthHistory), [goals, strengthHistory]);
-  const homeSessions = useHomeSessions((state) => state.sessions);
-  const runHistory = useRunStore((state) => state.history);
   const earned = useGamification((state) => state.earned);
   const unseen = useGamification((state) => state.unseen);
   const markSeen = useGamification((state) => state.markSeen);
@@ -126,10 +119,6 @@ export default function DashboardScreen() {
   // Ankündigung: das nächste Event der kommenden zwei Wochen
   const savedEvents = useSavedEvents((state) => state.saved);
   const myEvent = useMemo(() => nextSavedEvent(events, Object.keys(savedEvents), now), [events, savedEvents, now]);
-  const nextEvent = useMemo(
-    () => (myEvent ? undefined : upcomingEvents(events, now, 1).find((e) => daysUntilEvent(e, now) <= 14)),
-    [events, now, myEvent],
-  );
   // Eine Challenge: die eigene, sonst eine laufende als Einladung
   const featuredChallenge =
     challengeEntries.find((e) => e.joined && !e.progress?.completed) ??
@@ -148,17 +137,6 @@ export default function DashboardScreen() {
   const suggestion = useMemo(
     () => suggestWorkout({ activities, strength: strengthHistory, now, muscleGroupOf: (id) => getExercise(id)?.muscleGroup }),
     [activities, strengthHistory, now],
-  );
-  const feed = useMemo(
-    () =>
-      buildFeed({
-        strength: strengthHistory,
-        home: homeSessions,
-        runs: runHistory,
-        muscleGroupOf: (id) => getExercise(id)?.muscleGroup,
-        programName: (id) => getProgram(id)?.name,
-      }),
-    [strengthHistory, homeSessions, runHistory],
   );
   const today = (new Date(now).getDay() + 6) % 7;
   const time = durationParts(week.durationSeconds);
@@ -303,6 +281,9 @@ export default function DashboardScreen() {
         </ImageCard>
       </FadeIn>
 
+      {/* Schnellzugriff: alle Bereiche an fester Stelle, statt sie über die Seite zu verteilen */}
+      <QuickGrid />
+
       {/* Ohne Plan: Einladung (Wenn-Dann-Pläne erhöhen die Umsetzung) */}
       {plan ? null : (
         <Card onPress={() => router.push('/plan/setup')} style={styles.inviteRow}>
@@ -439,31 +420,6 @@ export default function DashboardScreen() {
       {/* Erholung: was kann ich heute trainieren? */}
       <RecoveryCard />
 
-      {/* 4. Eigene Aktivitäten (Feed wie bei Strava), bewusst begrenzt */}
-      <SectionHeader
-        title="Deine Aktivitäten"
-        action={feed.length > 0 ? { label: 'Alle ansehen', onPress: () => router.push('/history') } : undefined}
-      />
-      {feed.length === 0 ? (
-        <Card>
-          <AppText variant="heading">Deine erste Einheit wartet</AppText>
-          <AppText color="textSecondary">
-            Tippe unten auf das Plus. Danach steht sie hier mit allen Kennzahlen und Rekorden.
-          </AppText>
-        </Card>
-      ) : (
-        feed.map((item) => (
-          <FeedCard
-            key={item.id}
-            item={item}
-            name={name}
-            now={now}
-            units={units}
-            onPress={() => router.push({ pathname: '/history/[id]', params: { id: item.id } })}
-          />
-        ))
-      )}
-
       {/* 5. Nahe Ziele: nächstes Abzeichen (Goal-Gradient), Challenge, Event */}
       {upcoming && upcomingBadge ? (
         <>
@@ -509,12 +465,6 @@ export default function DashboardScreen() {
         />
       ) : null}
 
-      {nextEvent ? (
-        <>
-          <SectionHeader title="Demnächst" action={{ label: 'Alle Events', onPress: () => router.push('/discover') }} />
-          <EventCard event={nextEvent} now={now} compact />
-        </>
-      ) : null}
     </Screen>
   );
 }

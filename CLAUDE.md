@@ -22,7 +22,7 @@ All-in-One Fitness-App (Kraft, Home-Workouts, Running). Entwicklungsplan: `claud
 
 ## Design
 - Dunkel zuerst, Hell-Modus wird unterstützt (Farben in `src/constants/theme.ts`)
-- Anthrazit-Flächen mit einem einzigen Akzent (Limette), große Typografie, runde Karten
+- Anthrazit-Flächen mit einem einzigen Akzent (Orange, vom Nutzer am 4.11. statt Limette gewählt), große Typografie, runde Karten
 - Keine generische Standard-UI: immer die Komponenten aus `src/components/ui` und die Theme-Tokens nutzen
 
 ## Regeln für Claude Code

@@ -1,34 +1,34 @@
 export const Colors = {
   dark: {
-    background: '#0B0D10',
-    surface: '#14181D',
-    surfaceAlt: '#1C2229',
-    border: '#262D36',
-    text: '#F4F6F8',
-    textSecondary: '#9AA4AF',
-    accent: '#C8F03C',
+    background: '#0E0F11',
+    surface: '#17191C',
+    surfaceAlt: '#212428',
+    border: '#2C3036',
+    text: '#F5F5F4',
+    textSecondary: '#A1A1AA',
+    accent: '#FF6B2C',
     /** Zart getönte Fläche im Akzentton, z.B. für Fortschrittsspuren */
-    accentSoft: '#2A3313',
-    onAccent: '#0B0D10',
-    danger: '#FF6B6B',
+    accentSoft: '#3A2418',
+    onAccent: '#160A04',
+    danger: '#FF5C7A',
     success: '#4ADE80',
   },
   light: {
-    background: '#F6F7F9',
+    background: '#F7F6F4',
     surface: '#FFFFFF',
-    surfaceAlt: '#EEF0F3',
-    border: '#DDE1E6',
-    text: '#0B0D10',
-    textSecondary: '#5B6570',
-    accent: '#4F7A00',
-    accentSoft: '#E6EFD3',
+    surfaceAlt: '#F0EEEB',
+    border: '#E2DFDA',
+    text: '#111214',
+    textSecondary: '#5F6168',
+    accent: '#C2410C',
+    accentSoft: '#FCE7DB',
     onAccent: '#FFFFFF',
-    danger: '#D93636',
+    danger: '#D61F45',
     success: '#1F9D55',
   },
 } as const;
 
-/** Farben auf Bildern: Bilder sind in beiden Modi dunkel, darauf immer helle Schrift und helle Limette. */
+/** Farben auf Bildern: Bilder sind in beiden Modi dunkel, darauf immer helle Schrift und das helle Orange. */
 export const OnImage = {
   text: '#FFFFFF',
   accent: Colors.dark.accent,
