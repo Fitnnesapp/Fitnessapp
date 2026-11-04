@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { clampInterval, type IntervalSettings } from '@/lib/logic/timeline';
+
 export type UnitsPreference = 'metric' | 'imperial';
 /** Darstellung: dem System folgen oder fest hell/dunkel */
 export type Appearance = 'system' | 'light' | 'dark';
@@ -20,6 +22,8 @@ type SettingsState = {
   restSeconds: number;
   /** Wöchentliches Laufziel in Metern, null = kein Ziel */
   weeklyRunGoalM: number | null;
+  /** Zuletzt gestartete Einstellungen des Intervall-Timers, null = Standard (Tabata) */
+  lastInterval: IntervalSettings | null;
   /** true, sobald der Speicher vom Gerät geladen wurde */
   hydrated: boolean;
   setDisplayName: (name: string) => void;
@@ -30,6 +34,7 @@ type SettingsState = {
   setWeeklyGoalDays: (days: number) => void;
   setRestSeconds: (seconds: number) => void;
   setWeeklyRunGoalM: (meters: number | null) => void;
+  setLastInterval: (settings: IntervalSettings) => void;
   reset: () => void;
 };
 
@@ -42,6 +47,7 @@ const DEFAULTS = {
   weeklyGoalDays: 3,
   restSeconds: 90,
   weeklyRunGoalM: null as number | null,
+  lastInterval: null as IntervalSettings | null,
 };
 
 type PersistedSettings = Pick<
@@ -54,10 +60,11 @@ type PersistedSettings = Pick<
   | 'weeklyGoalDays'
   | 'restSeconds'
   | 'weeklyRunGoalM'
+  | 'lastInterval'
 >;
 
 /** Version des gespeicherten Formats. Bei Änderungen hochzählen und in `migrate` umwandeln. */
-const SETTINGS_STORE_VERSION = 4;
+const SETTINGS_STORE_VERSION = 5;
 
 /** Alle Einstellungen liegen ausschließlich lokal auf dem Gerät, es gibt keine Netzwerkzugriffe. */
 export const useSettings = create<SettingsState>()(
@@ -74,6 +81,14 @@ export const useSettings = create<SettingsState>()(
       // 1 bis 300 km pro Woche, null schaltet das Ziel ab
       setWeeklyRunGoalM: (meters) =>
         set({ weeklyRunGoalM: meters === null ? null : Math.min(300_000, Math.max(1_000, Math.round(meters))) }),
+      setLastInterval: (interval) =>
+        set({
+          lastInterval: {
+            workSeconds: clampInterval('workSeconds', interval.workSeconds),
+            restSeconds: clampInterval('restSeconds', interval.restSeconds),
+            rounds: clampInterval('rounds', interval.rounds),
+          },
+        }),
       setWeeklyGoalDays: (days) => set({ weeklyGoalDays: Math.min(7, Math.max(1, Math.round(days))) }),
       reset: () => set(DEFAULTS),
     }),
@@ -90,6 +105,7 @@ export const useSettings = create<SettingsState>()(
         weeklyGoalDays,
         restSeconds,
         weeklyRunGoalM,
+        lastInterval,
       }): PersistedSettings => ({
         displayName,
         units,
@@ -99,11 +115,13 @@ export const useSettings = create<SettingsState>()(
         weeklyGoalDays,
         restSeconds,
         weeklyRunGoalM,
+        lastInterval,
       }),
       // Version 0 → 1: neue Einstellung "Darstellung" (Standard: System)
       // Version 1 → 2: Wochenziel ohne Plan (Standard: 3 Tage)
       // Version 2 → 3: gemerkte Satzpause (Standard: 90 s)
-      // Version 3 → 4: Laufziel pro Woche (Standard: keins). Bestehende Werte bleiben jeweils erhalten.
+      // Version 3 → 4: Laufziel pro Woche (Standard: keins)
+      // Version 4 → 5: zuletzt genutzter Intervall-Timer (Standard: keiner). Bestehende Werte bleiben jeweils erhalten.
       migrate: (persisted) => ({ ...DEFAULTS, ...(persisted as Partial<PersistedSettings>) }),
       onRehydrateStorage: () => () => useSettings.setState({ hydrated: true }),
     },

@@ -25,6 +25,7 @@ import {
   type IntervalSettings,
 } from '@/lib/logic/timeline';
 import { useCountdownSounds } from '@/lib/sounds';
+import { useSettings } from '@/lib/storage/settings-store';
 
 const PRESETS: { label: string; settings: IntervalSettings; hint: string }[] = [
   {
@@ -58,7 +59,10 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 export default function IntervalTimerScreen() {
   const theme = useTheme();
   const sounds = useCountdownSounds();
-  const [settings, setSettings] = useState<IntervalSettings>(PRESETS[0].settings);
+  // Startet mit den zuletzt genutzten Einstellungen, beim ersten Mal mit Tabata
+  const lastInterval = useSettings((state) => state.lastInterval);
+  const setLastInterval = useSettings((state) => state.setLastInterval);
+  const [settings, setSettings] = useState<IntervalSettings>(lastInterval ?? PRESETS[0].settings);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsedBase, setElapsedBase] = useState(0);
   const [runningSince, setRunningSince] = useState<number | null>(null);
@@ -122,6 +126,7 @@ export default function IntervalTimerScreen() {
 
   function start() {
     tapFeedback();
+    setLastInterval(settings);
     lastSignal.current = '';
     setStartedAt(Date.now());
     setElapsedBase(0);
