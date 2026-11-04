@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { AppText } from '@/components/ui/app-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { impactFeedback } from '@/lib/haptics';
 import type { DraftSet } from '@/types/workout';
 
 type SetRowProps = {
@@ -84,7 +85,11 @@ export function SetRow({ set, workingIndex, weightUnit, isRecord, onChange, onTo
         accessibilityRole="checkbox"
         accessibilityLabel="Satz erledigt"
         accessibilityState={{ checked: set.done }}
-        onPress={onToggleDone}
+        onPress={() => {
+          // Spürbarer Impuls nur beim Abhaken, nicht beim Zurücknehmen
+          if (!set.done) impactFeedback();
+          onToggleDone();
+        }}
         style={[
           styles.check,
           { backgroundColor: set.done ? theme.accent : 'transparent', borderColor: set.done ? theme.accent : theme.border },

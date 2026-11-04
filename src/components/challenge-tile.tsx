@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { ImageCard } from '@/components/ui/image-card';
 import { Radius, Spacing } from '@/constants/theme';
 import { sceneForChallenge } from '@/data/images';
@@ -60,9 +61,7 @@ export function ChallengeTile({ challenge, joined, progress, now, width, onPress
       </AppText>
       {joined && progress ? (
         <View style={styles.progress}>
-          <View style={styles.track}>
-            <View style={[styles.fill, { backgroundColor: theme.accent, width: `${Math.max(3, Math.round(progress.ratio * 100))}%` }]} />
-          </View>
+          <ProgressBar progress={progress.ratio} height={8} trackColor="rgba(255,255,255,0.25)" style={styles.flex} />
           <AppText variant="label" style={styles.onImage}>
             {formatValue(progress.value)}/{joined.target}
           </AppText>
@@ -81,6 +80,5 @@ const styles = StyleSheet.create({
   onImageSoft: { color: '#FFFFFF', opacity: 0.8 },
   badge: { alignSelf: 'flex-start', paddingHorizontal: Spacing.two, paddingVertical: 2, borderRadius: Radius.pill },
   progress: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  track: { flex: 1, height: 8, borderRadius: Radius.pill, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: Radius.pill },
+  flex: { flex: 1 },
 });

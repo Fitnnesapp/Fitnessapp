@@ -4,6 +4,7 @@ import { Image, Pressable, StyleSheet, View, type ImageSourcePropType } from 're
 
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { tapFeedback } from '@/lib/haptics';
 
 import { AppText } from './app-text';
 
@@ -27,7 +28,10 @@ export function OptionCard({ title, hint, icon, image, selected, tag, onPress }:
     <Pressable
       accessibilityRole="radio"
       accessibilityState={{ selected }}
-      onPress={onPress}
+      onPress={() => {
+        tapFeedback();
+        onPress();
+      }}
       style={({ pressed }) => [
         styles.card,
         {

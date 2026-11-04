@@ -9,7 +9,9 @@ import { FeedCard } from '@/components/feed-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { FadeIn } from '@/components/ui/fade-in';
 import { ImageCard } from '@/components/ui/image-card';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { Screen } from '@/components/ui/screen';
 import { SectionHeader } from '@/components/ui/section-header';
@@ -34,6 +36,7 @@ import { suggestWorkout, type SuggestionTarget } from '@/lib/logic/suggestions';
 import type { Units } from '@/lib/logic/units';
 import { hrefForSession } from '@/lib/plan-href';
 import { useEvents, useEventsStore } from '@/lib/storage/events-store';
+import { successFeedback } from '@/lib/haptics';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
@@ -228,46 +231,55 @@ export default function DashboardScreen() {
               {BADGES.find((b) => b.key === key)?.name ?? key}
             </AppText>
           ))}
-          <Button title="Super!" onPress={markSeen} style={styles.fullWidth} />
+          <Button
+            title="Super!"
+            onPress={() => {
+              successFeedback();
+              markSeen();
+            }}
+            style={styles.fullWidth}
+          />
         </Card>
       ) : null}
 
       {/* 2. Genau eine nächste Handlung, ein Tipp bis zum Training */}
-      <ImageCard
-        source={sceneForKind(hero.kind)}
-        height={hero.href ? 340 : 260}
-        accessibilityLabel={`${hero.label}: ${hero.title}`}
-        onPress={hero.href ? () => router.push(hero.href as Href) : plan ? () => router.push('/plan') : undefined}>
-        <AppText variant="eyebrow" style={{ color: OnImage.accent }}>
-          {hero.label}
-        </AppText>
-        <AppText variant="display" style={[styles.onImage, styles.heroTitle]} numberOfLines={2} adjustsFontSizeToFit>
-          {hero.title}
-        </AppText>
-        <AppText style={styles.onImageSoft} numberOfLines={2}>
-          {hero.text}
-        </AppText>
-        {hero.href ? (
-          <>
-            <View style={[styles.cta, { backgroundColor: OnImage.accent }]}>
-              <Ionicons name="play" size={20} color="#0B0D10" />
-              <AppText variant="heading" style={styles.onAccentFixed}>
-                {hero.cta}
+      <FadeIn delay={60}>
+        <ImageCard
+          source={sceneForKind(hero.kind)}
+          height={hero.href ? 340 : 260}
+          accessibilityLabel={`${hero.label}: ${hero.title}`}
+          onPress={hero.href ? () => router.push(hero.href as Href) : plan ? () => router.push('/plan') : undefined}>
+          <AppText variant="eyebrow" style={{ color: OnImage.accent }}>
+            {hero.label}
+          </AppText>
+          <AppText variant="display" style={[styles.onImage, styles.heroTitle]} numberOfLines={2} adjustsFontSizeToFit>
+            {hero.title}
+          </AppText>
+          <AppText style={styles.onImageSoft} numberOfLines={2}>
+            {hero.text}
+          </AppText>
+          {hero.href ? (
+            <>
+              <View style={[styles.cta, { backgroundColor: OnImage.accent }]}>
+                <Ionicons name="play" size={20} color="#0B0D10" />
+                <AppText variant="heading" style={styles.onAccentFixed}>
+                  {hero.cta}
+                </AppText>
+              </View>
+              <AppText variant="caption" style={[styles.onImageSoft, styles.centerText]}>
+                {hero.note}
+              </AppText>
+            </>
+          ) : (
+            <View style={styles.heroFooter}>
+              <Ionicons name="checkmark-circle" size={22} color={OnImage.accent} />
+              <AppText variant="caption" style={styles.onImageSoft}>
+                {hero.note}
               </AppText>
             </View>
-            <AppText variant="caption" style={[styles.onImageSoft, styles.centerText]}>
-              {hero.note}
-            </AppText>
-          </>
-        ) : (
-          <View style={styles.heroFooter}>
-            <Ionicons name="checkmark-circle" size={22} color={OnImage.accent} />
-            <AppText variant="caption" style={styles.onImageSoft}>
-              {hero.note}
-            </AppText>
-          </View>
-        )}
-      </ImageCard>
+          )}
+        </ImageCard>
+      </FadeIn>
 
       {/* Ohne Plan: Einladung (Wenn-Dann-Pläne erhöhen die Umsetzung) */}
       {plan ? null : (
@@ -287,85 +299,87 @@ export default function DashboardScreen() {
 
       {/* 3. Sichtbarer Fortschritt: große Zahlen, Ziel-Ring, Serie, fairer Vergleich mit dir selbst */}
       <SectionHeader title="Diese Woche" action={{ label: 'Fortschritt', onPress: () => router.push('/history') }} />
-      <Card style={styles.weekCard}>
-        <View style={styles.goalRow}>
-          <ProgressRing progress={goal.ratio} size={96} strokeWidth={11}>
-            <AppText variant="number" style={styles.ringNumber}>
-              {goal.activeDays}/{goal.goal}
-            </AppText>
-          </ProgressRing>
-          <View style={styles.flex}>
-            <AppText variant="eyebrow" color="accent">
-              {goal.reached ? 'Wochenziel erreicht' : plan ? 'Wochenziel laut Plan' : 'Wochenziel'}
-            </AppText>
-            <AppText variant="heading">{goal.message}</AppText>
+      <FadeIn delay={160}>
+        <Card style={styles.weekCard}>
+          <View style={styles.goalRow}>
+            <ProgressRing progress={goal.ratio} size={96} strokeWidth={11}>
+              <AppText variant="number" style={styles.ringNumber}>
+                {goal.activeDays}/{goal.goal}
+              </AppText>
+            </ProgressRing>
+            <View style={styles.flex}>
+              <AppText variant="eyebrow" color="accent">
+                {goal.reached ? 'Wochenziel erreicht' : plan ? 'Wochenziel laut Plan' : 'Wochenziel'}
+              </AppText>
+              <AppText variant="heading">{goal.message}</AppText>
+            </View>
           </View>
-        </View>
 
-        <View style={[styles.stats, { borderColor: theme.border }]}>
-          <Stat label="Einheiten" value={String(week.workouts)} style={styles.flex} />
-          <Stat label="Zeit" value={time.value} unit={time.unit} style={styles.flex} />
-          <Stat label="Distanz" value={distance.value} unit={distance.unit} style={styles.flex} />
-        </View>
+          <View style={[styles.stats, { borderColor: theme.border }]}>
+            <Stat label="Einheiten" value={String(week.workouts)} style={styles.flex} />
+            <Stat label="Zeit" value={time.value} unit={time.unit} style={styles.flex} />
+            <Stat label="Distanz" value={distance.value} unit={distance.unit} style={styles.flex} />
+          </View>
 
-        <View style={styles.days} accessibilityLabel={`${goal.activeDays} Trainingstage diese Woche`}>
-          {DAYS.map((day, i) => {
-            const done = week.perDay[i] > 0;
-            const isToday = i === today;
-            return (
-              <View key={i} style={styles.day}>
-                <View
-                  style={[
-                    styles.dayBar,
-                    {
-                      backgroundColor: done ? theme.accent : theme.surfaceAlt,
-                      borderColor: isToday ? theme.text : 'transparent',
-                      opacity: i > today && !done ? 0.5 : 1,
-                    },
-                  ]}>
-                  {done ? <Ionicons name="checkmark" size={16} color={theme.onAccent} /> : null}
+          <View style={styles.days} accessibilityLabel={`${goal.activeDays} Trainingstage diese Woche`}>
+            {DAYS.map((day, i) => {
+              const done = week.perDay[i] > 0;
+              const isToday = i === today;
+              return (
+                <View key={i} style={styles.day}>
+                  <View
+                    style={[
+                      styles.dayBar,
+                      {
+                        backgroundColor: done ? theme.accent : theme.surfaceAlt,
+                        borderColor: isToday ? theme.text : 'transparent',
+                        opacity: i > today && !done ? 0.5 : 1,
+                      },
+                    ]}>
+                    {done ? <Ionicons name="checkmark" size={16} color={theme.onAccent} /> : null}
+                  </View>
+                  <AppText variant="eyebrow" color={isToday ? 'text' : 'textSecondary'}>
+                    {day}
+                  </AppText>
                 </View>
-                <AppText variant="eyebrow" color={isToday ? 'text' : 'textSecondary'}>
-                  {day}
-                </AppText>
-              </View>
-            );
-          })}
-        </View>
+              );
+            })}
+          </View>
 
-        {comparison.message ? (
-          <View style={styles.inline}>
-            <Ionicons name="trending-up" size={18} color={theme.accent} />
-            <AppText variant="caption" color="textSecondary" style={styles.flex}>
-              {comparison.message}
-            </AppText>
-          </View>
-        ) : null}
+          {comparison.message ? (
+            <View style={styles.inline}>
+              <Ionicons name="trending-up" size={18} color={theme.accent} />
+              <AppText variant="caption" color="textSecondary" style={styles.flex}>
+                {comparison.message}
+              </AppText>
+            </View>
+          ) : null}
 
-        {/* Serie mit Freezes: motiviert, ohne bei einem verpassten Tag alles zu nehmen */}
-        <View style={[styles.streakRow, { borderTopColor: theme.border }]}>
-          <Ionicons name="flame" size={26} color={streak.current > 0 ? theme.accent : theme.textSecondary} />
-          <View style={styles.flex}>
-            <AppText variant="heading">
-              {streak.current > 0 ? `${streak.current} ${streak.current === 1 ? 'Tag' : 'Tage'} in Folge` : 'Starte deine Serie'}
-            </AppText>
-            <AppText variant="caption" color={streak.atRisk ? 'accent' : 'textSecondary'}>
-              {streak.atRisk
-                ? 'Schon 10 Minuten heute verlängern deine Serie.'
-                : streak.trainedToday
-                  ? 'Heute erledigt.'
-                  : streak.longest > 0
-                    ? `Rekord: ${streak.longest} ${streak.longest === 1 ? 'Tag' : 'Tage'}`
-                    : 'Jeder Trainingstag zählt.'}
-            </AppText>
+          {/* Serie mit Freezes: motiviert, ohne bei einem verpassten Tag alles zu nehmen */}
+          <View style={[styles.streakRow, { borderTopColor: theme.border }]}>
+            <Ionicons name="flame" size={26} color={streak.current > 0 ? theme.accent : theme.textSecondary} />
+            <View style={styles.flex}>
+              <AppText variant="heading">
+                {streak.current > 0 ? `${streak.current} ${streak.current === 1 ? 'Tag' : 'Tage'} in Folge` : 'Starte deine Serie'}
+              </AppText>
+              <AppText variant="caption" color={streak.atRisk ? 'accent' : 'textSecondary'}>
+                {streak.atRisk
+                  ? 'Schon 10 Minuten heute verlängern deine Serie.'
+                  : streak.trainedToday
+                    ? 'Heute erledigt.'
+                    : streak.longest > 0
+                      ? `Rekord: ${streak.longest} ${streak.longest === 1 ? 'Tag' : 'Tage'}`
+                      : 'Jeder Trainingstag zählt.'}
+              </AppText>
+            </View>
+            <View style={styles.freezes} accessibilityLabel={`${streak.freezesLeft} von ${FREEZES_PER_MONTH} Freezes übrig`}>
+              {Array.from({ length: FREEZES_PER_MONTH }, (_, i) => (
+                <Ionicons key={i} name="snow" size={18} color={i < streak.freezesLeft ? theme.accent : theme.border} />
+              ))}
+            </View>
           </View>
-          <View style={styles.freezes} accessibilityLabel={`${streak.freezesLeft} von ${FREEZES_PER_MONTH} Freezes übrig`}>
-            {Array.from({ length: FREEZES_PER_MONTH }, (_, i) => (
-              <Ionicons key={i} name="snow" size={18} color={i < streak.freezesLeft ? theme.accent : theme.border} />
-            ))}
-          </View>
-        </View>
-      </Card>
+        </Card>
+      </FadeIn>
 
       {/* 4. Eigene Aktivitäten (Feed wie bei Strava), bewusst begrenzt */}
       <SectionHeader
@@ -411,9 +425,7 @@ export default function DashboardScreen() {
                 {Math.round(upcoming.ratio * 100)}%
               </AppText>
             </View>
-            <View style={[styles.barTrack, { backgroundColor: theme.accentSoft }]}>
-              <View style={[styles.barFill, { backgroundColor: theme.accent, width: `${Math.max(4, Math.round(upcoming.ratio * 100))}%` }]} />
-            </View>
+            <ProgressBar progress={upcoming.ratio} minVisible={0.04} />
             <AppText variant="caption" color="textSecondary">
               {upcomingBadge.description} · {formatProgress(upcoming.current)} von {upcoming.target}
             </AppText>
@@ -522,6 +534,4 @@ const styles = StyleSheet.create({
   freezes: { flexDirection: 'row', gap: 2 },
 
   percent: { fontSize: 24, lineHeight: 28 },
-  barTrack: { height: 10, borderRadius: Radius.pill, overflow: 'hidden' },
-  barFill: { height: '100%', borderRadius: Radius.pill },
 });

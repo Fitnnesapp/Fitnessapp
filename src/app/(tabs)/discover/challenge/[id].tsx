@@ -24,6 +24,7 @@ import {
   targetOnJoin,
   unitLabel,
 } from '@/lib/logic/challenges';
+import { successFeedback } from '@/lib/haptics';
 import { useChallengeStore } from '@/lib/storage/challenge-store';
 
 /** Einzelne Challenge: Beschreibung, Fortschritts-Ring, Etappen und Teilnahme. */
@@ -57,6 +58,7 @@ export default function ChallengeScreen() {
   function onJoin() {
     if (!challenge) return;
     join(challenge.id, { joinedAt: now, target: targetOnJoin(challenge, activities, now) });
+    successFeedback();
   }
 
   function onLeave() {

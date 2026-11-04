@@ -38,6 +38,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: Spacing.two,
   },
-  pressed: { opacity: 0.7 },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.985 }] },
   lifted: { boxShadow: '0 6px 20px rgba(11, 13, 16, 0.07)' },
 });

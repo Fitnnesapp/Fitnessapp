@@ -4,6 +4,7 @@ import { Image, StyleSheet, View } from 'react-native';
 
 import { sceneForChallenge } from '@/data/images';
 import { AppText } from '@/components/ui/app-text';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { Card } from '@/components/ui/card';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -73,14 +74,7 @@ export function ChallengeCard({ challenge, joined, progress, now, onPress, featu
 
       {joined && progress ? (
         <>
-          <View style={[styles.track, { backgroundColor: theme.accentSoft }]}>
-            <View
-              style={[
-                styles.fill,
-                { backgroundColor: theme.accent, width: `${Math.max(3, Math.round(progress.ratio * 100))}%` },
-              ]}
-            />
-          </View>
+          <ProgressBar progress={progress.ratio} />
           <AppText variant="caption" color="textSecondary">
             {progress.message}
           </AppText>
@@ -101,6 +95,4 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   icon: { width: 48, height: 48, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center' },
   cta: { borderWidth: 1.5, borderRadius: Radius.pill, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one },
-  track: { height: 10, borderRadius: Radius.pill, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: Radius.pill },
 });

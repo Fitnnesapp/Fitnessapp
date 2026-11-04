@@ -12,6 +12,7 @@ import { streaks, weekStart } from '@/lib/logic/activity';
 import { celebrate, ordinalText, weekEffectText } from '@/lib/logic/celebration';
 import { WEEKLY_GOAL_DAYS } from '@/lib/logic/motivation';
 import { nextSession, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
+import { successFeedback } from '@/lib/haptics';
 import { usePlanStore } from '@/lib/storage/plan-store';
 
 type CelebrationCardProps = {
@@ -42,6 +43,7 @@ export function CelebrationCard({ sessionId, headline, records = [] }: Celebrati
   const [progress] = useState(() => new Animated.Value(0));
   useEffect(() => {
     let cancelled = false;
+    successFeedback();
     void AccessibilityInfo.isReduceMotionEnabled()
       .catch(() => false)
       .then((reduce) => {

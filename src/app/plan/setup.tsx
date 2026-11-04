@@ -36,6 +36,7 @@ import {
 } from '@/lib/logic/plan';
 import { displayToKg, kgToDisplay, parseNumber, weightUnitLabel } from '@/lib/logic/units';
 import { useHealthStore } from '@/lib/storage/health-store';
+import { successFeedback } from '@/lib/haptics';
 import { usePlanStore } from '@/lib/storage/plan-store';
 import { useSettings } from '@/lib/storage/settings-store';
 
@@ -197,6 +198,7 @@ export default function PlanSetupScreen() {
       },
     );
     setPlan(plan);
+    successFeedback();
     router.replace({ pathname: '/plan', params: { neu: '1' } });
   }
 
