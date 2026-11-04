@@ -19,6 +19,8 @@ type MuscleMapProps = {
   showLegend?: boolean;
   /** Text für kräftige und blasse Färbung */
   legendLabels?: [strong: string, light: string];
+  /** Macht die Muskeln antippbar, z.B. als Filter. Die Karte ist dann nur eine Ergänzung zu zugänglichen Chips. */
+  onSelectMuscle?: (muscle: MuscleGroup) => void;
 };
 
 const BODY_RIGHT = mirrorPath(BODY_HALF, MAP_WIDTH);
@@ -36,6 +38,7 @@ export function MuscleMap({
   height = 200,
   showLegend = true,
   legendLabels = ['Hauptarbeit', 'unterstützt'],
+  onSelectMuscle,
 }: MuscleMapProps) {
   const theme = useTheme();
   const width = (height * MAP_WIDTH) / MAP_HEIGHT;
@@ -64,6 +67,7 @@ export function MuscleMap({
               d={path.d}
               fill={value > 0 ? theme.accent : theme.border}
               fillOpacity={value > 0 ? 0.3 + 0.7 * value : 1}
+              onPress={onSelectMuscle ? () => onSelectMuscle(path.muscle) : undefined}
             />
           );
         })}
@@ -77,7 +81,11 @@ export function MuscleMap({
   );
 
   return (
-    <View accessible accessibilityRole="image" accessibilityLabel={label} style={styles.wrap}>
+    <View
+      accessible={!onSelectMuscle}
+      accessibilityRole={onSelectMuscle ? undefined : 'image'}
+      accessibilityLabel={onSelectMuscle ? undefined : label}
+      style={styles.wrap}>
       <View style={styles.row}>
         {view(FRONT_PATHS, 'Vorne')}
         {view(BACK_PATHS, 'Hinten')}

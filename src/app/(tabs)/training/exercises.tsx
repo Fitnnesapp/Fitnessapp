@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 
+import { MuscleMap } from '@/components/muscle-map';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
@@ -52,6 +53,17 @@ export default function ExercisesScreen() {
       ListHeaderComponent={
         <View style={styles.filters}>
           <TextField label="Suchen" value={query} onChangeText={setQuery} placeholder="z.B. Bankdrücken" />
+          <Card style={styles.mapCard}>
+            <MuscleMap
+              load={muscle ? { [muscle]: 1 } : {}}
+              height={150}
+              showLegend={false}
+              onSelectMuscle={(group) => setMuscle(muscle === group ? null : group)}
+            />
+            <AppText variant="caption" color="textSecondary" style={styles.center}>
+              {muscle ? `${muscle} · nochmal tippen hebt den Filter auf` : 'Tippe auf einen Muskel oder wähle unten'}
+            </AppText>
+          </Card>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
             {MUSCLE_GROUPS.map((group) => (
               <Chip
@@ -92,6 +104,8 @@ export default function ExercisesScreen() {
 }
 
 const styles = StyleSheet.create({
+  mapCard: { paddingVertical: Spacing.three, alignItems: 'center' },
+  center: { textAlign: 'center' },
   content: { padding: Spacing.three, paddingBottom: Spacing.six },
   filters: { gap: Spacing.three, marginBottom: Spacing.three },
   chips: { gap: Spacing.two },
