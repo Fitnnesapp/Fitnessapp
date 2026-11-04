@@ -14,6 +14,7 @@ import { OnImage, Radius, Spacing } from '@/constants/theme';
 import { getExercise } from '@/data/exercises';
 import { SCENES, sceneForKind } from '@/data/images';
 import { getProgram, isFreeProgram, PROGRAMS } from '@/data/programs';
+import { ROUTINES } from '@/data/routines';
 import { useActivities } from '@/hooks/use-activities';
 import { useNow } from '@/hooks/use-now';
 import { useSubscription } from '@/hooks/use-subscription';
@@ -23,6 +24,7 @@ import { formatClock } from '@/lib/logic/format';
 import { ifThenSentence, sessionsForDay } from '@/lib/logic/plan';
 import { quickestProgram } from '@/lib/logic/quick-win';
 import { repeatOptions, type RepeatOption } from '@/lib/logic/repeat';
+import { preferencesFromPlan, routineMinutes, suggestRoutine } from '@/lib/logic/routines';
 import { activeElapsedAt } from '@/lib/logic/run-stats';
 import { formatDistance, type Units } from '@/lib/logic/units';
 import { hrefForSession } from '@/lib/plan-href';
@@ -68,6 +70,14 @@ export default function TrainingScreen() {
   const { isPremium } = useSubscription();
   // Sekundentakt nur, solange eine Einheit läuft, sonst reicht eine Minute für "Heute"/"Gestern"
   const now = useNow(activeWorkout || activeRun ? 1_000 : 60_000);
+  // Auf die Stunde gerundet, damit der Vorschlag nicht bei jedem Sekundentakt neu berechnet wird
+  const hour = Math.floor(now / 3_600_000);
+  const answers = plan?.answers;
+  const suggestion = useMemo(
+    () =>
+      suggestRoutine(ROUTINES, strength, hour * 3_600_000, (id) => getExercise(id)?.muscleGroup, preferencesFromPlan(answers)),
+    [strength, answers, hour],
+  );
 
   const options = useMemo(() => repeatOptions(strength, home, runs), [strength, home, runs]);
   const quick = useMemo(() => quickestProgram(PROGRAMS, (id) => isPremium || isFreeProgram(id)), [isPremium]);
@@ -215,7 +225,14 @@ export default function TrainingScreen() {
         height={180}
         accessibilityLabel={`${KINDS[0].title}: ${KINDS[0].description}`}
         onPress={() => router.push(KINDS[0].href)}>
-        <KindLabel kind={KINDS[0]} large />
+        <KindLabel
+          kind={
+            suggestion
+              ? { ...KINDS[0], description: `Heute empfohlen: ${suggestion.routine.name} · ~${routineMinutes(suggestion.routine)} Min` }
+              : KINDS[0]
+          }
+          large
+        />
       </ImageCard>
       <View style={styles.pair}>
         {KINDS.slice(1).map((kind) => (
