@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 
 import { ActiveSessions } from '@/components/active-sessions';
+import { RunGoalCard } from '@/components/run-goal-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -45,10 +46,13 @@ export default function RunningScreen() {
 
   const bests = useMemo(() => runBestsSummary(history), [history]);
   const prediction = useMemo(() => predictRaces(history, now), [history, now]);
-  const weekM = useMemo(() => {
-    const start = weekStart(now);
-    return history.filter((run) => run.startedAt >= start).reduce((sum, run) => sum + run.distanceM, 0);
-  }, [history, now]);
+  const currentWeekStart = weekStart(now);
+  const weekM = useMemo(
+    () => history.filter((run) => run.startedAt >= currentWeekStart).reduce((sum, run) => sum + run.distanceM, 0),
+    [history, currentWeekStart],
+  );
+  // Tage bis einschließlich Sonntag
+  const daysLeft = 7 - ((new Date(now).getDay() + 6) % 7);
   const recent = useMemo(() => [...history].sort((a, b) => b.startedAt - a.startedAt).slice(0, 3), [history]);
 
   async function start() {
@@ -116,6 +120,8 @@ export default function RunningScreen() {
           onPress={() => router.push('/training/run-manual')}
         />
       ) : null}
+
+      <RunGoalCard weekM={weekM} weekStartAt={currentWeekStart} daysLeft={daysLeft} />
 
       {denied ? (
         <Card>

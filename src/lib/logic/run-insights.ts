@@ -98,3 +98,19 @@ export function formatRaceTime(seconds: number): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
 }
+
+/**
+ * Vorschlag für ein Wochenziel: Schnitt der letzten vier vollen Wochen plus 10 %,
+ * auf 5 km aufgerundet. Die 10 % sind die bekannte Faustregel für eine sanfte Steigerung.
+ * Ohne Läufe: 10 km als machbarer Einstieg.
+ */
+export function suggestWeeklyRunGoalM(runs: readonly { startedAt: number; distanceM: number }[], currentWeekStart: number): number {
+  const WEEK = 7 * DAY;
+  const from = currentWeekStart - 4 * WEEK;
+  const total = runs
+    .filter((r) => r.startedAt >= from && r.startedAt < currentWeekStart)
+    .reduce((sum, r) => sum + r.distanceM, 0);
+  if (total === 0) return 10_000;
+  const target = (total / 4) * 1.1;
+  return Math.min(100_000, Math.max(5_000, Math.ceil(target / 5_000) * 5_000));
+}

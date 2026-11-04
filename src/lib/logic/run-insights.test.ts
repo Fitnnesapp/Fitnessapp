@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { formatRaceTime, predictRaces, riegel, runBestsSummary } from './run-insights.ts';
+import { formatRaceTime, predictRaces, riegel, runBestsSummary, suggestWeeklyRunGoalM } from './run-insights.ts';
 
 const NOW = Date.UTC(2026, 10, 4);
 const DAY = 86_400_000;
@@ -60,4 +60,17 @@ test('Zu kurze Läufe ergeben keine Prognose, große Sprünge werden ausgelassen
 test('Zeitformat', () => {
   assert.equal(formatRaceTime(1500), '25:00');
   assert.equal(formatRaceTime(6727), '1:52:07');
+});
+
+test('Wochenziel-Vorschlag: Schnitt plus 10 %, auf 5 km gerundet', () => {
+  const week = 7 * DAY;
+  const start = NOW;
+  assert.equal(suggestWeeklyRunGoalM([], start), 10_000);
+  // 4 Wochen mit je 12 km → 13,2 km → 15 km
+  const runs = [1, 2, 3, 4].map((i) => ({ startedAt: start - i * week + DAY, distanceM: 12_000 }));
+  assert.equal(suggestWeeklyRunGoalM(runs, start), 15_000);
+  // Läufe dieser Woche und älter als vier Wochen zählen nicht
+  assert.equal(suggestWeeklyRunGoalM([{ startedAt: start + DAY, distanceM: 50_000 }, { startedAt: start - 5 * week, distanceM: 80_000 }], start), 10_000);
+  // Kleine Umfänge: mindestens 5 km
+  assert.equal(suggestWeeklyRunGoalM([{ startedAt: start - DAY, distanceM: 2_000 }], start), 5_000);
 });

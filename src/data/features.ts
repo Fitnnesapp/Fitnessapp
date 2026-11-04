@@ -96,6 +96,14 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/training/run-manual',
   },
   {
+    id: 'run-goal',
+    kind: 'funktion',
+    title: 'Wochenziel fürs Laufen',
+    subtitle: 'Kilometer pro Woche festlegen und den Fortschritt sehen',
+    keywords: ['Kilometerziel', 'Laufumfang', 'km pro Woche', 'Wochenkilometer', 'Laufziel'],
+    href: '/training/running',
+  },
+  {
     id: 'interval-timer',
     kind: 'funktion',
     title: 'Intervall-Timer',

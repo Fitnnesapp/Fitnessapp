@@ -18,6 +18,8 @@ type SettingsState = {
   weeklyGoalDays: number;
   /** Zuletzt gewählte Satzpause in Sekunden (Startwert im nächsten Workout) */
   restSeconds: number;
+  /** Wöchentliches Laufziel in Metern, null = kein Ziel */
+  weeklyRunGoalM: number | null;
   /** true, sobald der Speicher vom Gerät geladen wurde */
   hydrated: boolean;
   setDisplayName: (name: string) => void;
@@ -27,6 +29,7 @@ type SettingsState = {
   setAppearance: (appearance: Appearance) => void;
   setWeeklyGoalDays: (days: number) => void;
   setRestSeconds: (seconds: number) => void;
+  setWeeklyRunGoalM: (meters: number | null) => void;
   reset: () => void;
 };
 
@@ -38,15 +41,23 @@ const DEFAULTS = {
   appearance: 'system' as Appearance,
   weeklyGoalDays: 3,
   restSeconds: 90,
+  weeklyRunGoalM: null as number | null,
 };
 
 type PersistedSettings = Pick<
   SettingsState,
-  'displayName' | 'units' | 'bodyWeightKg' | 'streakReminder' | 'appearance' | 'weeklyGoalDays' | 'restSeconds'
+  | 'displayName'
+  | 'units'
+  | 'bodyWeightKg'
+  | 'streakReminder'
+  | 'appearance'
+  | 'weeklyGoalDays'
+  | 'restSeconds'
+  | 'weeklyRunGoalM'
 >;
 
 /** Version des gespeicherten Formats. Bei Änderungen hochzählen und in `migrate` umwandeln. */
-const SETTINGS_STORE_VERSION = 3;
+const SETTINGS_STORE_VERSION = 4;
 
 /** Alle Einstellungen liegen ausschließlich lokal auf dem Gerät, es gibt keine Netzwerkzugriffe. */
 export const useSettings = create<SettingsState>()(
@@ -60,6 +71,9 @@ export const useSettings = create<SettingsState>()(
       setStreakReminder: (streakReminder) => set({ streakReminder }),
       setAppearance: (appearance) => set({ appearance }),
       setRestSeconds: (seconds) => set({ restSeconds: Math.min(600, Math.max(15, Math.round(seconds))) }),
+      // 1 bis 300 km pro Woche, null schaltet das Ziel ab
+      setWeeklyRunGoalM: (meters) =>
+        set({ weeklyRunGoalM: meters === null ? null : Math.min(300_000, Math.max(1_000, Math.round(meters))) }),
       setWeeklyGoalDays: (days) => set({ weeklyGoalDays: Math.min(7, Math.max(1, Math.round(days))) }),
       reset: () => set(DEFAULTS),
     }),
@@ -75,6 +89,7 @@ export const useSettings = create<SettingsState>()(
         appearance,
         weeklyGoalDays,
         restSeconds,
+        weeklyRunGoalM,
       }): PersistedSettings => ({
         displayName,
         units,
@@ -83,10 +98,12 @@ export const useSettings = create<SettingsState>()(
         appearance,
         weeklyGoalDays,
         restSeconds,
+        weeklyRunGoalM,
       }),
       // Version 0 → 1: neue Einstellung "Darstellung" (Standard: System)
       // Version 1 → 2: Wochenziel ohne Plan (Standard: 3 Tage)
-      // Version 2 → 3: gemerkte Satzpause (Standard: 90 s). Bestehende Werte bleiben jeweils erhalten.
+      // Version 2 → 3: gemerkte Satzpause (Standard: 90 s)
+      // Version 3 → 4: Laufziel pro Woche (Standard: keins). Bestehende Werte bleiben jeweils erhalten.
       migrate: (persisted) => ({ ...DEFAULTS, ...(persisted as Partial<PersistedSettings>) }),
       onRehydrateStorage: () => () => useSettings.setState({ hydrated: true }),
     },
