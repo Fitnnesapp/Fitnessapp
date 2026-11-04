@@ -83,8 +83,8 @@ export const FEATURES: readonly FeatureItem[] = [
     id: 'custom-exercise',
     kind: 'funktion',
     title: 'Eigene Übung anlegen',
-    subtitle: 'Fehlende Geräte oder Varianten ergänzen, mit Rekorden und Fortschritt',
-    keywords: ['Übung fehlt', 'neue Übung', 'Gerät hinzufügen', 'Variante', 'selbst erstellen'],
+    subtitle: 'Fehlende Varianten oder Studiomaschinen ergänzen, mit Rekorden und Fortschritt',
+    keywords: ['Übung fehlt', 'neue Übung', 'Maschine hinzufügen', 'Variante', 'selbst erstellen'],
     href: '/training/exercise/new',
   },
   {

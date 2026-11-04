@@ -91,3 +91,7 @@ test('Neue Funktionen sind über Alltagsbegriffe auffindbar', () => {
   assert.equal(first('Muskelkater was trainieren'), 'recovery');
   assert.equal(first('Zielzeit Halbmarathon'), 'run-prediction');
 });
+
+test('Eigene Übung wird über Alltagssprache gefunden', () => {
+  assert.equal(top('meine übung fehlt'), 'custom-exercise');
+});
