@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ChallengeCard } from '@/components/challenge-card';
 import { EventCard } from '@/components/event-card';
 import { FeedCard } from '@/components/feed-card';
+import { RecoveryCard } from '@/components/recovery-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -380,6 +381,9 @@ export default function DashboardScreen() {
           </View>
         </Card>
       </FadeIn>
+
+      {/* Erholung: was kann ich heute trainieren? */}
+      <RecoveryCard />
 
       {/* 4. Eigene Aktivitäten (Feed wie bei Strava), bewusst begrenzt */}
       <SectionHeader

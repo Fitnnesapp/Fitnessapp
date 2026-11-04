@@ -32,3 +32,48 @@ export function muscleLoad(entries: readonly LoadEntry[]): MuscleLoad {
   for (const [muscle, value] of raw) result[muscle] = Math.round((value / max) * 1000) / 1000;
   return result;
 }
+
+const HOUR = 3_600_000;
+/** Volle Erholung nach hartem Training des Hauptmuskels, bei Hilfsmuskeln kürzer. */
+export const PRIMARY_RECOVERY_HOURS = 72;
+export const SECONDARY_RECOVERY_HOURS = 36;
+
+export type RecoveryWorkout = {
+  startedAt: number;
+  exercises: { primary: MuscleGroup | undefined; secondary: readonly MuscleGroup[]; workingSets: number }[];
+};
+
+export type MuscleRecovery = {
+  /** 0 = gerade trainiert, 1 = vollständig erholt; nur Muskeln mit Belastung in den letzten 72 Stunden */
+  recovering: Partial<Record<MuscleGroup, number>>;
+  /** Stunden bis zur vollen Erholung je Muskel */
+  hoursLeft: Partial<Record<MuscleGroup, number>>;
+};
+
+/**
+ * Erholungsstand der Muskelgruppen nach den Krafttrainings der letzten Tage.
+ * Grobe, verständliche Faustregel (48 bis 72 Stunden für den Hauptmuskel), keine medizinische Aussage.
+ */
+export function muscleRecovery(workouts: readonly RecoveryWorkout[], now: number): MuscleRecovery {
+  const recovering: Partial<Record<MuscleGroup, number>> = {};
+  const hoursLeft: Partial<Record<MuscleGroup, number>> = {};
+  const apply = (muscle: MuscleGroup, startedAt: number, fullHours: number) => {
+    const hours = (now - startedAt) / HOUR;
+    if (hours < 0 || hours >= fullHours) return;
+    const value = hours / fullHours;
+    if (recovering[muscle] === undefined || value < recovering[muscle]) {
+      recovering[muscle] = Math.round(value * 100) / 100;
+      hoursLeft[muscle] = Math.ceil(fullHours - hours);
+    }
+  };
+  for (const workout of workouts) {
+    for (const exercise of workout.exercises) {
+      if (exercise.workingSets <= 0) continue;
+      if (exercise.primary) apply(exercise.primary, workout.startedAt, PRIMARY_RECOVERY_HOURS);
+      for (const muscle of exercise.secondary) {
+        if (muscle !== exercise.primary) apply(muscle, workout.startedAt, SECONDARY_RECOVERY_HOURS);
+      }
+    }
+  }
+  return { recovering, hoursLeft };
+}

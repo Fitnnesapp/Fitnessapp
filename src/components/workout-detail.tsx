@@ -2,15 +2,17 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 
 import { CelebrationCard } from '@/components/celebration-card';
+import { MuscleMap } from '@/components/muscle-map';
 import { DetailHeader, StatGrid } from '@/components/detail-layout';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
-import { getExercise } from '@/data/exercises';
+import { getExercise, secondaryMuscles } from '@/data/exercises';
 import { confirmAction } from '@/lib/confirm';
 import { formatDuration } from '@/lib/logic/format';
+import { muscleLoad } from '@/lib/logic/muscle-load';
 import { findRecords } from '@/lib/logic/personal-records';
 import { formatWeight } from '@/lib/logic/units';
 import { summarizeWorkout } from '@/lib/logic/workout-stats';
@@ -84,7 +86,22 @@ export function WorkoutDetail({ workoutId, justFinished = false }: WorkoutDetail
       />
 
       {summary.muscleGroups.length > 0 ? (
-        <AppText color="textSecondary">Trainiert: {summary.muscleGroups.join(', ')}</AppText>
+        <Card>
+          <AppText variant="eyebrow" color="textSecondary">
+            Trainiert: {summary.muscleGroups.join(', ')}
+          </AppText>
+          <MuscleMap
+            height={170}
+            legendLabels={['viele Sätze', 'wenige']}
+            load={muscleLoad(
+              workout.exercises.map((entry) => ({
+                primary: getExercise(entry.exerciseId)?.muscleGroup,
+                secondary: secondaryMuscles(entry.exerciseId),
+                amount: entry.sets.filter((set) => !set.isWarmup).length,
+              })),
+            )}
+          />
+        </Card>
       ) : null}
 
       {workout.exercises.map((entry, index) => {
