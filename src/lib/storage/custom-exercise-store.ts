@@ -11,6 +11,8 @@ type CustomExercisesState = {
   hydrated: boolean;
   /** Legt die Übung an. Ergebnis: neue ID oder Fehlertext. */
   add: (input: CustomExerciseInput) => { id: string } | { error: string };
+  /** Ändert Name, Muskel, Equipment oder Notiz; die ID bleibt, der Verlauf also erhalten. */
+  update: (id: string, input: CustomExerciseInput) => { id: string } | { error: string };
   remove: (id: string) => void;
   reset: () => void;
 };
@@ -33,6 +35,17 @@ export const useCustomExercises = create<CustomExercisesState>()(
         setCustomExercises(next);
         set({ exercises: next });
         return { id: exercise.id };
+      },
+      update: (id, input) => {
+        const current = get().exercises;
+        const others = current.filter((exercise) => exercise.id !== id);
+        const error = validateCustomExercise(input, [...EXERCISES, ...others]);
+        if (error) return { error };
+        const updated = { ...createCustomExercise(input, Date.now()), id };
+        const next = current.map((exercise) => (exercise.id === id ? updated : exercise));
+        setCustomExercises(next);
+        set({ exercises: next });
+        return { id };
       },
       remove: (id) => {
         const next = get().exercises.filter((exercise) => exercise.id !== id);

@@ -48,7 +48,7 @@ export default function ExerciseDetailScreen() {
   const goals = useGoalsStore((state) => state.goals);
   const removeCustom = useCustomExercises((state) => state.remove);
   // Abonniert die eigenen Übungen, damit die Seite nach dem Anlegen oder Löschen neu zeichnet
-  useCustomExercises((state) => state.exercises.length);
+  useCustomExercises((state) => state.exercises);
   const [metric, setMetric] = useState<Metric>('max');
 
   const theme = useTheme();
@@ -245,6 +245,14 @@ export default function ExerciseDetailScreen() {
             </Card>
           ))}
         </>
+      ) : null}
+
+      {exercise.custom ? (
+        <Button
+          title="Eigene Übung bearbeiten"
+          variant="secondary"
+          onPress={() => router.push({ pathname: '/training/exercise/new', params: { edit: exercise.id } })}
+        />
       ) : null}
 
       {usage ? (

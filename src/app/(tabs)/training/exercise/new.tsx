@@ -11,7 +11,7 @@ import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
 import { Radius, Spacing } from '@/constants/theme';
-import { EQUIPMENT, MUSCLE_GROUPS } from '@/data/exercises';
+import { EQUIPMENT, getExercise, MUSCLE_GROUPS } from '@/data/exercises';
 import { useTheme } from '@/hooks/use-theme';
 import { successFeedback } from '@/lib/haptics';
 import { CUSTOM_EXERCISE_LIMITS } from '@/lib/logic/custom-exercises';
@@ -26,32 +26,42 @@ import type { Equipment, MuscleGroup } from '@/types/workout';
 export default function NewExerciseScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const params = useLocalSearchParams<{ pick?: string; swap?: string; name?: string }>();
+  const params = useLocalSearchParams<{ pick?: string; swap?: string; name?: string; edit?: string }>();
+  // Bearbeiten nur für eigene Übungen; die ID bleibt gleich, Verlauf und Rekorde bleiben verknüpft
+  const editing = params.edit ? getExercise(params.edit) : undefined;
+  const editId = editing?.custom ? editing.id : null;
+  const update = useCustomExercises((state) => state.update);
   const add = useCustomExercises((state) => state.add);
   const addExercise = useWorkouts((state) => state.addExercise);
   const replaceExercise = useWorkouts((state) => state.replaceExercise);
   const hasActive = useWorkouts((state) => state.active !== null);
 
-  const [name, setName] = useState(params.name ?? '');
-  const [muscle, setMuscle] = useState<MuscleGroup | null>(null);
-  const [equipment, setEquipment] = useState<Equipment | null>(null);
-  const [notes, setNotes] = useState('');
+  const [name, setName] = useState((editId ? editing?.name : params.name) ?? '');
+  const [muscle, setMuscle] = useState<MuscleGroup | null>(editId ? (editing?.muscleGroup ?? null) : null);
+  const [equipment, setEquipment] = useState<Equipment | null>(editId ? (editing?.equipment ?? null) : null);
+  const [notes, setNotes] = useState(editId ? (editing?.instructions ?? '') : '');
   const [error, setError] = useState<string | null>(null);
 
   const swapIndex = params.swap !== undefined ? Number(params.swap) : null;
-  const intoWorkout = hasActive && (params.pick === '1' || (swapIndex !== null && Number.isInteger(swapIndex)));
+  const intoWorkout = !editId && hasActive && (params.pick === '1' || (swapIndex !== null && Number.isInteger(swapIndex)));
 
   function save() {
     if (!muscle || !equipment) {
       setError('Wähle Muskelgruppe und Equipment.');
       return;
     }
-    const result = add({ name, muscleGroup: muscle, equipment, instructions: notes });
+    const input = { name, muscleGroup: muscle, equipment, instructions: notes };
+    const result = editId ? update(editId, input) : add(input);
     if ('error' in result) {
       setError(result.error);
       return;
     }
     successFeedback();
+    if (editId) {
+      if (router.canGoBack()) router.back();
+      else router.replace({ pathname: '/training/exercise/[id]', params: { id: editId } });
+      return;
+    }
     if (intoWorkout) {
       if (swapIndex !== null && Number.isInteger(swapIndex)) replaceExercise(swapIndex, result.id);
       else addExercise(result.id);
@@ -65,7 +75,7 @@ export default function NewExerciseScreen() {
   return (
     <Screen>
       <AppText variant="display" style={styles.headline}>
-        Eigene Übung
+        {editId ? 'Übung bearbeiten' : 'Eigene Übung'}
       </AppText>
       <AppText color="textSecondary">
         Fehlt ein Gerät aus deinem Studio oder eine Variante? Leg sie an. Sie zählt danach wie jede andere Übung: Rekorde,
@@ -82,7 +92,7 @@ export default function NewExerciseScreen() {
           }}
           placeholder="z.B. Brustpresse am Hammer-Gerät"
           maxLength={CUSTOM_EXERCISE_LIMITS.nameMax}
-          autoFocus={!params.name}
+          autoFocus={!params.name && !editId}
         />
 
         <AppText variant="label" color="textSecondary">
@@ -149,7 +159,10 @@ export default function NewExerciseScreen() {
         </View>
       ) : null}
 
-      <Button title={intoWorkout ? 'Anlegen und hinzufügen' : 'Übung anlegen'} onPress={save} />
+      <Button
+        title={editId ? 'Änderungen speichern' : intoWorkout ? 'Anlegen und hinzufügen' : 'Übung anlegen'}
+        onPress={save}
+      />
     </Screen>
   );
 }
