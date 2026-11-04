@@ -1,4 +1,4 @@
-import type { Equipment, Exercise, MuscleGroup } from '@/types/workout';
+import type { Equipment, Exercise, MuscleGroup } from '../../types/workout.ts';
 
 /**
  * Eigene Übungen: alles, was in der Bibliothek fehlt (z.B. ein bestimmtes Gerät im Studio).

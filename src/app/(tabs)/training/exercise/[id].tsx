@@ -1,6 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { GoalEditor } from '@/components/goal-card';
 import { MuscleMap } from '@/components/muscle-map';
@@ -11,6 +12,7 @@ import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { EXERCISES, getExercise, secondaryMuscles } from '@/data/exercises';
 import { confirmAction } from '@/lib/confirm';
 import { alternativesFor } from '@/lib/logic/alternatives';
@@ -20,7 +22,7 @@ import { muscleLoad } from '@/lib/logic/muscle-load';
 import { findRecords } from '@/lib/logic/personal-records';
 import { bestOneRepMax } from '@/lib/logic/strength-calc';
 import { formatWeight, kgToDisplay, weightUnitLabel } from '@/lib/logic/units';
-import { exerciseProgress } from '@/lib/logic/workout-stats';
+import { compactSets, exerciseLog, exerciseProgress } from '@/lib/logic/workout-stats';
 import { useCustomExercises } from '@/lib/storage/custom-exercise-store';
 import { useGoalsStore } from '@/lib/storage/goals-store';
 import { useSettings } from '@/lib/storage/settings-store';
@@ -49,7 +51,9 @@ export default function ExerciseDetailScreen() {
   useCustomExercises((state) => state.exercises.length);
   const [metric, setMetric] = useState<Metric>('max');
 
+  const theme = useTheme();
   const progress = useMemo(() => exerciseProgress(history, id), [history, id]);
+  const log = useMemo(() => exerciseLog(history, id, 5), [history, id]);
   const estimate = useMemo(() => bestOneRepMax(history, id), [history, id]);
   const prCount = useMemo(() => {
     const own = history.map((w) => ({ exercises: w.exercises.filter((e) => e.exerciseId === id) }));
@@ -166,6 +170,35 @@ export default function ExerciseDetailScreen() {
         ) : null}
       </Card>
 
+      {log.length > 0 ? (
+        <Card>
+          <AppText variant="label" color="textSecondary">
+            LETZTE EINHEITEN
+          </AppText>
+          {log.map((entry, index) => (
+            <Pressable
+              key={entry.workoutId}
+              accessibilityRole="button"
+              accessibilityLabel={`Workout vom ${formatDate(entry.at)} öffnen`}
+              onPress={() => router.push({ pathname: '/history/[id]', params: { id: entry.workoutId } })}
+              style={({ pressed }) => [
+                styles.logRow,
+                index > 0 && { borderTopColor: theme.border, borderTopWidth: StyleSheet.hairlineWidth },
+                pressed && styles.pressed,
+              ]}>
+              <View style={styles.flex}>
+                <AppText variant="caption" color="textSecondary">
+                  {formatDate(entry.at)}
+                  {entry.warmups > 0 ? ` · ${entry.warmups} ${entry.warmups === 1 ? 'Aufwärmsatz' : 'Aufwärmsätze'}` : ''}
+                </AppText>
+                <AppText>{compactSets(entry.sets, (kg) => formatWeight(kg, units))}</AppText>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+            </Pressable>
+          ))}
+        </Card>
+      ) : null}
+
       {/* Geschätztes Maximalgewicht aus dem besten Satz, mit Sprung in den Rechner */}
       {estimate ? (
         <Card>
@@ -238,4 +271,7 @@ export default function ExerciseDetailScreen() {
 
 const styles = StyleSheet.create({
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  logRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.two },
+  flex: { flex: 1 },
+  pressed: { opacity: 0.6 },
 });

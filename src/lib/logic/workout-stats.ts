@@ -85,3 +85,51 @@ export function lastWorkingSet(history: StrengthWorkout[], exerciseId: string): 
   }
   return null;
 }
+
+export type ExerciseLogEntry = {
+  workoutId: string;
+  at: number;
+  /** Arbeitssätze in Reihenfolge (ohne Aufwärmsätze) */
+  sets: { weightKg: number; reps: number }[];
+  warmups: number;
+  volumeKg: number;
+};
+
+/** Die letzten Einheiten einer Übung, neueste zuerst, nur mit mindestens einem Arbeitssatz. */
+export function exerciseLog(history: StrengthWorkout[], exerciseId: string, limit = 5): ExerciseLogEntry[] {
+  const entries: ExerciseLogEntry[] = [];
+  for (const workout of [...history].sort((a, b) => b.startedAt - a.startedAt)) {
+    const sets = workout.exercises
+      .filter((exercise) => exercise.exerciseId === exerciseId)
+      .flatMap((exercise) => exercise.sets);
+    const working = sets.filter((set) => !set.isWarmup && set.reps > 0);
+    if (working.length === 0) continue;
+    entries.push({
+      workoutId: workout.id,
+      at: workout.startedAt,
+      sets: working.map((set) => ({ weightKg: set.weightKg, reps: set.reps })),
+      warmups: sets.length - sets.filter((set) => !set.isWarmup).length,
+      volumeKg: working.reduce((sum, set) => sum + set.weightKg * set.reps, 0),
+    });
+    if (entries.length >= limit) break;
+  }
+  return entries;
+}
+
+/**
+ * Kurzschreibweise für Sätze: aufeinanderfolgende Sätze mit gleichem Gewicht werden gebündelt,
+ * z.B. "80 kg × 8, 8, 7 · 85 kg × 5". Ohne Gewicht: "12, 10, 9 Wdh.".
+ */
+export function compactSets(sets: { weightKg: number; reps: number }[], formatWeight: (kg: number) => string): string {
+  const groups: { weightKg: number; reps: number[] }[] = [];
+  for (const set of sets) {
+    const last = groups[groups.length - 1];
+    if (last && last.weightKg === set.weightKg) last.reps.push(set.reps);
+    else groups.push({ weightKg: set.weightKg, reps: [set.reps] });
+  }
+  return groups
+    .map((group) =>
+      group.weightKg > 0 ? `${formatWeight(group.weightKg)} × ${group.reps.join(', ')}` : `${group.reps.join(', ')} Wdh.`,
+    )
+    .join(' · ');
+}

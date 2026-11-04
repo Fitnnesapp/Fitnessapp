@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import type { Exercise } from '@/types/workout';
+import type { Exercise } from '../../types/workout.ts';
 
 import {
   cleanExerciseName,
