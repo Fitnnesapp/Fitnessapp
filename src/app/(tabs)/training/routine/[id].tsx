@@ -4,16 +4,18 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
+import { MuscleMap } from '@/components/muscle-map';
 import { Card } from '@/components/ui/card';
 import { FadeIn } from '@/components/ui/fade-in';
 import { ImageCard } from '@/components/ui/image-card';
 import { Screen } from '@/components/ui/screen';
 import { OnImage, Radius, Spacing } from '@/constants/theme';
-import { getExercise } from '@/data/exercises';
+import { getExercise, secondaryMuscles } from '@/data/exercises';
 import { SCENES } from '@/data/images';
 import { getRoutine } from '@/data/routines';
 import { useTheme } from '@/hooks/use-theme';
 import { impactFeedback } from '@/lib/haptics';
+import { muscleLoad } from '@/lib/logic/muscle-load';
 import { routineMinutes, routineMuscles, routineSetCount, targetReps } from '@/lib/logic/routines';
 import { formatWeight } from '@/lib/logic/units';
 import { lastWorkingSet } from '@/lib/logic/workout-stats';
@@ -39,6 +41,13 @@ export default function RoutineDetailScreen() {
   }
 
   const muscles = routineMuscles(routine, muscleOf);
+  const load = muscleLoad(
+    routine.items.map((item) => ({
+      primary: muscleOf(item.exerciseId),
+      secondary: secondaryMuscles(item.exerciseId),
+      amount: item.sets,
+    })),
+  );
 
   function start() {
     if (!routine) return;
@@ -82,6 +91,10 @@ export default function RoutineDetailScreen() {
           </Card>
         ))}
       </View>
+
+      <Card>
+        <MuscleMap load={load} height={170} legendLabels={['stark', 'leicht']} />
+      </Card>
 
       <View style={styles.muscles}>
         {muscles.map((share) => (

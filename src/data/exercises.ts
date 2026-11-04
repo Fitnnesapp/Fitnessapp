@@ -108,6 +108,54 @@ export const EQUIPMENT: readonly Equipment[] = [
   'Kettlebell',
 ];
 
+/** Mitarbeitende Muskelgruppen der wichtigsten Übungen (Hilfsmuskeln). */
+const SECONDARY: Record<string, MuscleGroup[]> = {
+  bankdruecken: ['Trizeps', 'Schultern'],
+  schraegbankdruecken: ['Schultern', 'Trizeps'],
+  'kh-bankdruecken': ['Trizeps', 'Schultern'],
+  'kh-schraegbankdruecken': ['Schultern', 'Trizeps'],
+  liegestuetze: ['Trizeps', 'Schultern', 'Bauch'],
+  dips: ['Trizeps', 'Schultern'],
+  kreuzheben: ['Beine', 'Gesäß', 'Unterarme'],
+  langhantelrudern: ['Bizeps', 'Schultern'],
+  'kh-rudern': ['Bizeps'],
+  klimmzuege: ['Bizeps', 'Unterarme'],
+  latziehen: ['Bizeps'],
+  'rudern-kabel': ['Bizeps', 'Schultern'],
+  rudermaschine: ['Bizeps'],
+  hyperextensions: ['Gesäß'],
+  schulterdruecken: ['Trizeps'],
+  'kh-schulterdruecken': ['Trizeps'],
+  'face-pulls': ['Rücken'],
+  'reverse-fliegende': ['Rücken'],
+  'arnold-press': ['Trizeps'],
+  'enges-bankdruecken': ['Brust', 'Schultern'],
+  baenkdips: ['Schultern', 'Brust'],
+  kniebeuge: ['Gesäß', 'Bauch'],
+  frontkniebeuge: ['Gesäß', 'Bauch'],
+  luftkniebeuge: ['Gesäß'],
+  beinpresse: ['Gesäß'],
+  ausfallschritte: ['Gesäß'],
+  'bulgarian-split-squat': ['Gesäß'],
+  'rumaenisches-kreuzheben': ['Gesäß', 'Rücken'],
+  'goblet-squat': ['Gesäß', 'Bauch'],
+  'kettlebell-swing': ['Gesäß', 'Rücken', 'Schultern'],
+  'hip-thrust': ['Beine'],
+  'glute-bridge': ['Beine'],
+  'einbeinige-bridge': ['Beine'],
+  'pike-liegestuetze': ['Trizeps', 'Brust'],
+  superman: ['Gesäß'],
+  plank: ['Schultern'],
+  'ab-wheel': ['Schultern', 'Rücken'],
+  'farmers-walk': ['Schultern', 'Bauch', 'Rücken'],
+  hammercurls: ['Unterarme'],
+};
+
+/** Hilfsmuskeln einer Übung, leer wenn keine hinterlegt sind. */
+export function secondaryMuscles(id: string): readonly MuscleGroup[] {
+  return SECONDARY[id] ?? [];
+}
+
 const BY_ID = new Map(EXERCISES.map((exercise) => [exercise.id, exercise]));
 
 export function getExercise(id: string): Exercise | undefined {

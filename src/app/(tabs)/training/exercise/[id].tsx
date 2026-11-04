@@ -2,13 +2,15 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { View } from 'react-native';
 
+import { MuscleMap } from '@/components/muscle-map';
 import { ProgressChart } from '@/components/progress-chart';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
-import { getExercise } from '@/data/exercises';
+import { getExercise, secondaryMuscles } from '@/data/exercises';
 import { formatDate } from '@/lib/logic/format';
+import { muscleLoad } from '@/lib/logic/muscle-load';
 import { findRecords } from '@/lib/logic/personal-records';
 import { bestOneRepMax } from '@/lib/logic/strength-calc';
 import { formatWeight, kgToDisplay, weightUnitLabel } from '@/lib/logic/units';
@@ -46,6 +48,18 @@ export default function ExerciseDetailScreen() {
       <AppText color="textSecondary">
         {exercise.muscleGroup} · {exercise.equipment} · {exercise.difficulty}
       </AppText>
+
+      <Card>
+        <MuscleMap
+          load={muscleLoad([{ primary: exercise.muscleGroup, secondary: secondaryMuscles(exercise.id), amount: 1 }])}
+          height={180}
+        />
+        {secondaryMuscles(exercise.id).length > 0 ? (
+          <AppText variant="caption" color="textSecondary" style={{ textAlign: 'center' }}>
+            Hauptmuskel: {exercise.muscleGroup} · Unterstützend: {secondaryMuscles(exercise.id).join(', ')}
+          </AppText>
+        ) : null}
+      </Card>
 
       <Card>
         <AppText variant="label" color="textSecondary">
