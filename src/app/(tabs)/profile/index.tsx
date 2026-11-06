@@ -26,6 +26,7 @@ import { memberSince, monthYear, personalBests } from '@/lib/logic/personal-best
 import { GOAL_LABELS, LIMITATION_LABELS, planDayCount } from '@/lib/logic/plan';
 import { displayToKg, formatDistance, formatWeight, kgToDisplay, parseNumber, weightUnitLabel } from '@/lib/logic/units';
 import { lifetimeTotals } from '@/lib/logic/weekly-review';
+import { onlyRuns } from '@/lib/logic/run-stats';
 import { requestReminderPermission, remindersSupported } from '@/lib/notifications';
 import { useChallengeStore } from '@/lib/storage/challenge-store';
 import { useCustomExercises } from '@/lib/storage/custom-exercise-store';
@@ -95,7 +96,7 @@ export default function ProfileScreen() {
   const lifetime = useMemo(() => lifetimeTotals(activities), [activities]);
   const streak = useMemo(() => streaks(activities, now), [activities, now]);
   const since = useMemo(() => memberSince(activities), [activities]);
-  const bests = useMemo(() => personalBests(strengthHistory, runHistory), [strengthHistory, runHistory]);
+  const bests = useMemo(() => personalBests(strengthHistory, onlyRuns(runHistory)), [strengthHistory, runHistory]);
   const name = displayName.trim();
 
   async function toggleReminder() {

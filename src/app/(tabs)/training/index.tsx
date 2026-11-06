@@ -26,6 +26,7 @@ import { quickestProgram } from '@/lib/logic/quick-win';
 import { repeatOptions, type RepeatOption } from '@/lib/logic/repeat';
 import { preferencesFromPlan, routineMinutes, suggestRoutine } from '@/lib/logic/routines';
 import { formatDistance, type Units } from '@/lib/logic/units';
+import { onlyRuns } from '@/lib/logic/run-stats';
 import { hrefForSession } from '@/lib/plan-href';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { usePlanStore } from '@/lib/storage/plan-store';
@@ -78,7 +79,7 @@ export default function TrainingScreen() {
     [strength, answers, hour],
   );
 
-  const options = useMemo(() => repeatOptions(strength, home, runs), [strength, home, runs]);
+  const options = useMemo(() => repeatOptions(strength, home, onlyRuns(runs)), [strength, home, runs]);
   const quick = useMemo(() => quickestProgram(PROGRAMS, (id) => isPremium || isFreeProgram(id)), [isPremium]);
   const trainedToday = useMemo(() => {
     const start = new Date(now);

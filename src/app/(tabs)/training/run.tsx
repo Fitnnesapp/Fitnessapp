@@ -10,8 +10,8 @@ import { Spacing } from '@/constants/theme';
 import { useNow } from '@/hooks/use-now';
 import { confirmAction } from '@/lib/confirm';
 import { formatClock } from '@/lib/logic/format';
-import { activeElapsedAt, currentPace, paceSecPerKm } from '@/lib/logic/run-stats';
-import { formatDistance, formatPace, paceUnitLabel } from '@/lib/logic/units';
+import { activeElapsedAt, currentPace, paceSecPerKm, speedKmh } from '@/lib/logic/run-stats';
+import { formatDistance, formatPace, formatSpeed, paceUnitLabel, speedUnitLabel } from '@/lib/logic/units';
 import { ensureTracking, stopTracking, type TrackingMode } from '@/lib/location/tracker';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
@@ -51,6 +51,8 @@ export default function RunScreen() {
   if (!active) return saving ? null : <Redirect href="/training/running" />;
 
   const elapsedMs = activeElapsedAt(active, now);
+  const ride = active.sport === 'ride';
+  const pace = currentPace(active.points);
   const last = active.points[active.points.length - 1];
   const signal = running
     ? signalOf(last ? last.acc : undefined, last ? now - last.t : null)
@@ -72,8 +74,10 @@ export default function RunScreen() {
     pauseRun();
     confirmAction({
       onCancel: wasRunning ? resumeRun : undefined,
-      title: 'Lauf beenden?',
-      message: 'Der Lauf wird gespeichert. Sehr kurze Läufe unter 20 Metern werden verworfen.',
+      title: ride ? 'Radfahrt beenden?' : 'Lauf beenden?',
+      message: ride
+        ? 'Die Radfahrt wird gespeichert. Sehr kurze Aufzeichnungen unter 20 Metern werden verworfen.'
+        : 'Der Lauf wird gespeichert. Sehr kurze Läufe unter 20 Metern werden verworfen.',
       confirmLabel: 'Beenden',
       destructive: false,
       onConfirm: finish,
@@ -85,7 +89,7 @@ export default function RunScreen() {
     pauseRun();
     confirmAction({
       onCancel: wasRunning ? resumeRun : undefined,
-      title: 'Lauf verwerfen?',
+      title: ride ? 'Radfahrt verwerfen?' : 'Lauf verwerfen?',
       message: 'Die aufgezeichnete Strecke geht verloren.',
       confirmLabel: 'Verwerfen',
       onConfirm: async () => {
@@ -102,6 +106,9 @@ export default function RunScreen() {
         <AppText variant="label" color={signal.color} accessibilityLiveRegion="polite">
           {signal.label.toUpperCase()}
         </AppText>
+        <AppText variant="eyebrow" color="textSecondary">
+          {ride ? 'RADFAHRT' : 'LAUF'}
+        </AppText>
         <AppText style={styles.distance}>{formatDistance(active.distanceM, units).split(' ')[0]}</AppText>
         <AppText variant="heading" color="textSecondary">
           {units === 'metric' ? 'Kilometer' : 'Meilen'}
@@ -115,24 +122,49 @@ export default function RunScreen() {
           </AppText>
           <AppText variant="title">{formatClock(elapsedMs)}</AppText>
         </Card>
-        <Card style={styles.stat}>
-          <AppText variant="label" color="textSecondary">
-            PACE JETZT
-          </AppText>
-          <AppText variant="title">{formatPace(running ? currentPace(active.points) : null, units)}</AppText>
-          <AppText variant="caption" color="textSecondary">
-            {paceUnitLabel(units)}
-          </AppText>
-        </Card>
-        <Card style={styles.stat}>
-          <AppText variant="label" color="textSecondary">
-            Ø PACE
-          </AppText>
-          <AppText variant="title">{formatPace(paceSecPerKm(active.distanceM, elapsedMs / 1000), units)}</AppText>
-          <AppText variant="caption" color="textSecondary">
-            {paceUnitLabel(units)}
-          </AppText>
-        </Card>
+        {ride ? (
+          <>
+            <Card style={styles.stat}>
+              <AppText variant="label" color="textSecondary">
+                TEMPO JETZT
+              </AppText>
+              <AppText variant="title">{formatSpeed(running && pace ? 3600 / pace : 0, units)}</AppText>
+              <AppText variant="caption" color="textSecondary">
+                {speedUnitLabel(units)}
+              </AppText>
+            </Card>
+            <Card style={styles.stat}>
+              <AppText variant="label" color="textSecondary">
+                Ø TEMPO
+              </AppText>
+              <AppText variant="title">{formatSpeed(speedKmh(active.distanceM, elapsedMs / 1000), units)}</AppText>
+              <AppText variant="caption" color="textSecondary">
+                {speedUnitLabel(units)}
+              </AppText>
+            </Card>
+          </>
+        ) : (
+          <>
+            <Card style={styles.stat}>
+              <AppText variant="label" color="textSecondary">
+                PACE JETZT
+              </AppText>
+              <AppText variant="title">{formatPace(running ? pace : null, units)}</AppText>
+              <AppText variant="caption" color="textSecondary">
+                {paceUnitLabel(units)}
+              </AppText>
+            </Card>
+            <Card style={styles.stat}>
+              <AppText variant="label" color="textSecondary">
+                Ø PACE
+              </AppText>
+              <AppText variant="title">{formatPace(paceSecPerKm(active.distanceM, elapsedMs / 1000), units)}</AppText>
+              <AppText variant="caption" color="textSecondary">
+                {paceUnitLabel(units)}
+              </AppText>
+            </Card>
+          </>
+        )}
       </View>
 
       {mode === 'foreground' && Platform.OS !== 'web' ? (
@@ -152,7 +184,12 @@ export default function RunScreen() {
       ) : null}
 
       <Button title={running ? 'Pause' : 'Weiter'} onPress={running ? pauseRun : resumeRun} disabled={saving} />
-      <Button title="Lauf beenden" variant="secondary" onPress={confirmFinish} loading={saving} />
+      <Button
+        title={ride ? 'Radfahrt beenden' : 'Lauf beenden'}
+        variant="secondary"
+        onPress={confirmFinish}
+        loading={saving}
+      />
       <Button title="Verwerfen" variant="ghost" onPress={confirmDiscard} disabled={saving} />
     </Screen>
   );

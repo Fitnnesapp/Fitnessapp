@@ -72,6 +72,7 @@ export default function YearReviewScreen() {
         <AppText color="textSecondary">
           an {review.activeDays} {review.activeDays === 1 ? 'Tag' : 'Tagen'}: Kraft {review.byType.strength} · Home{' '}
           {review.byType.home} · Laufen {review.byType.running}
+          {review.byType.cycling > 0 ? ` · Rad ${review.byType.cycling}` : ''}
         </AppText>
       </Card>
 

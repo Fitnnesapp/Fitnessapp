@@ -50,6 +50,15 @@ export function formatPace(secPerKm: number | null, units: Units): string {
 
 export const paceUnitLabel = (units: Units) => (units === 'metric' ? 'min/km' : 'min/mi');
 
+/** Geschwindigkeit (z.B. Radfahren) aus km/h, eine Nachkommastelle mit Komma. */
+export function formatSpeed(kmh: number, units: Units): string {
+  if (!Number.isFinite(kmh) || kmh <= 0) return '–';
+  const value = units === 'metric' ? kmh : kmh / (M_PER_MILE / 1000);
+  return (Math.round(value * 10) / 10).toFixed(1).replace('.', ',');
+}
+
+export const speedUnitLabel = (units: Units) => (units === 'metric' ? 'km/h' : 'mph');
+
 export function formatElevation(meters: number, units: Units): string {
   return units === 'metric' ? `${meters} m` : `${Math.round(meters * 3.28084)} ft`;
 }

@@ -37,7 +37,7 @@ test('Wochenstatistik summiert nur die Woche und gruppiert nach Tag und Art', ()
   assert.equal(stats.workouts, 4);
   assert.equal(stats.durationSeconds, 1800 + 3000 + 1200 + 1800);
   assert.equal(stats.distanceM, 8000);
-  assert.deepEqual(stats.byType, { strength: 2, home: 1, running: 1 });
+  assert.deepEqual(stats.byType, { strength: 2, home: 1, running: 1, cycling: 0 });
   assert.deepEqual(stats.perDay, [1, 0, 2, 0, 0, 0, 1]);
 });
 

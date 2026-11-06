@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ActiveSessions } from '@/components/active-sessions';
 import { ChallengeCard } from '@/components/challenge-card';
 import { EventGoalCard } from '@/components/event-goal-card';
+import { HealthBenefitCard } from '@/components/health-benefit-card';
 import { QuickGrid } from '@/components/quick-grid';
 import { GoalCard } from '@/components/goal-card';
 import { RecoveryCard } from '@/components/recovery-card';
@@ -415,6 +416,9 @@ export default function DashboardScreen() {
       </FadeIn>
 
       {/* Gemerktes Event: festes Datum vor Augen, mit der passenden Vorbereitungsphase */}
+      {/* Nutzen statt nur Zahlen: Fortschritt zur WHO-Empfehlung dieser Woche */}
+      <HealthBenefitCard now={now} />
+
       {myEvent ? <EventGoalCard event={myEvent} now={now} /> : null}
 
       {/* Erholung: was kann ich heute trainieren? */}

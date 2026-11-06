@@ -10,6 +10,7 @@ import { Spacing } from '@/constants/theme';
 import { getExercise, MUSCLE_GROUPS } from '@/data/exercises';
 import { recordBook } from '@/lib/logic/record-book';
 import { formatRaceTime, runBestsSummary } from '@/lib/logic/run-insights';
+import { onlyRuns } from '@/lib/logic/run-stats';
 import { formatDistance, formatWeight, kgToDisplay } from '@/lib/logic/units';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
@@ -26,7 +27,7 @@ export default function RecordsScreen() {
   const [muscle, setMuscle] = useState<MuscleGroup | null>(null);
 
   const runs = useRunStore((state) => state.history);
-  const runBests = useMemo(() => runBestsSummary(runs), [runs]);
+  const runBests = useMemo(() => runBestsSummary(onlyRuns(runs)), [runs]);
   const book = useMemo(() => recordBook(history), [history]);
   const trainedMuscles = MUSCLE_GROUPS.filter((group) => book.some((r) => getExercise(r.exerciseId)?.muscleGroup === group));
   const rows = book.filter((record) => !muscle || getExercise(record.exerciseId)?.muscleGroup === muscle);

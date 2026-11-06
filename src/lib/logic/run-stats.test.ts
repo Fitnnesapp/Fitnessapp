@@ -11,6 +11,10 @@ import {
   evaluatePoint,
   fastestSplit,
   findRunRecords,
+  isRide,
+  MAX_RIDE_SPEED_MS,
+  onlyRuns,
+  speedKmh,
   haversineM,
   kmSplits,
   paceSecPerKm,
@@ -182,4 +186,19 @@ test('downsample behält Anfang, Ende und die Obergrenze', () => {
   assert.equal(reduced[0], 0);
   assert.equal(reduced.at(-1), 9999);
   assert.deepEqual(downsample([1, 2, 3], 500), [1, 2, 3]);
+});
+
+test('Radfahren: höhere Geschwindigkeit erlaubt, Läufe und Radfahrten trennbar', () => {
+  const a = { lat: 52.5, lng: 13.4, t: 0, e: 0, alt: null, acc: 5 };
+  // rund 167 m in 10 s = 60 km/h
+  const fast = { ...a, lat: 52.5015, t: 10_000, e: 10_000 };
+  assert.equal(evaluatePoint(a, fast).accepted, false);
+  assert.equal(evaluatePoint(a, fast, MAX_RIDE_SPEED_MS).accepted, true);
+  const sessions = [{ id: 'a' }, { id: 'b', sport: 'ride' as const }, { id: 'c', sport: 'run' as const }];
+  assert.deepEqual(
+    onlyRuns(sessions).map((s) => s.id),
+    ['a', 'c'],
+  );
+  assert.ok(isRide(sessions[1]));
+  assert.equal(Math.round(speedKmh(30000, 3600)), 30);
 });

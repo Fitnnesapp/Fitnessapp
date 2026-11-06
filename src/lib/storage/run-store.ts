@@ -6,10 +6,12 @@ import {
   computeBests,
   elevationGain,
   evaluatePoint,
+  MAX_RIDE_SPEED_MS,
+  MAX_SPEED_MS,
   toTrackPoint,
 } from '@/lib/logic/run-stats';
 import { createManualRun, type ManualRunInput } from '@/lib/logic/manual-run';
-import type { ActiveRun, RawLocation, RunSession } from '@/types/running';
+import type { ActiveRun, RawLocation, RunSession, Sport } from '@/types/running';
 
 import { debouncedStorage, flushPendingWrites } from './debounced-storage';
 
@@ -21,7 +23,7 @@ type RunState = {
   history: RunSession[];
   hydrated: boolean;
 
-  startRun: () => void;
+  startRun: (sport?: Sport) => void;
   pauseRun: () => void;
   resumeRun: () => void;
   /** Übernimmt neue GPS-Messungen in den laufenden Lauf. Im Status pausiert werden sie ignoriert. */
@@ -38,7 +40,7 @@ type RunState = {
 };
 
 /** Version des gespeicherten Formats. Bei Änderungen hochzählen und in `migrate` umwandeln. */
-const RUN_STORE_VERSION = 1;
+const RUN_STORE_VERSION = 2;
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 
@@ -50,10 +52,11 @@ export const useRunStore = create<RunState>()(
       history: [],
       hydrated: false,
 
-      startRun: () => {
+      startRun: (sport = 'run') => {
         const now = Date.now();
         set({
           active: {
+            sport,
             id: newId(),
             startedAt: now,
             status: 'running',
@@ -92,7 +95,11 @@ export const useRunStore = create<RunState>()(
           if (active.runningSince !== null && raw.t < active.runningSince) continue;
 
           const point = toTrackPoint(raw, activeElapsedAt(active, raw.t));
-          const result = evaluatePoint(points[points.length - 1] ?? null, point);
+          const result = evaluatePoint(
+            points[points.length - 1] ?? null,
+            point,
+            active.sport === 'ride' ? MAX_RIDE_SPEED_MS : MAX_SPEED_MS,
+          );
           if (!result.accepted) continue;
 
           points.push(point);
@@ -119,8 +126,10 @@ export const useRunStore = create<RunState>()(
             distanceM: Math.round(active.distanceM),
             durationSeconds,
             elevationGainM: elevationGain(active.points),
-            bests: computeBests(active.points),
+            // Laufbestzeiten über 1, 5 und 10 km gelten nur für Läufe
+            bests: active.sport === 'ride' ? { k1: null, k5: null, k10: null } : computeBests(active.points),
             points: active.points,
+            ...(active.sport === 'ride' ? { sport: 'ride' as const } : {}),
           };
           set({ active: null, history: [...history, session] });
         } else {
@@ -159,7 +168,8 @@ export const useRunStore = create<RunState>()(
       name: 'fitnessapp-runs',
       version: RUN_STORE_VERSION,
       storage: createJSONStorage(() => debouncedStorage),
-      // 0 → 1: optionales Feld `manual` für nachgetragene Läufe, bestehende Läufe bleiben unverändert
+      // 0 → 1: optionales Feld `manual` für nachgetragene Läufe
+      // 1 → 2: optionales Feld `sport` (Lauf oder Rad); fehlt es, ist es ein Lauf. Bestehende Läufe bleiben unverändert
       migrate: (persisted) => persisted as Pick<RunState, 'active' | 'history'>,
       partialize: ({ active, history }) => ({ active, history }),
       onRehydrateStorage: () => () => useRunStore.setState({ hydrated: true }),

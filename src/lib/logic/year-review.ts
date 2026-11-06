@@ -7,7 +7,7 @@ import { findRunRecords } from './run-stats.ts';
 export type YearReview = {
   year: number;
   workouts: number;
-  byType: { strength: number; home: number; running: number };
+  byType: { strength: number; home: number; running: number; cycling: number };
   durationSeconds: number;
   distanceM: number;
   /** Gesamtvolumen im Krafttraining in kg, ohne Aufwärmsätze */
@@ -43,7 +43,7 @@ export function yearsWithActivity(activities: Activity[]): number[] {
 export function yearReview({ year, activities, strength, runs, now }: Input): YearReview {
   const inYear = activities.filter((a) => yearOf(a.startedAt) === year);
 
-  const byType = { strength: 0, home: 0, running: 0 };
+  const byType = { strength: 0, home: 0, running: 0, cycling: 0 };
   const perMonth = Array<number>(12).fill(0);
   const perWeekday = Array<number>(7).fill(0);
   const days = new Set<string>();

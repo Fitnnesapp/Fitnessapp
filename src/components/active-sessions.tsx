@@ -42,8 +42,16 @@ export function ActiveSessions() {
       ) : null}
       {activeRun ? (
         <ActiveCard
-          icon="walk"
-          title={activeRun.status === 'paused' ? 'Lauf pausiert' : 'Lauf läuft'}
+          icon={activeRun.sport === 'ride' ? 'bicycle' : 'walk'}
+          title={
+            activeRun.sport === 'ride'
+              ? activeRun.status === 'paused'
+                ? 'Radfahrt pausiert'
+                : 'Radfahrt läuft'
+              : activeRun.status === 'paused'
+                ? 'Lauf pausiert'
+                : 'Lauf läuft'
+          }
           text={`${formatDistance(activeRun.distanceM, units)} · ${formatClock(activeElapsedAt(activeRun, now))}`}
           onPress={() => router.push('/training/run')}
         />
