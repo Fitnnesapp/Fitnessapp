@@ -1,6 +1,6 @@
 # Psychologische Grundlagen des App-Designs
 
-Stand: 24.10.2026. Dieses Dokument begründet, warum Start-Bildschirm, Trainingsplan, Challenges und Events so
+Stand: 06.11.2026 (erstmals 24.10.2026). Dieses Dokument begründet, warum Start-Bildschirm, Trainingsplan, Challenges und Events so
 gestaltet sind. Leitlinie aus dem Entwicklungsplan: motivieren ohne künstlichen Druck, keine manipulativen Muster.
 
 ## Studien und was daraus in der App wurde
@@ -54,6 +54,52 @@ Entdecken bleibt im Aufbau unverändert, übernimmt aber gemeinsame Bausteine wi
 | **Seiler (2010)**, Intensitätsverteilung im Ausdauersport | Erfolgreiche Ausdauersportler trainieren rund 80 % locker und 20 % intensiv. | Lauf-Ideen mit Kennzeichnung locker, mittel, hart. |
 | **Lally et al. (2010)**, Gewohnheitsbildung | Einzelne ausgelassene Tage schaden der Gewohnheit kaum. | Beständigkeits-Raster zählt aktive Wochen, Ruhetage sind kein Scheitern. |
 
+
+## Nutzen-Analyse (6. November 2026): Warum Menschen eine Fitness-App behalten
+
+**Frage:** Woran entscheidet sich, ob jemand die App nach der ersten Woche weiter nutzt?
+**Antwort der Forschung:** am wahrgenommenen Nutzen. In Modellen zur Technologienutzung ist die wahrgenommene
+Nützlichkeit der stärkste Treiber für Nutzung und Weiternutzung (Davis 1989; Bhattacherjee 2001). Motivation hält
+länger, wenn die Gründe selbst gewählt sind (Sheldon & Elliot 1999) und Menschen sich als kompetent erleben
+(Ryan & Deci 2000). Und eine Handlung passiert, wenn Motivation, Fähigkeit und Auslöser zusammenkommen; jede
+Reibung senkt die Wahrscheinlichkeit (Fogg 2009).
+
+### Befund vor diesem Ausbau
+
+| Bereich | Beobachtung | Folge für Nutzer |
+|---|---|---|
+| Nutzen | Die App zeigte Aktivität (Einheiten, Minuten, km), aber nicht, was sie bringt. | „Schön, 2 Einheiten. Und jetzt?“ Die Zahlen bleiben abstrakt. |
+| Erstkontakt | Der Willkommen-Bildschirm zählte Funktionen auf. | Kein klares Versprechen, warum sich die App lohnt. |
+| Datensilo | Trainings blieben in der App; Health-App und Aktivitätsringe sahen nichts davon. | Doppelte Erfassung oder Wechsel zu einer anderen App. |
+| Reibung | Radfahren war nicht erfassbar; neue Versionen kamen nur per Store-Update. | Ein Teil des Trainings fehlte; Fehlerbehebungen kamen spät an. |
+| Motivation in Tiefs | Serie und Abzeichen tragen in guten Wochen; nach einer Pause fehlte ein persönlicher Anker. | Wer eine Woche aussetzt, findet schwer zurück. |
+
+### Umsetzung
+
+| Prinzip | Grundlage | Umsetzung in der App |
+|---|---|---|
+| **Nutzen statt Zahlen** | Wahrgenommene Nützlichkeit (Davis 1989); Ergebniserwartung (Bandura 1977) | Karte „Dein Gesundheits-Nutzen“: Stand zur WHO-Empfehlung (150 Ausdauerminuten, 2 Krafttage), mit verständlicher Begründung und Quelle |
+| **Gewinn-Rahmung** | Bei Vorsorgeverhalten wie Bewegung wirken Gewinn-Botschaften besser als Verlust-Botschaften (Gallagher & Updegraff 2012) | „Bis zur WHO-Empfehlung fehlen noch 55 Minuten, z.B. 30 Min. lockeres Laufen“ statt Warnungen; nie „du hast verpasst“ |
+| **Ehrliche Evidenz** | Glaubwürdigkeit ist Voraussetzung für Vertrauen | Die 40 % aus Zhao et al. (BMJ 2020) werden als Zusammenhang aus Beobachtungsdaten erklärt, nicht als Versprechen |
+| **Nutzen im Moment der Handlung** | Unmittelbare Rückmeldung verstärkt Verhalten (Gewohnheitsschleife) | Der Erfolgsmoment nach jeder Einheit zeigt den neuen Stand zur WHO-Empfehlung |
+| **Klares Nutzenversprechen** | Ergebniserwartung entscheidet über den Start | Willkommen nennt, was man davon hat: Klarheit, Gesundheit, messbarer Fortschritt, Datenschutz |
+| **Eigenes Warum** | Selbstkonkordante Ziele werden beharrlicher verfolgt (Sheldon & Elliot 1999) | „Dein Warum“ in eigenen Worten; erscheint nach 3 Tagen Pause und zum Wochenstart, nicht dauernd |
+| **Weniger Reibung** | Fähigkeit als Hebel (Fogg 2009) | Radfahren mit GPS und zum Nachtragen; Apple Health überträgt automatisch; Updates laden im Hintergrund |
+| **Kein Datensilo** | Nutzen steigt, wenn Daten dort sind, wo man sie braucht | Workouts, Läufe und Radtouren mit Strecke in Apple Health, zählen für die Aktivitätsringe |
+
+### Bewusst nicht gemacht
+
+- Keine Verlust- oder Angstbotschaften über Gesundheit, keine Sterblichkeitszahlen als Druckmittel
+- Das Warum erscheint nicht ständig, damit es nicht abstumpft und nicht belehrt
+- Apple Health nur schreibend: Die App liest keine Gesundheitsdaten, damit kein Grund für Misstrauen entsteht
+
+### Empfohlene nächste Schritte
+
+1. Android: Health Connect mit derselben Abbildung (`src/lib/logic/health-export.ts`)
+2. Erinnerung zur selbst gewählten Uhrzeit an Plan-Tagen (Wenn-Dann-Plan als Benachrichtigung)
+3. Auto-Pause beim Laufen und Radfahren (Ampel, Kreuzung)
+4. Wochenbilanz am Sonntag: Gesundheits-Nutzen der Woche in einem Satz
+
 ## Bewusst vermieden
 
 - Keine Mechaniken, die auf Sucht zielen (endloses Scrollen, Verlustangst, zufällige Belohnungen nach Spielautomaten-Prinzip). Ziel ist eine Gewohnheit, die Menschen guttut, nicht maximale Bildschirmzeit.
@@ -88,3 +134,11 @@ Entdecken bleibt im Aufbau unverändert, übernimmt aber gemeinsame Bausteine wi
 
 - **Events:** `src/data/events.json` auf `main` bearbeiten. Die App lädt die Liste beim nächsten Öffnen (höchstens alle 12 Stunden). Termine vor dem Eintragen beim Veranstalter prüfen; die HYROX-Termine sind aus einer Übersicht übernommen und sollten bestätigt werden.
 - **Challenges:** `src/data/challenges.ts`. Sie sind Teil der App und brauchen ein App-Update. Abgelaufene Challenges verschwinden automatisch.
+- Davis, F. D. (1989). Perceived usefulness, perceived ease of use, and user acceptance of information technology. *MIS Quarterly, 13*(3), 319–340.
+- Bhattacherjee, A. (2001). Understanding information systems continuance: An expectation-confirmation model. *MIS Quarterly, 25*(3), 351–370.
+- Bandura, A. (1977). Self-efficacy: Toward a unifying theory of behavioral change. *Psychological Review, 84*(2), 191–215.
+- Sheldon, K. M. & Elliot, A. J. (1999). Goal striving, need satisfaction, and longitudinal well-being: The self-concordance model. *Journal of Personality and Social Psychology, 76*(3), 482–497.
+- Fogg, B. J. (2009). A behavior model for persuasive design. *Proceedings of the 4th International Conference on Persuasive Technology*, Article 40.
+- Gallagher, K. M. & Updegraff, J. A. (2012). Health message framing effects on attitudes, intentions, and behavior: A meta-analytic review. *Annals of Behavioral Medicine, 43*(1), 101–116.
+- Zhao, M., Veeranki, S. P., Magnussen, C. G. & Xi, B. (2020). Recommended physical activity and all cause and cause specific mortality in US adults: prospective cohort study. *BMJ, 370*, m2031.
+- World Health Organization (2020). *WHO guidelines on physical activity and sedentary behaviour*. Genf: WHO.
