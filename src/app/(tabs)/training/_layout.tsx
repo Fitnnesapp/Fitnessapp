@@ -28,7 +28,7 @@ export default function TrainingLayout() {
         options={{ title: 'Zusammenfassung', headerBackVisible: false, gestureEnabled: false }}
       />
       <Stack.Screen name="running" options={{ title: 'Running' }} />
-      <Stack.Screen name="run-manual" options={{ title: 'Lauf nachtragen' }} />
+      <Stack.Screen name="run-manual" options={{ title: 'Nachtragen' }} />
       <Stack.Screen name="run" options={{ title: 'Lauf', headerBackVisible: false, gestureEnabled: false }} />
       <Stack.Screen
         name="run-summary/[id]"

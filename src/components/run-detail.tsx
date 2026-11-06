@@ -175,7 +175,7 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
       ) : null}
       {run.manual ? (
         <Button
-          title="Lauf bearbeiten"
+          title={ride ? 'Radfahrt bearbeiten' : 'Lauf bearbeiten'}
           variant="secondary"
           onPress={() => router.push({ pathname: '/training/run-manual', params: { edit: run.id } })}
         />

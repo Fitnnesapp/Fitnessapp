@@ -246,8 +246,8 @@ export default function TrainingScreen() {
       <View style={styles.pair}>
         <LinkTile
           icon="create-outline"
-          title="Lauf nachtragen"
-          text="Laufband oder ohne GPS"
+          title="Nachtragen"
+          text="Lauf oder Rad ohne GPS"
           onPress={() => router.push('/training/run-manual')}
         />
         <LinkTile

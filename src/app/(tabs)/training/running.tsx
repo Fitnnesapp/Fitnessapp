@@ -131,7 +131,7 @@ export default function RunningScreen() {
 
       {!active ? (
         <Button
-          title="Lauf ohne GPS nachtragen"
+          title="Lauf oder Radfahrt ohne GPS nachtragen"
           variant="ghost"
           onPress={() => router.push('/training/run-manual')}
         />
