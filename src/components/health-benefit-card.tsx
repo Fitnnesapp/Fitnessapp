@@ -18,6 +18,10 @@ import { benefitMessage, WHO_AEROBIC_MINUTES, WHO_STRENGTH_DAYS } from '@/lib/lo
 export function HealthBenefitCard({ now }: { now: number }) {
   const theme = useTheme();
   const benefit = useWeeklyBenefit(now);
+  const lastWeek = useWeeklyBenefit(now, 1);
+  // Zu Wochenbeginn (Mo, Di) die Bilanz der Vorwoche zeigen, damit das Erreichte nicht einfach verschwindet
+  const weekday = new Date(now).getDay();
+  const showLastWeek = (weekday === 1 || weekday === 2) && (lastWeek.aerobicMinutes > 0 || lastWeek.strengthDays > 0);
   const [open, setOpen] = useState(false);
   const both = benefit.aerobicMet && benefit.strengthMet;
 
@@ -44,6 +48,21 @@ export function HealthBenefitCard({ now }: { now: number }) {
       />
 
       <AppText color={both ? 'accent' : 'text'}>{benefitMessage(benefit)}</AppText>
+
+      {showLastWeek ? (
+        <View style={[styles.lastWeek, { borderTopColor: theme.border }]}>
+          <Ionicons
+            name={lastWeek.aerobicMet && lastWeek.strengthMet ? 'checkmark-circle' : 'time-outline'}
+            size={16}
+            color={theme.accent}
+          />
+          <AppText variant="caption" color="textSecondary" style={styles.flex}>
+            Letzte Woche: {lastWeek.aerobicMinutes} Ausdauer-Min. · {lastWeek.strengthDays}{' '}
+            {lastWeek.strengthDays === 1 ? 'Krafttag' : 'Krafttage'}
+            {lastWeek.aerobicMet && lastWeek.strengthMet ? ' · WHO-Empfehlung erfüllt' : ''}
+          </AppText>
+        </View>
+      ) : null}
 
       <Pressable
         accessibilityRole="button"
@@ -91,4 +110,11 @@ const styles = StyleSheet.create({
   row: { gap: Spacing.one },
   rowHead: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   more: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
+  lastWeek: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingTop: Spacing.two,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
 });

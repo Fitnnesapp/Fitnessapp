@@ -8,11 +8,13 @@ import { useRunStore } from '@/lib/storage/run-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
 /** Gesundheits-Nutzen der laufenden Woche aus allen drei Trainingsarten. */
-export function useWeeklyBenefit(now: number): WeeklyBenefit {
+export function useWeeklyBenefit(now: number, weeksBack = 0): WeeklyBenefit {
   const strength = useWorkouts((state) => state.history);
   const home = useHomeSessions((state) => state.sessions);
   const runs = useRunStore((state) => state.history);
-  const start = weekStart(now);
+  // weekStart der Vorwoche: einen Tag vor Montag nehmen, das ist zeitumstellungssicher
+  const thisWeek = weekStart(now);
+  const start = weeksBack === 0 ? thisWeek : weekStart(thisWeek - (weeksBack - 1) * 7 * 86_400_000 - 86_400_000);
 
   return useMemo(() => {
     const entries: BenefitEntry[] = [
