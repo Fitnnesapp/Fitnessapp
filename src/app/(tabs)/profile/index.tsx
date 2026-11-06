@@ -93,6 +93,8 @@ export default function ProfileScreen() {
   const resetHealthSync = useHealthSync((state) => state.reset);
   const autoPause = useSettings((state) => state.autoPause);
   const setAutoPause = useSettings((state) => state.setAutoPause);
+  const voiceSplits = useSettings((state) => state.voiceSplits);
+  const setVoiceSplits = useSettings((state) => state.setVoiceSplits);
   const runGoalM = useSettings((state) => state.weeklyRunGoalM);
   const setRunGoalM = useSettings((state) => state.setWeeklyRunGoalM);
   const health = useHealthStore();
@@ -326,6 +328,13 @@ export default function ProfileScreen() {
           text="Standzeiten ab 10 Sekunden, etwa an der Ampel, zählen nicht zu Zeit und Tempo."
           onPress={() => setAutoPause(!autoPause)}>
           <Toggle on={autoPause} />
+        </SettingRow>
+        <SettingRow
+          icon="volume-high"
+          title="Sprachansagen bei Lauf und Rad"
+          text="Nach jedem Kilometer (Rad: alle 5) Zeit und Tempo, mit Zieltempo auch die Abweichung."
+          onPress={() => setVoiceSplits(!voiceSplits)}>
+          <Toggle on={voiceSplits} />
         </SettingRow>
         {remindersSupported ? (
           <SettingRow

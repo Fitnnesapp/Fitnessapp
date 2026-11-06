@@ -12,6 +12,7 @@ import { Screen } from '@/components/ui/screen';
 import { Radius, Spacing } from '@/constants/theme';
 import { confirmAction } from '@/lib/confirm';
 import { formatClock } from '@/lib/logic/format';
+import { paceDelta, paceDeltaText } from '@/lib/logic/announce';
 import { findRunRecords, isRide, kmSplits, paceSecPerKm, speedKmh } from '@/lib/logic/run-stats';
 import { formatDistance, formatElevation, formatPace, formatSpeed, paceUnitLabel, speedUnitLabel } from '@/lib/logic/units';
 import { useTheme } from '@/hooks/use-theme';
@@ -40,6 +41,7 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
   const router = useRouter();
   const theme = useTheme();
   const units = useSettings((state) => state.units);
+  const targetPace = useSettings((state) => state.targetPaceSecPerKm);
   const history = useRunStore((state) => state.history);
   const deleteRun = useRunStore((state) => state.deleteRun);
   const run = history.find((r) => r.id === runId);
@@ -66,6 +68,7 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
   const ride = isRide(run);
   const earned = records.get(run.id) ?? [];
   const avgPace = paceSecPerKm(run.distanceM, run.durationSeconds);
+  const delta = !ride && !run.manual ? paceDelta(avgPace, targetPace) : null;
   const fastest = splits.length > 0 ? Math.min(...splits.map((s) => s.seconds)) : null;
 
   function confirmDelete() {
@@ -133,6 +136,17 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
               ]),
         ]}
       />
+
+      {delta !== null && targetPace !== null ? (
+        <Card style={styles.manual}>
+          <AppText variant="label" color="textSecondary">
+            ZIELTEMPO {formatPace(targetPace, units)} {paceUnitLabel(units)}
+          </AppText>
+          <AppText variant="heading" color={delta <= 2 ? 'accent' : 'text'}>
+            {paceDeltaText(delta)}
+          </AppText>
+        </Card>
+      ) : null}
 
       {splits.length > 0 ? (
         <Card>
