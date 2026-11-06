@@ -320,8 +320,8 @@ export default function ProfileScreen() {
         {remindersSupported ? (
           <SettingRow
             icon="notifications"
-            title="Serien-Erinnerung um 19 Uhr"
-            text="Höchstens einmal am Tag, nur wenn du eine Serie hast und noch nicht trainiert hast."
+            title="Erinnerungen"
+            text="An Plan-Tagen zu deiner Tageszeit mit deinem Wenn-Dann-Plan, sonst um 19 Uhr für deine Serie. Höchstens eine am Tag, nie nach einem Training."
             onPress={toggleReminder}>
             <Toggle on={streakReminder} />
           </SettingRow>
