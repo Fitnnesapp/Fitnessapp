@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppleHealthCard } from '@/components/apple-health-card';
 import { AppVersionCard } from '@/components/app-version-card';
+import { WhyEditor } from '@/components/why-editor';
 import { BackupCard } from '@/components/backup-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -276,6 +277,7 @@ export default function ProfileScreen() {
             </View>
           )}
         </View>
+        <WhyEditor />
         <View style={styles.field}>
           <AppText variant="label" color="textSecondary">
             Laufziel pro Woche
