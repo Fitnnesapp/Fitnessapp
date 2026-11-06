@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AppleHealthCard } from '@/components/apple-health-card';
 import { BackupCard } from '@/components/backup-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ import { onlyRuns } from '@/lib/logic/run-stats';
 import { requestReminderPermission, remindersSupported } from '@/lib/notifications';
 import { useChallengeStore } from '@/lib/storage/challenge-store';
 import { useCustomExercises } from '@/lib/storage/custom-exercise-store';
+import { useHealthSync } from '@/lib/storage/health-sync-store';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useGoalsStore } from '@/lib/storage/goals-store';
 import { useNewsStore } from '@/lib/storage/news-store';
@@ -85,6 +87,7 @@ export default function ProfileScreen() {
   const resetNews = useNewsStore((state) => state.reset);
   const resetSavedEvents = useSavedEvents((state) => state.reset);
   const resetCustomExercises = useCustomExercises((state) => state.reset);
+  const resetHealthSync = useHealthSync((state) => state.reset);
   const runGoalM = useSettings((state) => state.weeklyRunGoalM);
   const setRunGoalM = useSettings((state) => state.setWeeklyRunGoalM);
   const health = useHealthStore();
@@ -139,6 +142,7 @@ export default function ProfileScreen() {
         resetNews();
         resetSavedEvents();
         resetCustomExercises();
+        resetHealthSync();
         health.revoke();
         setWeightText('');
       },
@@ -335,6 +339,7 @@ export default function ProfileScreen() {
 
       {/* 5. Gesundheit und Datenschutz */}
       <SectionHeader title="Gesundheit & Daten" />
+      <AppleHealthCard />
       <Card style={styles.settings}>
         <AppText variant="eyebrow" color="textSecondary">
           Gesundheitsangaben

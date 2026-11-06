@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 
 import { ConfirmHost } from '@/components/confirm-host';
 import { GamificationSync } from '@/components/gamification-sync';
+import { HealthSyncRunner } from '@/components/health-sync-runner';
 import { useTheme } from '@/hooks/use-theme';
 import '@/lib/location/background-task';
 import { useChallengeStore } from '@/lib/storage/challenge-store';
@@ -62,6 +63,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={navigationTheme}>
       <GamificationSync />
+      <HealthSyncRunner />
       <StatusBar style={theme.scheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="search" options={{ presentation: 'modal', animation: 'fade_from_bottom' }} />
