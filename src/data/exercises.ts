@@ -47,6 +47,8 @@ const ROWS: Row[] = [
   // Beine
   ['kniebeuge', 'Kniebeuge', 'Beine', 'Langhantel', 'Fortgeschritten', 'Stange auf dem oberen Rücken, Hüfte nach hinten und unten, Knie über den Füßen, dann aufrichten.'],
   ['frontkniebeuge', 'Frontkniebeuge', 'Beine', 'Langhantel', 'Profi', 'Stange vorn auf den Schultern halten und mit aufrechtem Oberkörper tief beugen.'],
+  ['luftkniebeuge', 'Kniebeuge ohne Gewicht', 'Beine', 'Körpergewicht', 'Einsteiger', 'Füße schulterbreit, Arme nach vorn, Hüfte nach hinten und unten bis die Oberschenkel waagerecht sind, dann aufrichten.'],
+  ['wandsitzen', 'Wandsitzen', 'Beine', 'Körpergewicht', 'Einsteiger', 'Mit dem Rücken an der Wand in die Hocke rutschen, Knie im rechten Winkel halten. Als Satz mit Sekunden zählen.'],
   ['beinpresse', 'Beinpresse', 'Beine', 'Maschine', 'Einsteiger', 'Füße schulterbreit auf die Platte, Knie beugen und kontrolliert wegdrücken.'],
   ['ausfallschritte', 'Ausfallschritte', 'Beine', 'Kurzhantel', 'Einsteiger', 'Großer Schritt nach vorn, hinteres Knie Richtung Boden senken, zurückdrücken.'],
   ['bulgarian-split-squat', 'Bulgarian Split Squat', 'Beine', 'Kurzhantel', 'Fortgeschritten', 'Hinteren Fuß auf einer Bank ablegen und mit dem vorderen Bein tief beugen.'],
@@ -57,9 +59,12 @@ const ROWS: Row[] = [
   ['kettlebell-swing', 'Kettlebell Swing', 'Beine', 'Kettlebell', 'Fortgeschritten', 'Mit explosivem Hüftstoß die Kettlebell auf Brusthöhe schwingen.'],
   // Gesäß
   ['hip-thrust', 'Hip Thrust', 'Gesäß', 'Langhantel', 'Fortgeschritten', 'Oberer Rücken an der Bank, Hüfte kraftvoll nach oben strecken und oben anspannen.'],
+  ['einbeinige-bridge', 'Einbeinige Glute Bridge', 'Gesäß', 'Körpergewicht', 'Fortgeschritten', 'Wie die Glute Bridge, aber ein Bein gestreckt in der Luft halten. Seiten abwechseln.'],
   ['glute-bridge', 'Glute Bridge', 'Gesäß', 'Körpergewicht', 'Einsteiger', 'Auf dem Rücken liegend die Hüfte anheben, bis Schultern, Hüfte und Knie eine Linie bilden.'],
   ['kabel-kickback', 'Kabel-Kickback', 'Gesäß', 'Kabelzug', 'Einsteiger', 'Das Bein am Kabel gestreckt nach hinten drücken.'],
   // Bauch
+  ['pike-liegestuetze', 'Pike-Liegestütze', 'Schultern', 'Körpergewicht', 'Fortgeschritten', 'Hüfte hoch wie ein umgedrehtes V, den Kopf zwischen den Händen Richtung Boden senken und hochdrücken.'],
+  ['superman', 'Superman', 'Rücken', 'Körpergewicht', 'Einsteiger', 'Auf dem Bauch liegend Arme und Beine gleichzeitig leicht anheben, kurz halten und ablegen.'],
   ['crunches', 'Crunches', 'Bauch', 'Körpergewicht', 'Einsteiger', 'Auf dem Rücken liegend den Oberkörper leicht einrollen, Nacken entspannt lassen.'],
   ['plank', 'Plank', 'Bauch', 'Körpergewicht', 'Einsteiger', 'Auf den Unterarmen stützen und den Körper als gerade Linie halten. Als Satz mit Sekunden zählen.'],
   ['beinheben', 'Hängendes Beinheben', 'Bauch', 'Körpergewicht', 'Fortgeschritten', 'Am Reck hängend die Beine gestreckt oder gebeugt anheben, ohne zu schwingen.'],
@@ -103,8 +108,63 @@ export const EQUIPMENT: readonly Equipment[] = [
   'Kettlebell',
 ];
 
+/** Mitarbeitende Muskelgruppen der wichtigsten Übungen (Hilfsmuskeln). */
+const SECONDARY: Record<string, MuscleGroup[]> = {
+  bankdruecken: ['Trizeps', 'Schultern'],
+  schraegbankdruecken: ['Schultern', 'Trizeps'],
+  'kh-bankdruecken': ['Trizeps', 'Schultern'],
+  'kh-schraegbankdruecken': ['Schultern', 'Trizeps'],
+  liegestuetze: ['Trizeps', 'Schultern', 'Bauch'],
+  dips: ['Trizeps', 'Schultern'],
+  kreuzheben: ['Beine', 'Gesäß', 'Unterarme'],
+  langhantelrudern: ['Bizeps', 'Schultern'],
+  'kh-rudern': ['Bizeps'],
+  klimmzuege: ['Bizeps', 'Unterarme'],
+  latziehen: ['Bizeps'],
+  'rudern-kabel': ['Bizeps', 'Schultern'],
+  rudermaschine: ['Bizeps'],
+  hyperextensions: ['Gesäß'],
+  schulterdruecken: ['Trizeps'],
+  'kh-schulterdruecken': ['Trizeps'],
+  'face-pulls': ['Rücken'],
+  'reverse-fliegende': ['Rücken'],
+  'arnold-press': ['Trizeps'],
+  'enges-bankdruecken': ['Brust', 'Schultern'],
+  baenkdips: ['Schultern', 'Brust'],
+  kniebeuge: ['Gesäß', 'Bauch'],
+  frontkniebeuge: ['Gesäß', 'Bauch'],
+  luftkniebeuge: ['Gesäß'],
+  beinpresse: ['Gesäß'],
+  ausfallschritte: ['Gesäß'],
+  'bulgarian-split-squat': ['Gesäß'],
+  'rumaenisches-kreuzheben': ['Gesäß', 'Rücken'],
+  'goblet-squat': ['Gesäß', 'Bauch'],
+  'kettlebell-swing': ['Gesäß', 'Rücken', 'Schultern'],
+  'hip-thrust': ['Beine'],
+  'glute-bridge': ['Beine'],
+  'einbeinige-bridge': ['Beine'],
+  'pike-liegestuetze': ['Trizeps', 'Brust'],
+  superman: ['Gesäß'],
+  plank: ['Schultern'],
+  'ab-wheel': ['Schultern', 'Rücken'],
+  'farmers-walk': ['Schultern', 'Bauch', 'Rücken'],
+  hammercurls: ['Unterarme'],
+};
+
+/** Hilfsmuskeln einer Übung, leer wenn keine hinterlegt sind. */
+export function secondaryMuscles(id: string): readonly MuscleGroup[] {
+  return SECONDARY[id] ?? [];
+}
+
 const BY_ID = new Map(EXERCISES.map((exercise) => [exercise.id, exercise]));
 
+/** Eigene Übungen, vom Speicher gesetzt (siehe custom-exercise-store) */
+let customById = new Map<string, Exercise>();
+
+export function setCustomExercises(list: readonly Exercise[]): void {
+  customById = new Map(list.map((exercise) => [exercise.id, exercise]));
+}
+
 export function getExercise(id: string): Exercise | undefined {
-  return BY_ID.get(id);
+  return BY_ID.get(id) ?? customById.get(id);
 }

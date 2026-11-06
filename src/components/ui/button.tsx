@@ -34,7 +34,8 @@ export function Button({ title, onPress, variant = 'primary', loading, disabled,
       style={({ pressed }) => [
         styles.base,
         { backgroundColor: palette.bg, borderColor: palette.border },
-        (pressed || inactive) && styles.dimmed,
+        inactive && styles.dimmed,
+        pressed && !inactive && styles.pressed,
         style,
       ]}>
       {loading ? (
@@ -58,4 +59,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dimmed: { opacity: 0.55 },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.97 }] },
 });

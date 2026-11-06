@@ -8,6 +8,7 @@ import {
   evaluatePoint,
   toTrackPoint,
 } from '@/lib/logic/run-stats';
+import { createManualRun, type ManualRunInput } from '@/lib/logic/manual-run';
 import type { ActiveRun, RawLocation, RunSession } from '@/types/running';
 
 import { debouncedStorage, flushPendingWrites } from './debounced-storage';
@@ -29,8 +30,15 @@ type RunState = {
   finishRun: () => Promise<string | null>;
   discardRun: () => void;
   deleteRun: (id: string) => void;
+  /** Speichert einen ohne GPS nachgetragenen Lauf (vorher validateManualRun). */
+  addManualRun: (input: ManualRunInput) => string;
+  /** Korrigiert einen nachgetragenen Lauf; aufgezeichnete GPS-Läufe bleiben unverändert. */
+  updateManualRun: (id: string, input: ManualRunInput) => void;
   reset: () => void;
 };
+
+/** Version des gespeicherten Formats. Bei Änderungen hochzählen und in `migrate` umwandeln. */
+const RUN_STORE_VERSION = 1;
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
 
@@ -131,11 +139,28 @@ export const useRunStore = create<RunState>()(
 
       deleteRun: (id) => set({ history: get().history.filter((run) => run.id !== id) }),
 
+      addManualRun: (input) => {
+        const run = createManualRun(input, newId());
+        set({ history: [...get().history, run] });
+        void flushPendingWrites();
+        return run.id;
+      },
+
+      updateManualRun: (id, input) => {
+        set({
+          history: get().history.map((run) => (run.id === id && run.manual ? createManualRun(input, id) : run)),
+        });
+        void flushPendingWrites();
+      },
+
       reset: () => set({ active: null, history: [] }),
     }),
     {
       name: 'fitnessapp-runs',
+      version: RUN_STORE_VERSION,
       storage: createJSONStorage(() => debouncedStorage),
+      // 0 → 1: optionales Feld `manual` für nachgetragene Läufe, bestehende Läufe bleiben unverändert
+      migrate: (persisted) => persisted as Pick<RunState, 'active' | 'history'>,
       partialize: ({ active, history }) => ({ active, history }),
       onRehydrateStorage: () => () => useRunStore.setState({ hydrated: true }),
     },

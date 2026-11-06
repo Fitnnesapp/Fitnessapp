@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
@@ -5,10 +6,13 @@ import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
-import { Spacing } from '@/constants/theme';
+import { ImageCard } from '@/components/ui/image-card';
+import { OnImage, Radius, Spacing } from '@/constants/theme';
+import { sceneForProgramCategory } from '@/data/images';
 import { CATEGORIES, isFreeProgram, PROGRAMS } from '@/data/programs';
 import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
+import { tapFeedback } from '@/lib/haptics';
 import { programMinutes } from '@/lib/logic/timeline';
 import type { ProgramCategory, ProgramDifficulty } from '@/types/home';
 
@@ -49,10 +53,34 @@ export default function HomeProgramsScreen() {
       keyExtractor={(program) => program.id}
       ListHeaderComponent={
         <View style={styles.filters}>
+          <AppText variant="display" style={styles.headline}>
+            Home-Workouts
+          </AppText>
+          <AppText color="textSecondary">Geführt, ohne Geräte. Wähle nach Ziel, Zeit oder Niveau.</AppText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-            {CATEGORIES.map((item) => (
-              <Chip key={item} label={item} selected={category === item} onPress={() => setCategory(category === item ? null : item)} />
-            ))}
+            {CATEGORIES.map((item) => {
+              const selected = category === item;
+              return (
+                <ImageCard
+                  key={item}
+                  source={sceneForProgramCategory(item)}
+                  height={112}
+                  scrim={0.9}
+                  onPress={() => {
+                    tapFeedback();
+                    setCategory(selected ? null : item);
+                  }}
+                  accessibilityLabel={`${item}${selected ? ', ausgewählt' : ''}`}
+                  style={[styles.categoryTile, { borderColor: selected ? theme.accent : 'transparent' }]}>
+                  <View style={styles.categoryLabel}>
+                    {selected ? <Ionicons name="checkmark-circle" size={18} color={OnImage.accent} /> : null}
+                    <AppText variant="heading" style={styles.onImage}>
+                      {item}
+                    </AppText>
+                  </View>
+                </ImageCard>
+              );
+            })}
           </ScrollView>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
             {DURATIONS.map((item) => (
@@ -70,27 +98,62 @@ export default function HomeProgramsScreen() {
         </View>
       }
       ListEmptyComponent={<AppText color="textSecondary">Kein Programm passt zu diesen Filtern.</AppText>}
-      renderItem={({ item }) => (
-        <Card onPress={() => router.push({ pathname: '/training/program/[id]', params: { id: item.id } })}>
-          <AppText variant="label" color="accent">
-            {item.category.toUpperCase()}
-            {!isPremium && !isFreeProgram(item.id) ? '  ·  🔒 PREMIUM' : ''}
-          </AppText>
-          <AppText variant="heading">{item.name}</AppText>
-          <AppText color="textSecondary">{item.description}</AppText>
-          <AppText variant="caption" color="textSecondary">
-            {programMinutes(item)} Min · {item.difficulty} · {item.steps.length * item.rounds} Übungen
-          </AppText>
+      ListFooterComponent={
+        <Card onPress={() => router.push('/training/timer')} style={styles.footer}>
+          <Ionicons name="timer-outline" size={22} color={theme.accent} />
+          <View style={styles.flex}>
+            <AppText variant="heading">Eigene Intervalle</AppText>
+            <AppText variant="caption" color="textSecondary">
+              Tabata, EMOM oder eigene Zeiten mit dem Intervall-Timer
+            </AppText>
+          </View>
         </Card>
-      )}
+      }
+      renderItem={({ item }) => {
+        const locked = !isPremium && !isFreeProgram(item.id);
+        return (
+          <Card onPress={() => router.push({ pathname: '/training/program/[id]', params: { id: item.id } })} style={styles.card}>
+            <View style={[styles.minutes, { backgroundColor: locked ? theme.surfaceAlt : theme.accentSoft }]}>
+              <AppText variant="number" color={locked ? 'textSecondary' : 'accent'} style={styles.minutesNumber}>
+                {programMinutes(item)}
+              </AppText>
+              <AppText variant="eyebrow" color={locked ? 'textSecondary' : 'accent'}>
+                Min
+              </AppText>
+            </View>
+            <View style={styles.flex}>
+              <View style={styles.metaRow}>
+                <AppText variant="eyebrow" color="textSecondary">
+                  {item.category} · {item.difficulty}
+                </AppText>
+                {locked ? <Ionicons name="lock-closed" size={13} color={theme.textSecondary} accessibilityLabel="Premium" /> : null}
+              </View>
+              <AppText variant="heading">{item.name}</AppText>
+              <AppText variant="caption" color="textSecondary" numberOfLines={2}>
+                {item.description}
+              </AppText>
+            </View>
+          </Card>
+        );
+      }}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
     />
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: Spacing.three, paddingBottom: Spacing.six },
+  content: { padding: Spacing.four, paddingBottom: Spacing.six },
   filters: { gap: Spacing.three, marginBottom: Spacing.three },
   chips: { gap: Spacing.two },
   separator: { height: Spacing.three },
+  flex: { flex: 1, gap: 2 },
+  headline: { fontSize: 34, lineHeight: 38, fontWeight: '900' },
+  card: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  minutes: { width: 64, height: 64, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center' },
+  minutesNumber: { fontSize: 26, lineHeight: 28 },
+  footer: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginTop: Spacing.three },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
+  categoryTile: { width: 148, borderWidth: 2, borderRadius: Radius.large + 2 },
+  categoryLabel: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one, marginLeft: -Spacing.two, marginBottom: -Spacing.two },
+  onImage: { color: '#FFFFFF' },
 });

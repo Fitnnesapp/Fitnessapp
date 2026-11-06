@@ -32,5 +32,14 @@ export function finalizeDraft(draft: ActiveWorkout, units: Units, endedAt: numbe
     }))
     .filter((exercise) => exercise.sets.length > 0);
 
-  return { id: draft.id, type: 'strength', startedAt: draft.startedAt, endedAt, exercises };
+  const note = cleanNote(draft.note);
+  return { id: draft.id, type: 'strength', startedAt: draft.startedAt, endedAt, exercises, ...(note ? { note } : {}) };
+}
+
+export const NOTE_MAX_LENGTH = 500;
+
+/** Notiz kürzen und Leerraum entfernen; leer ergibt undefined. */
+export function cleanNote(note: string | undefined): string | undefined {
+  const trimmed = (note ?? '').trim().slice(0, NOTE_MAX_LENGTH);
+  return trimmed === '' ? undefined : trimmed;
 }

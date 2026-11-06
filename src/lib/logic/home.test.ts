@@ -2,7 +2,16 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { estimateCalories } from './calories.ts';
-import { activeSecondsAt, buildTimeline, exerciseCount, locate, programMinutes, totalSeconds } from './timeline.ts';
+import {
+  activeSecondsAt,
+  buildTimeline,
+  clampInterval,
+  exerciseCount,
+  intervalProgram,
+  locate,
+  programMinutes,
+  totalSeconds,
+} from './timeline.ts';
 
 const step = (name: string, seconds?: number) => ({ name, instruction: '', seconds });
 
@@ -79,4 +88,20 @@ test('Kalorienschätzung nach MET-Formel', () => {
   assert.equal(estimateCalories('HIIT', 1800, null), 280);
   assert.equal(estimateCalories('Mobility', 3600, 80), 200);
   assert.equal(estimateCalories('Core', -5, 70), 0);
+});
+
+test('Intervall-Timer: Tabata ergibt 8 × 20 s Belastung mit 7 Pausen à 10 s', () => {
+  const timeline = buildTimeline(intervalProgram({ workSeconds: 20, restSeconds: 10, rounds: 8 }), 0);
+  assert.equal(timeline.filter((s) => s.kind === 'work').length, 8);
+  assert.equal(timeline.filter((s) => s.kind === 'rest').length, 7);
+  assert.equal(totalSeconds(timeline), 230);
+});
+
+test('Intervall-Timer: Eingaben werden begrenzt und gerastert', () => {
+  assert.equal(clampInterval('workSeconds', 2), 5);
+  assert.equal(clampInterval('workSeconds', 23), 25);
+  assert.equal(clampInterval('restSeconds', -10), 0);
+  assert.equal(clampInterval('rounds', 99), 50);
+  const program = intervalProgram({ workSeconds: 1000, restSeconds: 7, rounds: 0 });
+  assert.deepEqual([program.workSeconds, program.restSeconds, program.rounds], [600, 5, 1]);
 });

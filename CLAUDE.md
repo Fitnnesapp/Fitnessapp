@@ -7,6 +7,9 @@ All-in-One Fitness-App (Kraft, Home-Workouts, Running). Entwicklungsplan: `claud
 - **Offline-first, ohne Konto und ohne Server**: alle Daten bleiben lokal auf dem Gerät
 - Zustand mit AsyncStorage für Einstellungen und Workouts (jede Änderung wird sofort gespeichert, `src/lib/storage`)
 - Keine Netzwerkzugriffe einbauen (kein Supabase, kein Login, keine Cloud-Dienste), außer der Nutzer entscheidet es ausdrücklich anders
+- Ausnahme (vom Nutzer entschieden): Die Event-Liste wird lesend aus dem Repo geladen (`src/data/events.json` auf `main`,
+  über raw.githubusercontent.com), mit Cache und mitgelieferter Fassung als Rückfall. Es werden keine Nutzerdaten gesendet.
+  Geladene Daten immer mit `parseEvents` prüfen, nie ungeprüft anzeigen oder öffnen.
 
 ## Konventionen
 - Code liegt unter `src/` (Expo-Standard der aktuellen Vorlage): Routen in `src/app`, Rest daneben.
@@ -19,7 +22,7 @@ All-in-One Fitness-App (Kraft, Home-Workouts, Running). Entwicklungsplan: `claud
 
 ## Design
 - Dunkel zuerst, Hell-Modus wird unterstützt (Farben in `src/constants/theme.ts`)
-- Anthrazit-Flächen mit einem einzigen Akzent (Limette), große Typografie, runde Karten
+- Anthrazit-Flächen mit einem einzigen Akzent (Orange, vom Nutzer am 4.11. statt Limette gewählt), große Typografie, runde Karten
 - Keine generische Standard-UI: immer die Komponenten aus `src/components/ui` und die Theme-Tokens nutzen
 
 ## Regeln für Claude Code

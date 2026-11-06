@@ -1,9 +1,15 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
 
 import { AppText } from '@/components/ui/app-text';
 import { useTheme } from '@/hooks/use-theme';
+
+/** Im Browser fällt SVG-Text sonst auf eine Serifenschrift zurück; auf dem Handy gilt die Systemschrift. */
+const SVG_FONT = Platform.select({
+  web: 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif',
+  default: undefined,
+});
 
 export type ChartPoint = { at: number; value: number };
 
@@ -68,18 +74,25 @@ export function ProgressChart({ points, unitLabel, height = 180 }: ProgressChart
             <Circle key={`${p.at}-${i}`} cx={x(i)} cy={y(p.value)} r={5} fill={theme.accent} />
           ))}
           <SvgText
+            fontFamily={SVG_FONT}
             x={x(points.length - 1)}
-            y={y(last.value) - 10}
+            y={Math.max(14, y(last.value) - 10)}
             fill={theme.text}
             fontSize={12}
             fontWeight="700"
             textAnchor="end">
             {`${formatValue(last.value)} ${unitLabel}`}
           </SvgText>
-          <SvgText x={PAD.left} y={height - 8} fill={theme.textSecondary} fontSize={11}>
+          <SvgText fontFamily={SVG_FONT} x={PAD.left} y={height - 8} fill={theme.textSecondary} fontSize={11}>
             {formatDay(first.at)}
           </SvgText>
-          <SvgText x={width - PAD.right} y={height - 8} fill={theme.textSecondary} fontSize={11} textAnchor="end">
+          <SvgText
+            fontFamily={SVG_FONT}
+            x={width - PAD.right}
+            y={height - 8}
+            fill={theme.textSecondary}
+            fontSize={11}
+            textAnchor="end">
             {formatDay(last.at)}
           </SvgText>
         </Svg>

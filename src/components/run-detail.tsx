@@ -2,16 +2,20 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { CelebrationCard } from '@/components/celebration-card';
 import { DetailHeader, StatGrid } from '@/components/detail-layout';
 import { RouteMap } from '@/components/route-map';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
+import { Radius, Spacing } from '@/constants/theme';
 import { confirmAction } from '@/lib/confirm';
 import { formatClock } from '@/lib/logic/format';
 import { findRunRecords, kmSplits, paceSecPerKm } from '@/lib/logic/run-stats';
 import { formatDistance, formatElevation, formatPace, paceUnitLabel } from '@/lib/logic/units';
+import { useTheme } from '@/hooks/use-theme';
+import { canShare, shareText } from '@/lib/share';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import type { RunRecordType } from '@/types/running';
@@ -31,6 +35,7 @@ type RunDetailProps = {
 /** Zusammenfassung eines Laufs mit Strecke, Kilometerzeiten und Rekorden. */
 export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
   const router = useRouter();
+  const theme = useTheme();
   const units = useSettings((state) => state.units);
   const history = useRunStore((state) => state.history);
   const deleteRun = useRunStore((state) => state.deleteRun);
@@ -61,16 +66,21 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
       confirmLabel: 'Löschen',
       onConfirm: () => {
         deleteRun(run!.id);
-        router.back();
+        // Nach dem Löschen zurück, nach einem frisch beendeten Training gibt es keinen sinnvollen Rückweg
+        if (!justFinished && router.canGoBack()) router.back();
+        else router.replace('/history');
       },
     });
   }
 
   return (
     <Screen>
-      <DetailHeader startedAt={run.startedAt} title={justFinished ? 'Stark gelaufen!' : 'Lauf'} />
+      {justFinished ? (
+        <CelebrationCard sessionId={run.id} headline="Stark gelaufen!" records={earned.map((type) => RECORD_LABELS[type])} />
+      ) : null}
+      <DetailHeader startedAt={run.startedAt} title="Lauf" />
 
-      {earned.length > 0 ? (
+      {earned.length > 0 && !justFinished ? (
         <Card>
           {earned.map((type) => (
             <AppText key={type} variant="heading">
@@ -80,35 +90,92 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
         </Card>
       ) : null}
 
-      <RouteMap points={run.points} />
+      {run.manual ? (
+        <Card style={styles.manual}>
+          <AppText variant="label" color="textSecondary">
+            OHNE GPS NACHGETRAGEN
+          </AppText>
+          <AppText variant="caption" color="textSecondary">
+            Distanz und Zeit hast du selbst eingetragen. Strecke, Kilometerzeiten und Höhenmeter gibt es dafür nicht.
+          </AppText>
+        </Card>
+      ) : (
+        <RouteMap points={run.points} />
+      )}
 
       <StatGrid
         items={[
           { label: 'Distanz', value: formatDistance(run.distanceM, units) },
           { label: 'Zeit', value: formatClock(run.durationSeconds * 1000) },
           { label: 'Ø Pace', value: formatPace(avgPace, units), unit: paceUnitLabel(units) },
-          { label: 'Bester Kilometer', value: formatPace(fastest, units), unit: paceUnitLabel(units) },
-          { label: 'Höhenmeter', value: formatElevation(run.elevationGainM, units) },
+          ...(run.manual
+            ? []
+            : [
+                { label: 'Bester Kilometer', value: formatPace(fastest, units), unit: paceUnitLabel(units) },
+                { label: 'Höhenmeter', value: formatElevation(run.elevationGainM, units) },
+              ]),
         ]}
       />
 
       {splits.length > 0 ? (
         <Card>
           <AppText variant="heading">Kilometerzeiten</AppText>
-          {splits.map((split) => (
-            <View key={split.km} style={styles.splitRow}>
-              <AppText color="textSecondary">{split.km}</AppText>
-              <AppText>
-                {formatPace(split.seconds, 'metric')} {paceUnitLabel('metric')}
-              </AppText>
-            </View>
-          ))}
+          {splits.map((split) => {
+            const isFastest = split.seconds === fastest;
+            // Schnellere Kilometer bekommen längere Balken (Kehrwert der Zeit)
+            const share = fastest ? fastest / split.seconds : 0;
+            return (
+              <View
+                key={split.km}
+                style={styles.splitRow}
+                accessible
+                accessibilityLabel={`Kilometer ${split.km}: ${formatPace(split.seconds, 'metric')} ${paceUnitLabel('metric')}${isFastest ? ', schnellster' : ''}`}>
+                <AppText color="textSecondary" style={styles.splitKm}>
+                  {split.km}
+                </AppText>
+                <View style={styles.splitTrack}>
+                  <View
+                    style={[
+                      styles.splitBar,
+                      { width: `${Math.max(8, share * 100)}%`, backgroundColor: isFastest ? theme.accent : theme.accentSoft },
+                    ]}
+                  />
+                </View>
+                <AppText variant="label" color={isFastest ? 'accent' : 'text'} style={styles.splitPace}>
+                  {formatPace(split.seconds, 'metric')}
+                </AppText>
+              </View>
+            );
+          })}
           <AppText variant="caption" color="textSecondary">
-            Pro vollem Kilometer, unabhängig von der Einheit.
+            Minuten pro vollem Kilometer, unabhängig von der Einheit. Längerer Balken heißt schneller.
           </AppText>
         </Card>
       ) : null}
 
+      {!justFinished ? (
+        <Button title="Neuen Lauf starten" onPress={() => router.push('/training/running')} />
+      ) : null}
+      {run.manual ? (
+        <Button
+          title="Lauf bearbeiten"
+          variant="secondary"
+          onPress={() => router.push({ pathname: '/training/run-manual', params: { edit: run.id } })}
+        />
+      ) : null}
+      {canShare() ? (
+        <Button
+          title="Lauf teilen"
+          variant="secondary"
+          onPress={() =>
+            void shareText(
+              `Lauf · ${formatDistance(run.distanceM, units)} in ${formatClock(run.durationSeconds * 1000)} · ` +
+                `Ø ${formatPace(avgPace, units)} ${paceUnitLabel(units)}` +
+                (fastest !== null ? ` · schnellster km ${formatPace(fastest, 'metric')}` : ''),
+            )
+          }
+        />
+      ) : null}
       {justFinished ? <Button title="Fertig" onPress={() => router.replace('/training/running')} /> : null}
       <Button title="Lauf löschen" variant="danger" onPress={confirmDelete} />
     </Screen>
@@ -116,5 +183,10 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
 }
 
 const styles = StyleSheet.create({
-  splitRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  manual: { gap: Spacing.one },
+  splitRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  splitKm: { width: 22 },
+  splitTrack: { flex: 1, height: 22, justifyContent: 'center' },
+  splitBar: { height: 22, borderRadius: Radius.small },
+  splitPace: { width: 44, textAlign: 'right' },
 });

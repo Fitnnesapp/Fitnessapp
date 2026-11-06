@@ -6,7 +6,12 @@ export default function TrainingLayout() {
       <Stack.Screen name="index" options={{ title: 'Training' }} />
       <Stack.Screen name="strength" options={{ title: 'Kraft' }} />
       <Stack.Screen name="exercises" options={{ title: 'Übungen' }} />
+      <Stack.Screen name="exercise/new" options={{ title: 'Eigene Übung' }} />
       <Stack.Screen name="exercise/[id]" options={{ title: 'Übung' }} />
+      <Stack.Screen name="routine/[id]" options={{ title: 'Workout' }} />
+      <Stack.Screen name="template/[id]" options={{ title: 'Vorlage bearbeiten' }} />
+      <Stack.Screen name="timer" options={{ title: 'Intervall-Timer' }} />
+      <Stack.Screen name="calculator" options={{ title: 'Rechner' }} />
       <Stack.Screen name="workout" options={{ title: 'Workout', headerBackVisible: false, gestureEnabled: false }} />
       <Stack.Screen
         name="summary/[id]"
@@ -23,6 +28,7 @@ export default function TrainingLayout() {
         options={{ title: 'Zusammenfassung', headerBackVisible: false, gestureEnabled: false }}
       />
       <Stack.Screen name="running" options={{ title: 'Running' }} />
+      <Stack.Screen name="run-manual" options={{ title: 'Lauf nachtragen' }} />
       <Stack.Screen name="run" options={{ title: 'Lauf', headerBackVisible: false, gestureEnabled: false }} />
       <Stack.Screen
         name="run-summary/[id]"

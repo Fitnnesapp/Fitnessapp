@@ -2,7 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { finalizeDraft } from '@/lib/logic/draft';
+import { cleanNote, finalizeDraft, NOTE_MAX_LENGTH } from '@/lib/logic/draft';
+import { draftFromWorkout } from '@/lib/logic/repeat';
+import { targetReps } from '@/lib/logic/routines';
 import { kgToDisplay, type Units } from '@/lib/logic/units';
 import { lastWorkingSet } from '@/lib/logic/workout-stats';
 import type { ActiveWorkout, DraftSet, StrengthWorkout, WorkoutTemplate } from '@/types/workout';
@@ -17,18 +19,41 @@ type WorkoutState = {
   hydrated: boolean;
 
   startWorkout: (exerciseIds?: string[]) => void;
+  /** Startet ein fertiges Workout: pro Übung die vorgegebene Satzzahl, vorbelegt mit dem letzten Training oder dem Ziel. */
+  startRoutine: (
+    items: { exerciseId: string; sets: number; targetReps: number | null; reps: string; restSeconds: number }[],
+  ) => void;
+  /** Startet ein gespeichertes Workout erneut mit gleichen Übungen und vorbelegten Sätzen. false, wenn es nicht existiert. */
+  repeatWorkout: (workoutId: string) => boolean;
   discardWorkout: () => void;
   /** Beendet das Workout und gibt die Id des gespeicherten Workouts zurück, oder null wenn kein Satz erledigt wurde. */
   finishWorkout: () => string | null;
   addExercise: (exerciseId: string) => void;
   removeExercise: (exerciseIndex: number) => void;
+  /** Verschiebt eine Übung um eine Position nach oben */
+  moveExerciseUp: (exerciseIndex: number) => void;
+  /** Tauscht eine Übung ohne erledigte Sätze gegen eine andere, Satzzahl und Vorgabe bleiben. */
+  replaceExercise: (exerciseIndex: number, exerciseId: string) => void;
   addSet: (exerciseIndex: number) => void;
+  /** Notiz zum laufenden Workout */
+  setActiveNote: (note: string) => void;
+  /** Notiz eines gespeicherten Workouts ändern (leer entfernt sie) */
+  setWorkoutNote: (workoutId: string, note: string) => void;
+  /** Fügt Aufwärmsätze (Anzeigeeinheit) vor den Arbeitssätzen ein. */
+  addWarmupSets: (exerciseIndex: number, sets: { weight: number; reps: number }[]) => void;
   removeSet: (exerciseIndex: number, setId: string) => void;
   updateSet: (exerciseIndex: number, setId: string, patch: Partial<Omit<DraftSet, 'id'>>) => void;
 
   deleteWorkout: (id: string) => void;
+  /** Ersetzt ein gespeichertes Workout (Korrektur von Sätzen) */
+  replaceWorkout: (workout: StrengthWorkout) => void;
   saveTemplate: (name: string, exerciseIds: string[]) => void;
   deleteTemplate: (id: string) => void;
+  renameTemplate: (id: string, name: string) => void;
+  /** Leere Vorlage anlegen, gibt ihre ID zurück */
+  createTemplate: (name: string) => string;
+  /** Übungen einer Vorlage ersetzen (Editor) */
+  setTemplateExercises: (id: string, exerciseIds: string[]) => void;
   reset: () => void;
 };
 
@@ -51,6 +76,7 @@ function prefilledSet(history: StrengthWorkout[], exerciseId: string, units: Uni
 }
 
 const INITIAL = { active: null, history: [], templates: [] };
+export const WORKOUT_STORE_VERSION = 2;
 
 export const useWorkouts = create<WorkoutState>()(
   persist(
@@ -72,6 +98,36 @@ export const useWorkouts = create<WorkoutState>()(
             })),
           },
         });
+      },
+
+      startRoutine: (items) => {
+        const { history } = get();
+        const units = useSettings.getState().units;
+
+        set({
+          active: {
+            id: newId(),
+            startedAt: Date.now(),
+            exercises: items.map(({ exerciseId, sets, targetReps, reps, restSeconds }) => ({
+              exerciseId,
+              target: { reps, restSeconds },
+              sets: Array.from({ length: Math.max(1, sets) }, () => {
+                const prefilled = prefilledSet(history, exerciseId, units);
+                if (prefilled.reps === '' && targetReps !== null) prefilled.reps = String(targetReps);
+                return prefilled;
+              }),
+            })),
+          },
+        });
+      },
+
+      repeatWorkout: (workoutId) => {
+        const source = get().history.find((w) => w.id === workoutId);
+        if (!source || get().active) return false;
+
+        const exercises = draftFromWorkout(source, useSettings.getState().units, newId);
+        set({ active: { id: newId(), startedAt: Date.now(), exercises } });
+        return true;
       },
 
       discardWorkout: () => set({ active: null }),
@@ -104,6 +160,63 @@ export const useWorkouts = create<WorkoutState>()(
         const { active } = get();
         if (!active) return;
         set({ active: { ...active, exercises: active.exercises.filter((_, i) => i !== exerciseIndex) } });
+      },
+
+      moveExerciseUp: (exerciseIndex) => {
+        const { active } = get();
+        if (!active || exerciseIndex <= 0 || exerciseIndex >= active.exercises.length) return;
+        const exercises = [...active.exercises];
+        [exercises[exerciseIndex - 1], exercises[exerciseIndex]] = [exercises[exerciseIndex], exercises[exerciseIndex - 1]];
+        set({ active: { ...active, exercises } });
+      },
+
+      replaceExercise: (exerciseIndex, exerciseId) => {
+        const { active, history } = get();
+        const entry = active?.exercises[exerciseIndex];
+        if (!active || !entry || entry.sets.some((set) => set.done)) return;
+        const units = useSettings.getState().units;
+        const replaced = {
+          ...entry,
+          exerciseId,
+          sets: entry.sets.map((old) => {
+            const fresh = { ...prefilledSet(history, exerciseId, units), isWarmup: old.isWarmup };
+            const goal = entry.target ? targetReps(entry.target.reps) : null;
+            if (fresh.reps === '' && goal !== null) fresh.reps = String(goal);
+            return fresh;
+          }),
+        };
+        set({ active: { ...active, exercises: active.exercises.map((e, i) => (i === exerciseIndex ? replaced : e)) } });
+      },
+
+      setActiveNote: (note) => {
+        const { active } = get();
+        if (!active) return;
+        set({ active: { ...active, note: note.slice(0, NOTE_MAX_LENGTH) } });
+      },
+
+      setWorkoutNote: (workoutId, note) => {
+        const cleaned = cleanNote(note);
+        set({
+          history: get().history.map((workout) => {
+            if (workout.id !== workoutId) return workout;
+            const { note: _old, ...rest } = workout;
+            return cleaned ? { ...rest, note: cleaned } : rest;
+          }),
+        });
+      },
+
+      addWarmupSets: (exerciseIndex, warmups) => {
+        const { active } = get();
+        const entry = active?.exercises[exerciseIndex];
+        if (!active || !entry || warmups.length === 0) return;
+        const added: DraftSet[] = warmups.map((warmup) => ({
+          ...emptySet(),
+          weight: String(warmup.weight),
+          reps: String(warmup.reps),
+          isWarmup: true,
+        }));
+        const updated = { ...entry, sets: [...added, ...entry.sets] };
+        set({ active: { ...active, exercises: active.exercises.map((e, i) => (i === exerciseIndex ? updated : e)) } });
       },
 
       addSet: (exerciseIndex) => {
@@ -157,16 +270,36 @@ export const useWorkouts = create<WorkoutState>()(
       },
 
       deleteWorkout: (id) => set({ history: get().history.filter((w) => w.id !== id) }),
+      replaceWorkout: (workout) =>
+        set({ history: get().history.map((w) => (w.id === workout.id ? workout : w)) }),
 
       saveTemplate: (name, exerciseIds) =>
         set({ templates: [...get().templates, { id: newId(), name: name.trim(), exerciseIds }] }),
 
       deleteTemplate: (id) => set({ templates: get().templates.filter((t) => t.id !== id) }),
+      renameTemplate: (id, name) => {
+        const trimmed = name.trim().slice(0, 40);
+        if (!trimmed) return;
+        set({ templates: get().templates.map((t) => (t.id === id ? { ...t, name: trimmed } : t)) });
+      },
+
+      createTemplate: (name) => {
+        const id = newId();
+        set({ templates: [...get().templates, { id, name: name.trim().slice(0, 40) || 'Neue Vorlage', exerciseIds: [] }] });
+        return id;
+      },
+      setTemplateExercises: (id, exerciseIds) =>
+        set({ templates: get().templates.map((t) => (t.id === id ? { ...t, exerciseIds } : t)) }),
 
       reset: () => set(INITIAL),
     }),
     {
       name: 'fitnessapp-workouts',
+      // Version 1: Übungen im laufenden Workout können eine optionale Vorgabe (target) haben.
+      // Version 2: optionale Notiz (note) an laufenden und gespeicherten Workouts.
+      // Ältere Daten bleiben unverändert gültig, die Migration übernimmt sie wie sie sind.
+      version: WORKOUT_STORE_VERSION,
+      migrate: (persisted) => persisted as Pick<WorkoutState, 'active' | 'history' | 'templates'>,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: ({ active, history, templates }) => ({ active, history, templates }),
       onRehydrateStorage: () => () => useWorkouts.setState({ hydrated: true }),

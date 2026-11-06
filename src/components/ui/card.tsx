@@ -8,18 +8,30 @@ type CardProps = {
   children: ReactNode;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  /** Vorlesetext für Screenreader, wenn die Karte tippbar ist */
+  accessibilityLabel?: string;
 };
 
-export function Card({ children, onPress, style }: CardProps) {
+export function Card({ children, onPress, style, accessibilityLabel }: CardProps) {
   const theme = useTheme();
-  const base = [styles.card, { backgroundColor: theme.surface, borderColor: theme.border }, style];
+  const base = [
+    styles.card,
+    { backgroundColor: theme.surface, borderColor: theme.border },
+    // Im Hellmodus trennt ein weicher Schatten die Karte vom Hintergrund, im Dunkelmodus der Rahmen
+    theme.scheme === 'light' ? styles.lifted : null,
+    style,
+  ];
 
   if (!onPress) {
     return <View style={base}>{children}</View>;
   }
 
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [base, pressed && styles.pressed]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      onPress={onPress}
+      style={({ pressed }) => [base, pressed && styles.pressed]}>
       {children}
     </Pressable>
   );
@@ -32,5 +44,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: Spacing.two,
   },
-  pressed: { opacity: 0.7 },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.985 }] },
+  lifted: { boxShadow: '0 6px 20px rgba(11, 13, 16, 0.07)' },
 });

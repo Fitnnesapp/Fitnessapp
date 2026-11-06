@@ -3,12 +3,18 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { ConfirmHost } from '@/components/confirm-host';
 import { GamificationSync } from '@/components/gamification-sync';
 import { useTheme } from '@/hooks/use-theme';
 import '@/lib/location/background-task';
+import { useChallengeStore } from '@/lib/storage/challenge-store';
+import { useCustomExercises } from '@/lib/storage/custom-exercise-store';
 import { useEntitlementStore } from '@/lib/storage/entitlement-store';
+import { useEventsStore } from '@/lib/storage/events-store';
 import { useGamification } from '@/lib/storage/gamification-store';
+import { useHealthStore } from '@/lib/storage/health-store';
 import { useHomeSessions } from '@/lib/storage/home-store';
+import { usePlanStore } from '@/lib/storage/plan-store';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
@@ -23,7 +29,16 @@ export default function RootLayout() {
   const runsReady = useRunStore((state) => state.hydrated);
   const gamificationReady = useGamification((state) => state.hydrated);
   const entitlementReady = useEntitlementStore((state) => state.hydrated);
-  const hydrated = settingsReady && workoutsReady && homeReady && runsReady && gamificationReady && entitlementReady;
+  const planReady = usePlanStore((state) => state.hydrated);
+  const challengesReady = useChallengeStore((state) => state.hydrated);
+  const eventsReady = useEventsStore((state) => state.hydrated);
+  const healthReady = useHealthStore((state) => state.hydrated);
+  // Eigene Übungen müssen vor dem ersten Bild bekannt sein, sonst fehlen im Verlauf die Namen
+  const customExercisesReady = useCustomExercises((state) => state.hydrated);
+  const hydrated =
+    settingsReady && workoutsReady && homeReady && runsReady && gamificationReady && entitlementReady && planReady && challengesReady && eventsReady &&
+    healthReady &&
+    customExercisesReady;
 
   useEffect(() => {
     if (hydrated) SplashScreen.hideAsync();
@@ -48,7 +63,10 @@ export default function RootLayout() {
     <ThemeProvider value={navigationTheme}>
       <GamificationSync />
       <StatusBar style={theme.scheme === 'dark' ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="search" options={{ presentation: 'modal', animation: 'fade_from_bottom' }} />
+      </Stack>
+      <ConfirmHost />
     </ThemeProvider>
   );
 }

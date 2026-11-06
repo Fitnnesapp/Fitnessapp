@@ -2,20 +2,29 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ConsistencyCard } from '@/components/consistency-card';
+import { LinkTile } from '@/components/link-tile';
 import { MonthCalendar } from '@/components/month-calendar';
+import { MuscleBalanceCard } from '@/components/muscle-balance-card';
 import { PremiumPrompt } from '@/components/premium-prompt';
+import { ProgressOverview } from '@/components/progress-overview';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { SectionHeader } from '@/components/ui/section-header';
 import { Spacing } from '@/constants/theme';
 import { getProgram } from '@/data/programs';
 import { getExercise } from '@/data/exercises';
 import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
+import { BADGES } from '@/lib/logic/badges';
 import { dayKey, formatClock, formatDate, formatDuration, formatTime } from '@/lib/logic/format';
 import { paceSecPerKm } from '@/lib/logic/run-stats';
 import { formatDistance, formatPace, formatWeight, paceUnitLabel } from '@/lib/logic/units';
 import { summarizeWorkout } from '@/lib/logic/workout-stats';
+import { useGamification } from '@/lib/storage/gamification-store';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
@@ -28,6 +37,13 @@ type Entry =
   | { kind: 'strength'; startedAt: number; workout: StrengthWorkout }
   | { kind: 'home'; startedAt: number; session: HomeSession }
   | { kind: 'run'; startedAt: number; run: RunSession };
+
+const KIND_FILTERS: { value: Entry['kind'] | null; label: string }[] = [
+  { value: null, label: 'Alle' },
+  { value: 'strength', label: 'Kraft' },
+  { value: 'home', label: 'Home' },
+  { value: 'run', label: 'Läufe' },
+];
 
 /** Ohne Premium sind die letzten 30 Tage sichtbar. Ältere Workouts bleiben gespeichert. */
 const FREE_HISTORY_DAYS = 30;
@@ -58,8 +74,12 @@ export default function HistoryScreen() {
   const sessions = useHomeSessions((state) => state.sessions);
   const runs = useRunStore((state) => state.history);
   const { isPremium } = useSubscription();
+  const earnedCount = useGamification((state) => Object.keys(state.earned).length);
   const [now] = useState(() => Date.now());
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [kind, setKind] = useState<Entry['kind'] | null>(null);
+  // Eigene große Überschrift statt Kopfzeile: oben den Abstand zur Statusleiste einrechnen
+  const insets = useSafeAreaInsets();
 
   // Alle Trainingsarten gemeinsam, neueste zuerst, gruppiert nach Kalendertag
   const { sections, hidden } = useMemo(() => {
@@ -67,7 +87,9 @@ export default function HistoryScreen() {
       ...history.map((workout): Entry => ({ kind: 'strength', startedAt: workout.startedAt, workout })),
       ...sessions.map((session): Entry => ({ kind: 'home', startedAt: session.startedAt, session })),
       ...runs.map((run): Entry => ({ kind: 'run', startedAt: run.startedAt, run })),
-    ].sort((a, b) => b.startedAt - a.startedAt);
+    ]
+      .filter((entry) => !kind || entry.kind === kind)
+      .sort((a, b) => b.startedAt - a.startedAt);
 
     const limit = now - FREE_HISTORY_DAYS * 86400000;
     const shown = isPremium ? entries : entries.filter((entry) => entry.startedAt >= limit);
@@ -81,7 +103,7 @@ export default function HistoryScreen() {
       byDay.set(key, section);
     }
     return { sections: [...byDay.values()], hidden: hiddenCount };
-  }, [history, sessions, runs, isPremium, now]);
+  }, [history, sessions, runs, isPremium, now, kind]);
 
   const counts = useMemo(() => new Map(sections.map((s) => [s.key, s.data.length])), [sections]);
   const visible = selectedDay ? sections.filter((s) => s.key === selectedDay) : sections;
@@ -89,7 +111,7 @@ export default function HistoryScreen() {
   return (
     <SectionList
       style={{ backgroundColor: theme.background }}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + Spacing.three }]}
       sections={visible}
       ListFooterComponent={
         hidden > 0 ? (
@@ -101,18 +123,58 @@ export default function HistoryScreen() {
           </View>
         ) : undefined
       }
-      ListHeaderComponent={<MonthCalendar counts={counts} selected={selectedDay} onSelect={setSelectedDay} />}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <ProgressOverview />
+          <ConsistencyCard />
+          <SectionHeader title="Erfolge" />
+          <View style={styles.tiles}>
+            <LinkTile
+              icon="ribbon-outline"
+              title="Abzeichen"
+              text={`${earnedCount} von ${BADGES.length} erreicht`}
+              onPress={() => router.push('/history/badges')}
+            />
+            <LinkTile icon="calendar-number-outline" title="Rückblick" text="Dein Jahr in Zahlen" onPress={() => router.push('/history/year')} />
+          </View>
+          <View style={styles.tiles}>
+            <LinkTile
+              icon="trophy-outline"
+              title="Rekordbuch"
+              text="Kraft- und Laufbestwerte"
+              onPress={() => router.push('/history/records')}
+            />
+          </View>
+          <MuscleBalanceCard />
+          <SectionHeader title="Aktivitäten" />
+          <View style={styles.chips}>
+            {KIND_FILTERS.map((filter) => (
+              <Chip
+                key={filter.label}
+                label={filter.label}
+                selected={kind === filter.value}
+                onPress={() => setKind(filter.value)}
+              />
+            ))}
+          </View>
+          <MonthCalendar counts={counts} selected={selectedDay} onSelect={setSelectedDay} />
+        </View>
+      }
       keyExtractor={(entry) => (entry.kind === 'strength' ? entry.workout.id : entry.kind === 'home' ? entry.session.id : entry.run.id)}
       stickySectionHeadersEnabled={false}
       ListEmptyComponent={
         <Card>
-          <AppText variant="heading">{selectedDay ? 'Kein Workout an diesem Tag' : 'Noch keine Workouts'}</AppText>
-          <AppText color="textSecondary">Sobald du ein Workout beendest, erscheint es hier.</AppText>
+          <AppText variant="heading">
+            {selectedDay ? 'Kein Eintrag an diesem Tag' : kind ? 'Noch nichts in dieser Kategorie' : 'Noch keine Workouts'}
+          </AppText>
+          <AppText color="textSecondary">
+            {kind ? 'Wähle „Alle“, um jede Trainingsart zu sehen.' : 'Sobald du ein Workout beendest, erscheint es hier.'}
+          </AppText>
         </Card>
       }
       renderSectionHeader={({ section }) => (
-        <AppText variant="label" color="textSecondary" style={styles.sectionHeader}>
-          {section.title.toUpperCase()}
+        <AppText variant="eyebrow" color="textSecondary" style={styles.sectionHeader}>
+          {section.title}
         </AppText>
       )}
       renderItem={({ item }) => {
@@ -122,7 +184,7 @@ export default function HistoryScreen() {
           return (
             <Card onPress={() => router.push({ pathname: '/history/[id]', params: { id: run.id } })}>
               <View style={styles.row}>
-                <TypeTitle kind="run" label="Lauf" />
+                <TypeTitle kind="run" label={run.manual ? 'Lauf · nachgetragen' : 'Lauf'} />
                 <AppText color="textSecondary">{formatTime(run.startedAt)}</AppText>
               </View>
               <AppText variant="caption">
@@ -171,6 +233,11 @@ export default function HistoryScreen() {
               {formatDuration(summary.durationMs)} · {formatWeight(summary.volumeKg, units)} · {summary.workingSets}{' '}
               {summary.workingSets === 1 ? 'Satz' : 'Sätze'}
             </AppText>
+            {workout.note ? (
+              <AppText variant="caption" color="textSecondary" numberOfLines={1} style={styles.note}>
+                „{workout.note}“
+              </AppText>
+            ) : null}
           </Card>
         );
       }}
@@ -180,10 +247,14 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: Spacing.three, paddingBottom: Spacing.six },
+  note: { fontStyle: 'italic' },
+  content: { padding: Spacing.four, paddingBottom: Spacing.six },
   sectionHeader: { marginTop: Spacing.three, marginBottom: Spacing.two },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   separator: { height: Spacing.two },
   footer: { marginTop: Spacing.four },
+  header: { gap: Spacing.three },
+  tiles: { flexDirection: 'row', gap: Spacing.two },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
 });

@@ -1,0 +1,127 @@
+{
+  "updatedAt": "2026-10-24",
+  "events": [
+    {
+      "id": "frankfurt-marathon-2026",
+      "name": "Mainova Frankfurt Marathon",
+      "kind": "lauf",
+      "date": "2026-10-25",
+      "city": "Frankfurt am Main",
+      "country": "DE",
+      "distances": ["Marathon", "Staffel"],
+      "url": "https://www.frankfurt-marathon.com",
+      "description": "Deutschlands ältester Stadtmarathon mit Zieleinlauf in der Festhalle."
+    },
+    {
+      "id": "nyc-marathon-2026",
+      "name": "New York City Marathon",
+      "kind": "lauf",
+      "date": "2026-11-01",
+      "city": "New York",
+      "country": "US",
+      "distances": ["Marathon"],
+      "url": "https://www.nyrr.org/tcsnycmarathon",
+      "description": "Der größte Marathon der Welt, durch alle fünf Stadtbezirke."
+    },
+    {
+      "id": "valencia-marathon-2026",
+      "name": "Maratón Valencia",
+      "kind": "lauf",
+      "date": "2026-12-06",
+      "city": "Valencia",
+      "country": "ES",
+      "distances": ["Marathon", "10 km"],
+      "url": "https://www.valenciaciudaddelrunning.com",
+      "description": "Flach, schnell und beliebt für persönliche Bestzeiten."
+    },
+    {
+      "id": "hyrox-frankfurt-2026",
+      "name": "HYROX Frankfurt",
+      "kind": "fitness",
+      "date": "2026-12-10",
+      "city": "Frankfurt am Main",
+      "country": "DE",
+      "distances": ["8 × 1 km Lauf", "8 Workout-Stationen"],
+      "url": "https://hyrox.com",
+      "description": "Fitness-Wettkampf aus Laufen und Funktionsstationen. Genaue Tage beim Veranstalter prüfen."
+    },
+    {
+      "id": "silvesterlauf-trier-2026",
+      "name": "Internationaler Silvesterlauf Trier",
+      "kind": "lauf",
+      "date": "2026-12-31",
+      "city": "Trier",
+      "country": "DE",
+      "distances": ["Volkslauf", "Elite-Rennen"],
+      "url": "https://www.silvesterlauf-trier.de",
+      "description": "Das Jahr laufend beenden, mitten durch die Trierer Altstadt."
+    },
+    {
+      "id": "hyrox-wien-2027",
+      "name": "HYROX Wien",
+      "kind": "fitness",
+      "date": "2027-02-19",
+      "city": "Wien",
+      "country": "AT",
+      "distances": ["8 × 1 km Lauf", "8 Workout-Stationen"],
+      "url": "https://hyrox.com",
+      "description": "Fitness-Wettkampf in der Messe Wien. Genaue Tage beim Veranstalter prüfen."
+    },
+    {
+      "id": "tokyo-marathon-2027",
+      "name": "Tokyo Marathon",
+      "kind": "lauf",
+      "date": "2027-03-07",
+      "city": "Tokio",
+      "country": "JP",
+      "distances": ["Marathon"],
+      "url": "https://www.marathon.tokyo/en/",
+      "description": "Einer der sieben World Marathon Majors."
+    },
+    {
+      "id": "berlin-halbmarathon-2027",
+      "name": "Berliner Halbmarathon",
+      "kind": "lauf",
+      "date": "2027-04-04",
+      "city": "Berlin",
+      "country": "DE",
+      "distances": ["Halbmarathon"],
+      "url": "https://www.berliner-halbmarathon.de",
+      "description": "Schnelle Strecke durch die Mitte Berlins, ideal als Frühjahrsziel."
+    },
+    {
+      "id": "hyrox-koeln-2027",
+      "name": "HYROX Köln (FIBO)",
+      "kind": "fitness",
+      "date": "2027-04-08",
+      "city": "Köln",
+      "country": "DE",
+      "distances": ["8 × 1 km Lauf", "8 Workout-Stationen"],
+      "url": "https://hyrox.com",
+      "description": "Während der Fitnessmesse FIBO. Genaue Tage beim Veranstalter prüfen."
+    },
+    {
+      "id": "london-marathon-2027",
+      "name": "London Marathon",
+      "kind": "lauf",
+      "date": "2027-04-24",
+      "endDate": "2027-04-25",
+      "city": "London",
+      "country": "GB",
+      "distances": ["Marathon"],
+      "url": "https://www.tcslondonmarathon.com",
+      "description": "2027 erstmals an zwei Tagen mit deutlich mehr Startplätzen."
+    },
+    {
+      "id": "hamburg-marathon-2027",
+      "name": "Haspa Marathon Hamburg",
+      "kind": "lauf",
+      "date": "2027-04-25",
+      "city": "Hamburg",
+      "country": "DE",
+      "distances": ["Marathon", "Halbmarathon", "Staffel"],
+      "url": "https://www.haspa-marathon-hamburg.de",
+      "description": "Deutschlands größter Frühjahrsmarathon."
+    }
+  ]
+}

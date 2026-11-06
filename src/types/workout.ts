@@ -21,6 +21,8 @@ export type Exercise = {
   equipment: Equipment;
   difficulty: Difficulty;
   instructions: string;
+  /** Vom Nutzer angelegt (eigene Übung), sonst Teil der mitgelieferten Bibliothek */
+  custom?: true;
 };
 
 /** Satz während des Trainings: Eingaben bleiben Text, damit Zwischenstände wie "7," tippbar sind. */
@@ -36,12 +38,16 @@ export type DraftSet = {
 export type DraftExercise = {
   exerciseId: string;
   sets: DraftSet[];
+  /** Vorgabe aus einem fertigen Workout (seit Speicherversion 1, optional) */
+  target?: { reps: string; restSeconds: number };
 };
 
 export type ActiveWorkout = {
   id: string;
   startedAt: number;
   exercises: DraftExercise[];
+  /** Freitext zum Training (seit Speicherversion 2, optional) */
+  note?: string;
 };
 
 /** Abgeschlossener Satz, Gewicht immer in kg gespeichert. */
@@ -64,12 +70,37 @@ export type StrengthWorkout = {
   startedAt: number;
   endedAt: number;
   exercises: LoggedExercise[];
+  /** Freitext zum Training, z.B. "Schulter zwickt" (seit Speicherversion 2, optional) */
+  note?: string;
 };
 
 export type WorkoutTemplate = {
   id: string;
   name: string;
   exerciseIds: string[];
+};
+
+/** Ort, für den ein fertiges Kraft-Workout gedacht ist. */
+export type RoutineSetting = 'Studio' | 'Zuhause';
+
+/** Eine Übung in einem fertigen Workout mit Zielvorgabe. */
+export type RoutineItem = {
+  exerciseId: string;
+  sets: number;
+  /** Zielbereich, z.B. "8–10" oder "30 s" */
+  reps: string;
+  restSeconds: number;
+};
+
+/** Fertiges, kuratiertes Kraft-Workout zum Sofortstart. */
+export type Routine = {
+  id: string;
+  name: string;
+  description: string;
+  focus: 'Ganzkörper' | 'Oberkörper' | 'Push' | 'Pull' | 'Beine' | 'Rumpf';
+  setting: RoutineSetting;
+  difficulty: Difficulty;
+  items: RoutineItem[];
 };
 
 export type RecordType = 'max_weight' | 'max_reps';
