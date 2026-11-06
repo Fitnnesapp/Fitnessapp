@@ -4,6 +4,7 @@ import { useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppleHealthCard } from '@/components/apple-health-card';
+import { AppVersionCard } from '@/components/app-version-card';
 import { BackupCard } from '@/components/backup-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -338,6 +339,8 @@ export default function ProfileScreen() {
       </Card>
 
       {/* 5. Gesundheit und Datenschutz */}
+      <AppVersionCard />
+
       <SectionHeader title="Gesundheit & Daten" />
       <AppleHealthCard />
       <Card style={styles.settings}>

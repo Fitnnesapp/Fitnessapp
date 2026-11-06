@@ -8,6 +8,7 @@ import { ChallengeCard } from '@/components/challenge-card';
 import { EventGoalCard } from '@/components/event-goal-card';
 import { HealthBenefitCard } from '@/components/health-benefit-card';
 import { QuickGrid } from '@/components/quick-grid';
+import { UpdateBanner } from '@/components/update-banner';
 import { GoalCard } from '@/components/goal-card';
 import { RecoveryCard } from '@/components/recovery-card';
 import { WhatsNewCard } from '@/components/whats-new-card';
@@ -281,6 +282,8 @@ export default function DashboardScreen() {
           )}
         </ImageCard>
       </FadeIn>
+
+      <UpdateBanner />
 
       {/* Schnellzugriff: alle Bereiche an fester Stelle, statt sie über die Seite zu verteilen */}
       <QuickGrid />
