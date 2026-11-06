@@ -1,6 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,8 @@ import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
 import { useNow } from '@/hooks/use-now';
+import { useTheme } from '@/hooks/use-theme';
+import { useVoiceSplits } from '@/hooks/use-voice-splits';
 import { confirmAction } from '@/lib/confirm';
 import { formatClock } from '@/lib/logic/format';
 import { activeElapsedAt, currentPace, isStandingStill, paceSecPerKm, speedKmh } from '@/lib/logic/run-stats';
@@ -27,6 +30,7 @@ function signalOf(accuracy: number | null | undefined, ageMs: number | null): Si
 
 export default function RunScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const units = useSettings((state) => state.units);
   const active = useRunStore((state) => state.active);
   const { pauseRun, resumeRun, finishRun, discardRun } = useRunStore.getState();
@@ -45,6 +49,15 @@ export default function RunScreen() {
       .then(setMode)
       .catch(() => setTrackingError(true));
   }, [hasRun]);
+
+  const voiceOn = useSettings((state) => state.voiceSplits);
+  const setVoiceSplits = useSettings((state) => state.setVoiceSplits);
+  useVoiceSplits({
+    active: running,
+    distanceM: active?.distanceM ?? 0,
+    elapsedMs: active ? activeElapsedAt(active, now) : 0,
+    sport: active?.sport === 'ride' ? 'ride' : 'run',
+  });
 
   // Beim Beenden wird active zuerst geleert; die Weiterleitung zur Zusammenfassung folgt danach.
   // Ohne diese Ausnahme würde die Umleitung hier der Zusammenfassung zuvorkommen.
@@ -188,6 +201,19 @@ export default function RunScreen() {
         </AppText>
       ) : null}
 
+      <Pressable
+        accessibilityRole="switch"
+        accessibilityState={{ checked: voiceOn }}
+        accessibilityLabel="Sprachansagen pro Kilometer"
+        onPress={() => setVoiceSplits(!voiceOn)}
+        hitSlop={8}
+        style={styles.voice}>
+        <Ionicons name={voiceOn ? 'volume-high' : 'volume-mute'} size={18} color={theme.textSecondary} />
+        <AppText variant="label" color="textSecondary">
+          {voiceOn ? `Ansagen an · ${ride ? 'alle 5 km' : 'jeder km'}` : 'Ansagen aus'}
+        </AppText>
+      </Pressable>
+
       <Button title={running ? 'Pause' : 'Weiter'} onPress={running ? pauseRun : resumeRun} disabled={saving} />
       <Button
         title={ride ? 'Radfahrt beenden' : 'Lauf beenden'}
@@ -201,6 +227,7 @@ export default function RunScreen() {
 }
 
 const styles = StyleSheet.create({
+  voice: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.one },
   content: { gap: Spacing.four },
   center: { alignItems: 'center', gap: Spacing.one, paddingVertical: Spacing.four },
   distance: { fontSize: 88, lineHeight: 96, fontWeight: '800', letterSpacing: -2 },
