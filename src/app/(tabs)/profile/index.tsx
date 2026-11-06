@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppleHealthCard } from '@/components/apple-health-card';
 import { AppVersionCard } from '@/components/app-version-card';
+import { PrivacyCard } from '@/components/privacy-card';
 import { WhyEditor } from '@/components/why-editor';
 import { BackupCard } from '@/components/backup-card';
 import { AppText } from '@/components/ui/app-text';
@@ -353,6 +354,7 @@ export default function ProfileScreen() {
       <AppVersionCard />
 
       <SectionHeader title="Gesundheit & Daten" />
+      <PrivacyCard />
       <AppleHealthCard />
       <Card style={styles.settings}>
         <AppText variant="eyebrow" color="textSecondary">
