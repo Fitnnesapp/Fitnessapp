@@ -119,3 +119,16 @@ export function planWeeklyBenefit(sessions: readonly PlanSessionLike[]): WeeklyB
   }));
   return weeklyBenefit(entries, monday);
 }
+
+export type BenefitWeek = WeeklyBenefit & { weekStart: number };
+
+/** Die letzten Wochen (älteste zuerst), die aktuelle Woche zuletzt, für den Verlauf. */
+export function benefitHistory(entries: readonly BenefitEntry[], currentWeekStart: number, weeks = 12): BenefitWeek[] {
+  const result: BenefitWeek[] = [];
+  for (let i = weeks - 1; i >= 0; i--) {
+    const d = new Date(currentWeekStart);
+    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7 * i).getTime();
+    result.push({ ...weeklyBenefit(entries, start), weekStart: start });
+  }
+  return result;
+}

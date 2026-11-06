@@ -9,6 +9,7 @@ import { LinkTile } from '@/components/link-tile';
 import { MonthCalendar } from '@/components/month-calendar';
 import { MuscleBalanceCard } from '@/components/muscle-balance-card';
 import { PremiumPrompt } from '@/components/premium-prompt';
+import { HealthWeeksCard } from '@/components/health-weeks-card';
 import { ProgressOverview } from '@/components/progress-overview';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
@@ -126,6 +127,7 @@ export default function HistoryScreen() {
       ListHeaderComponent={
         <View style={styles.header}>
           <ProgressOverview />
+          <HealthWeeksCard />
           <ConsistencyCard />
           <SectionHeader title="Erfolge" />
           <View style={styles.tiles}>
