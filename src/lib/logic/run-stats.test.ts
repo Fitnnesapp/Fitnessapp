@@ -14,6 +14,7 @@ import {
   isRide,
   MAX_RIDE_SPEED_MS,
   onlyRuns,
+  rideBests,
   speedKmh,
   haversineM,
   kmSplits,
@@ -201,4 +202,17 @@ test('Radfahren: höhere Geschwindigkeit erlaubt, Läufe und Radfahrten trennbar
   );
   assert.ok(isRide(sessions[1]));
   assert.equal(Math.round(speedKmh(30000, 3600)), 30);
+});
+
+test('Rad-Bestwerte: längste Fahrt, schnellster Schnitt erst ab 10 km', () => {
+  const rides = [
+    { sport: 'ride' as const, distanceM: 8000, durationSeconds: 600 },
+    { sport: 'ride' as const, distanceM: 40000, durationSeconds: 5400 },
+    { distanceM: 21000, durationSeconds: 6000 },
+  ];
+  const bests = rideBests(rides);
+  assert.equal(bests.count, 2);
+  assert.equal(bests.longestM, 40000);
+  assert.equal(Math.round(bests.fastestKmh ?? 0), 27);
+  assert.equal(rideBests([]).fastestKmh, null);
 });

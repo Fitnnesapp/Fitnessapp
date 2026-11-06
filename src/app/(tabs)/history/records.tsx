@@ -10,8 +10,8 @@ import { Spacing } from '@/constants/theme';
 import { getExercise, MUSCLE_GROUPS } from '@/data/exercises';
 import { recordBook } from '@/lib/logic/record-book';
 import { formatRaceTime, runBestsSummary } from '@/lib/logic/run-insights';
-import { onlyRuns } from '@/lib/logic/run-stats';
-import { formatDistance, formatWeight, kgToDisplay } from '@/lib/logic/units';
+import { onlyRuns, rideBests } from '@/lib/logic/run-stats';
+import { formatDistance, formatSpeed, formatWeight, kgToDisplay, speedUnitLabel } from '@/lib/logic/units';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
@@ -28,6 +28,7 @@ export default function RecordsScreen() {
 
   const runs = useRunStore((state) => state.history);
   const runBests = useMemo(() => runBestsSummary(onlyRuns(runs)), [runs]);
+  const bike = useMemo(() => rideBests(runs), [runs]);
   const book = useMemo(() => recordBook(history), [history]);
   const trainedMuscles = MUSCLE_GROUPS.filter((group) => book.some((r) => getExercise(r.exerciseId)?.muscleGroup === group));
   const rows = book.filter((record) => !muscle || getExercise(record.exerciseId)?.muscleGroup === muscle);
@@ -45,7 +46,7 @@ export default function RecordsScreen() {
       {runBests.count > 0 ? (
         <Card
           onPress={() => router.push('/training/running')}
-          accessibilityLabel="Laufbestzeiten, öffnet die Running-Seite">
+          accessibilityLabel="Laufbestzeiten, öffnet die Seite Laufen und Rad">
           <AppText variant="label" color="textSecondary">
             LAUFEN
           </AppText>
@@ -55,6 +56,34 @@ export default function RecordsScreen() {
               { label: '5 km', value: runBests.k5 !== null ? formatRaceTime(runBests.k5) : '–' },
               { label: '10 km', value: runBests.k10 !== null ? formatRaceTime(runBests.k10) : '–' },
               { label: 'Längster', value: formatDistance(runBests.longestM, units) },
+            ].map((tile) => (
+              <View key={tile.label} style={styles.runTile}>
+                <AppText variant="eyebrow" color="textSecondary">
+                  {tile.label}
+                </AppText>
+                <AppText variant="heading" numberOfLines={1}>
+                  {tile.value}
+                </AppText>
+              </View>
+            ))}
+          </View>
+        </Card>
+      ) : null}
+
+      {bike.count > 0 ? (
+        <Card
+          onPress={() => router.push('/training/running')}
+          accessibilityLabel="Rad-Bestwerte, öffnet die Seite Laufen und Rad">
+          <AppText variant="label" color="textSecondary">
+            RADFAHREN
+          </AppText>
+          <View style={styles.runGrid}>
+            {[
+              { label: 'Längste Fahrt', value: formatDistance(bike.longestM, units) },
+              {
+                label: 'Schnellster Schnitt',
+                value: bike.fastestKmh !== null ? `${formatSpeed(bike.fastestKmh, units)} ${speedUnitLabel(units)}` : '–',
+              },
             ].map((tile) => (
               <View key={tile.label} style={styles.runTile}>
                 <AppText variant="eyebrow" color="textSecondary">

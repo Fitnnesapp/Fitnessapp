@@ -254,3 +254,14 @@ export function onlyRuns<T extends { sport?: 'run' | 'ride' }>(sessions: readonl
 export function speedKmh(distanceM: number, durationSeconds: number): number {
   return durationSeconds > 0 ? distanceM / 1000 / (durationSeconds / 3600) : 0;
 }
+
+/** Rad-Bestwerte: längste Fahrt und schnellster Schnitt ab 10 km (kurze Fahrten verzerren den Schnitt). */
+export function rideBests(sessions: readonly { sport?: 'run' | 'ride'; distanceM: number; durationSeconds: number }[]) {
+  const rides = sessions.filter((s) => isRide(s));
+  const longestM = Math.max(0, ...rides.map((r) => r.distanceM));
+  const fastestKmh = Math.max(
+    0,
+    ...rides.filter((r) => r.distanceM >= 10_000).map((r) => speedKmh(r.distanceM, r.durationSeconds)),
+  );
+  return { count: rides.length, longestM, fastestKmh: fastestKmh > 0 ? fastestKmh : null };
+}

@@ -89,7 +89,7 @@ export default function RunningScreen() {
   return (
     <Screen>
       <AppText variant="display" style={styles.headline}>
-        Running
+        Laufen & Rad
       </AppText>
 
       {active ? (

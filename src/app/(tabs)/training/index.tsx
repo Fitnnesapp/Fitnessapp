@@ -46,7 +46,7 @@ type Kind = {
 
 const KINDS: Kind[] = [
   { href: '/training/strength', title: 'Kraft', description: 'Sätze, Gewichte, Rekorde', image: SCENES['hero-kraft'] },
-  { href: '/training/running', title: 'Laufen', description: 'GPS, Pace, Strecke', image: SCENES['hero-lauf'] },
+  { href: '/training/running', title: 'Laufen', description: 'Laufen und Rad mit GPS', image: SCENES['hero-lauf'] },
   { href: '/training/home', title: 'Home', description: 'Geführt, ohne Geräte', image: SCENES['hero-home'] },
 ];
 
