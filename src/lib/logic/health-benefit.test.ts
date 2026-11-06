@@ -8,6 +8,7 @@ import {
   planWeeklyBenefit,
   weeklyBenefit,
   weeksMet,
+  weeksMetInYear,
 } from './health-benefit.ts';
 
 const monday = new Date(2026, 10, 2).getTime();
@@ -74,4 +75,18 @@ test('Verlauf: 12 Wochen, älteste zuerst, aktuelle zuletzt', () => {
   assert.equal(history[11].aerobicMinutes, 120);
   assert.equal(new Date(history[10].weekStart).getDate(), 26);
   assert.equal(history[0].aerobicMinutes, 0);
+});
+
+test('Jahr: erfüllte Wochen, nur bis heute', () => {
+  const week = (start: Date) => [
+    { startedAt: start.getTime() + 18 * 3600_000, durationSeconds: 80 * 60, intensity: 'intensiv' as const, strengthening: true },
+    { startedAt: start.getTime() + 42 * 3600_000, durationSeconds: 45 * 60, intensity: 'keine' as const, strengthening: true },
+  ];
+  // 2026 beginnt an einem Donnerstag, erster Montag ist der 5. Januar
+  const entries = [...week(new Date(2026, 0, 5)), ...week(new Date(2026, 0, 12)), ...week(new Date(2025, 11, 29))];
+  const result = weeksMetInYear(entries, 2026, new Date(2026, 0, 20).getTime());
+  assert.deepEqual(result, { met: 2, weeks: 3 });
+  // Wochen vor dem ersten Training zählen nicht
+  const late = weeksMetInYear(week(new Date(2026, 0, 12)), 2026, new Date(2026, 0, 20).getTime());
+  assert.deepEqual(late, { met: 1, weeks: 2 });
 });

@@ -132,3 +132,27 @@ export function benefitHistory(entries: readonly BenefitEntry[], currentWeekStar
   }
   return result;
 }
+
+/** Wochen eines Jahres (Wochen, die in diesem Jahr beginnen), in denen beide Empfehlungen erfüllt waren. */
+export function weeksMetInYear(entries: readonly BenefitEntry[], year: number, now: number): { met: number; weeks: number } {
+  // Erst ab der Woche des ersten Trainings zählen: Wochen davor wären unfair "verpasst"
+  const first = entries.reduce((min, e) => Math.min(min, e.startedAt), Infinity);
+  // Erster Montag des Jahres
+  const jan1 = new Date(year, 0, 1);
+  let start = new Date(year, 0, 1 + ((8 - jan1.getDay()) % 7)).getTime();
+  let met = 0;
+  let weeks = 0;
+  while (new Date(start).getFullYear() === year && start <= now) {
+    const weekEnd = new Date(new Date(start).getFullYear(), new Date(start).getMonth(), new Date(start).getDate() + 7).getTime();
+    if (weekEnd <= first) {
+      start = weekEnd;
+      continue;
+    }
+    weeks += 1;
+    const week = weeklyBenefit(entries, start);
+    if (week.aerobicMet && week.strengthMet) met += 1;
+    const d = new Date(start);
+    start = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7).getTime();
+  }
+  return { met, weeks };
+}
