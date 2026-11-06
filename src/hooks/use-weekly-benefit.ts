@@ -8,16 +8,13 @@ import { useRunStore } from '@/lib/storage/run-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
 /** Gesundheits-Nutzen der laufenden Woche aus allen drei Trainingsarten. */
-export function useWeeklyBenefit(now: number, weeksBack = 0): WeeklyBenefit {
+/** Alle Einheiten als Einträge für die WHO-Rechnung. */
+export function useBenefitEntries(): BenefitEntry[] {
   const strength = useWorkouts((state) => state.history);
   const home = useHomeSessions((state) => state.sessions);
   const runs = useRunStore((state) => state.history);
-  // weekStart der Vorwoche: einen Tag vor Montag nehmen, das ist zeitumstellungssicher
-  const thisWeek = weekStart(now);
-  const start = weeksBack === 0 ? thisWeek : weekStart(thisWeek - (weeksBack - 1) * 7 * 86_400_000 - 86_400_000);
-
-  return useMemo(() => {
-    const entries: BenefitEntry[] = [
+  return useMemo(
+    () => [
       ...strength.map((w) => ({
         startedAt: w.startedAt,
         durationSeconds: Math.max(0, Math.round((w.endedAt - w.startedAt) / 1000)),
@@ -29,7 +26,8 @@ export function useWeeklyBenefit(now: number, weeksBack = 0): WeeklyBenefit {
         return {
           startedAt: s.startedAt,
           durationSeconds: s.activeSeconds,
-          intensity: category === 'HIIT' ? ('intensiv' as const) : category === 'Ganzkörper' ? ('moderat' as const) : ('keine' as const),
+          intensity:
+            category === 'HIIT' ? ('intensiv' as const) : category === 'Ganzkörper' ? ('moderat' as const) : ('keine' as const),
           strengthening: category === 'Ganzkörper' || category === 'Core',
         };
       }),
@@ -39,7 +37,16 @@ export function useWeeklyBenefit(now: number, weeksBack = 0): WeeklyBenefit {
         intensity: enduranceIntensity(r.sport ?? 'run', r.distanceM, r.durationSeconds),
         strengthening: false,
       })),
-    ];
-    return weeklyBenefit(entries, start);
-  }, [strength, home, runs, start]);
+    ],
+    [strength, home, runs],
+  );
+}
+
+export function useWeeklyBenefit(now: number, weeksBack = 0): WeeklyBenefit {
+  const entries = useBenefitEntries();
+  // weekStart der Vorwoche: einen Tag vor Montag nehmen, das ist zeitumstellungssicher
+  const thisWeek = weekStart(now);
+  const start = weeksBack === 0 ? thisWeek : weekStart(thisWeek - (weeksBack - 1) * 7 * 86_400_000 - 86_400_000);
+
+  return useMemo(() => weeklyBenefit(entries, start), [entries, start]);
 }

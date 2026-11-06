@@ -80,3 +80,17 @@ export function benefitMessage(benefit: WeeklyBenefit): string {
   if (missingDays > 0) parts.push(missingDays === 1 ? 'noch ein Krafttag' : `noch ${missingDays} Krafttage`);
   return `Bis zur WHO-Empfehlung fehlen ${parts.join(' und ')}.`;
 }
+
+/** In wie vielen der letzten vollen Wochen beide Empfehlungen erfüllt waren (aktuelle Woche zählt nicht). */
+export function weeksMet(entries: readonly BenefitEntry[], currentWeekStart: number, weeks = 12): number {
+  let count = 0;
+  let start = currentWeekStart;
+  for (let i = 0; i < weeks; i++) {
+    // Vorwoche: Montag vor dem aktuellen Wochenbeginn, zeitumstellungssicher über das Kalenderdatum
+    const d = new Date(start);
+    start = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7).getTime();
+    const week = weeklyBenefit(entries, start);
+    if (week.aerobicMet && week.strengthMet) count += 1;
+  }
+  return count;
+}

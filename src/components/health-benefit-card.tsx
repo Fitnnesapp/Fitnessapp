@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
@@ -7,8 +7,9 @@ import { Card } from '@/components/ui/card';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useWeeklyBenefit } from '@/hooks/use-weekly-benefit';
-import { benefitMessage, WHO_AEROBIC_MINUTES, WHO_STRENGTH_DAYS } from '@/lib/logic/health-benefit';
+import { useBenefitEntries, useWeeklyBenefit } from '@/hooks/use-weekly-benefit';
+import { weekStart } from '@/lib/logic/activity';
+import { benefitMessage, WHO_AEROBIC_MINUTES, WHO_STRENGTH_DAYS, weeksMet } from '@/lib/logic/health-benefit';
 
 /**
  * Übersetzt Training in persönlichen Nutzen: Fortschritt zur WHO-Empfehlung dieser Woche.
@@ -19,6 +20,8 @@ export function HealthBenefitCard({ now }: { now: number }) {
   const theme = useTheme();
   const benefit = useWeeklyBenefit(now);
   const lastWeek = useWeeklyBenefit(now, 1);
+  const entries = useBenefitEntries();
+  const metWeeks = useMemo(() => weeksMet(entries, weekStart(now)), [entries, now]);
   // Zu Wochenbeginn (Mo, Di) die Bilanz der Vorwoche zeigen, damit das Erreichte nicht einfach verschwindet
   const weekday = new Date(now).getDay();
   const showLastWeek = (weekday === 1 || weekday === 2) && (lastWeek.aerobicMinutes > 0 || lastWeek.strengthDays > 0);
@@ -82,6 +85,7 @@ export function HealthBenefitCard({ now }: { now: number }) {
           rund 480.000 Erwachsenen (Zhao et al., BMJ 2020) hatten Menschen, die beides erfüllten, ein um etwa 40 %
           geringeres Sterberisiko als Inaktive. Das ist ein Zusammenhang aus Beobachtungsdaten, kein Versprechen, aber
           der beste Richtwert, den es gibt.
+          {metWeeks > 0 ? `\n\nDu hast die Empfehlung in ${metWeeks} der letzten 12 Wochen erfüllt.` : ''}
         </AppText>
       ) : null}
     </Card>

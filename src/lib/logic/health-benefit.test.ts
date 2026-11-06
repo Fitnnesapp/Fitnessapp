@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { benefitMessage, enduranceIntensity, weeklyBenefit } from './health-benefit.ts';
+import { benefitMessage, enduranceIntensity, weeklyBenefit, weeksMet } from './health-benefit.ts';
 
 const monday = new Date(2026, 10, 2).getTime();
 const day = (n: number, h = 18) => new Date(2026, 10, 2 + n, h).getTime();
@@ -34,4 +34,15 @@ test('Nachricht: positiv, mit konkretem Vorschlag', () => {
     /noch 55 Ausdauerminuten \(z\.B\. 30 Min\. lockeres Laufen\) und noch ein Krafttag/,
   );
   assert.match(benefitMessage({ aerobicMinutes: 200, strengthDays: 2, aerobicMet: true, strengthMet: true }), /beide/);
+});
+
+test('Erfüllte Wochen der letzten 12, aktuelle Woche zählt nicht', () => {
+  const week = (n: number, d: number) => new Date(2026, 10, 2 - 7 * n + d, 18).getTime();
+  const full = (n: number) => [
+    { startedAt: week(n, 0), durationSeconds: 80 * 60, intensity: 'intensiv' as const, strengthening: false },
+    { startedAt: week(n, 1), durationSeconds: 45 * 60, intensity: 'keine' as const, strengthening: true },
+    { startedAt: week(n, 3), durationSeconds: 45 * 60, intensity: 'keine' as const, strengthening: true },
+  ];
+  const entries = [...full(0), ...full(1), ...full(3), ...full(13)];
+  assert.equal(weeksMet(entries, monday), 2);
 });
