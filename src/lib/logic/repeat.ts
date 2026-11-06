@@ -13,7 +13,7 @@ export const REPEAT_LIMIT = 3;
 export type RepeatOption =
   | { kind: 'strength'; workoutId: string; at: number; exerciseIds: string[]; sets: number }
   | { kind: 'home'; programId: string; at: number }
-  | { kind: 'run'; at: number; distanceM: number };
+  | { kind: 'run'; at: number; distanceM: number; ride?: boolean };
 
 export function repeatOptions(
   strength: StrengthWorkout[],
@@ -34,7 +34,9 @@ export function repeatOptions(
         }),
       ),
     ...home.map((s): RepeatOption => ({ kind: 'home', programId: s.programId, at: s.startedAt })),
-    ...runs.map((r): RepeatOption => ({ kind: 'run', at: r.startedAt, distanceM: r.distanceM })),
+    ...runs.map(
+      (r): RepeatOption => ({ kind: 'run', at: r.startedAt, distanceM: r.distanceM, ...(r.sport === 'ride' ? { ride: true } : {}) }),
+    ),
   ].sort((a, b) => b.at - a.at);
 
   const seen = new Set<string>();
@@ -45,7 +47,9 @@ export function repeatOptions(
         ? `s:${option.exerciseIds.join(',')}`
         : option.kind === 'home'
           ? `h:${option.programId}`
-          : 'r';
+          : option.ride
+            ? 'b'
+            : 'r';
     if (seen.has(key)) continue;
     seen.add(key);
     result.push(option);
