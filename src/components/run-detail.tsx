@@ -146,7 +146,7 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
                 key={split.km}
                 style={styles.splitRow}
                 accessible
-                accessibilityLabel={`Kilometer ${split.km}: ${formatPace(split.seconds, 'metric')} ${paceUnitLabel('metric')}${isFastest ? ', schnellster' : ''}`}>
+                accessibilityLabel={`Kilometer ${split.km}: ${ride ? `${formatSpeed(3600 / split.seconds, 'metric')} km/h` : `${formatPace(split.seconds, 'metric')} ${paceUnitLabel('metric')}`}${isFastest ? ', schnellster' : ''}`}>
                 <AppText color="textSecondary" style={styles.splitKm}>
                   {split.km}
                 </AppText>
@@ -159,13 +159,15 @@ export function RunDetail({ runId, justFinished = false }: RunDetailProps) {
                   />
                 </View>
                 <AppText variant="label" color={isFastest ? 'accent' : 'text'} style={styles.splitPace}>
-                  {formatPace(split.seconds, 'metric')}
+                  {ride ? formatSpeed(3600 / split.seconds, 'metric') : formatPace(split.seconds, 'metric')}
                 </AppText>
               </View>
             );
           })}
           <AppText variant="caption" color="textSecondary">
-            Minuten pro vollem Kilometer, unabhängig von der Einheit. Längerer Balken heißt schneller.
+            {ride
+              ? 'Tempo in km/h je vollem Kilometer. Längerer Balken heißt schneller.'
+              : 'Minuten pro vollem Kilometer, unabhängig von der Einheit. Längerer Balken heißt schneller.'}
           </AppText>
         </Card>
       ) : null}
