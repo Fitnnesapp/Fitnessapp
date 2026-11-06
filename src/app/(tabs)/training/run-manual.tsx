@@ -20,7 +20,7 @@ import {
   validateManualRun,
 } from '@/lib/logic/manual-run';
 import { formatRaceTime } from '@/lib/logic/run-insights';
-import { formatPace, paceUnitLabel, parseNumber } from '@/lib/logic/units';
+import { formatPace, formatSpeed, paceUnitLabel, parseNumber, speedUnitLabel } from '@/lib/logic/units';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
 
@@ -59,6 +59,8 @@ export default function ManualRunScreen() {
       : null,
   );
 
+  const [sport, setSport] = useState<'run' | 'ride'>(editing?.sport === 'ride' ? 'ride' : 'run');
+  const ride = sport === 'ride';
   const [distanceText, setDistanceText] = useState(initial?.distance ?? '');
   const [durationText, setDurationText] = useState(initial?.duration ?? '');
   const [daysAgo, setDaysAgo] = useState(initial?.daysAgo ?? 0);
@@ -85,7 +87,7 @@ export default function ManualRunScreen() {
     if (durationSeconds === null) return setError('Gib die Dauer an, z.B. 28:30 oder 1:05:00.');
     const start = startedAt();
     if (start === null) return setError('Die Uhrzeit bitte als HH:MM, z.B. 07:30.');
-    const input = { distanceKm, durationSeconds, startedAt: start };
+    const input = { distanceKm, durationSeconds, startedAt: start, sport };
     const problem = validateManualRun(input, Date.now());
     if (problem) return setError(problem);
     successFeedback();
@@ -107,12 +109,18 @@ export default function ManualRunScreen() {
   return (
     <Screen>
       <AppText variant="display" style={styles.headline}>
-        {editing ? 'Lauf bearbeiten' : 'Lauf nachtragen'}
+        {editing ? 'Einheit bearbeiten' : 'Nachtragen'}
       </AppText>
       <AppText color="textSecondary">
-        Laufband, Handy vergessen oder mit einer Uhr gelaufen? Trag Distanz und Zeit ein. Der Lauf zählt für Verlauf,
-        Wochenziel, Challenges und deine Prognose.
+        {ride
+          ? 'Indoor-Cycling, Spinning oder ohne Handy geradelt? Trag Distanz und Zeit ein. Die Radfahrt zählt für Verlauf, Wochenstatistik und deinen Gesundheits-Nutzen.'
+          : 'Laufband, Handy vergessen oder mit einer Uhr gelaufen? Trag Distanz und Zeit ein. Der Lauf zählt für Verlauf, Wochenziel, Challenges und deine Prognose.'}
       </AppText>
+
+      <View style={styles.chips}>
+        <Chip label="Lauf" selected={!ride} onPress={() => setSport('run')} />
+        <Chip label="Rad" selected={ride} onPress={() => setSport('ride')} />
+      </View>
 
       <Card style={styles.card}>
         <View style={styles.row}>
@@ -140,9 +148,15 @@ export default function ManualRunScreen() {
         <View style={[styles.pace, { backgroundColor: theme.surfaceAlt }]}>
           <Ionicons name="speedometer-outline" size={18} color={theme.accent} />
           <AppText variant="caption" color="textSecondary">
-            Ø Pace
+            {ride ? 'Ø Tempo' : 'Ø Pace'}
           </AppText>
-          <AppText variant="heading">{pace ? `${formatPace(pace, units)} ${paceUnitLabel(units)}` : '–'}</AppText>
+          <AppText variant="heading">
+            {pace
+              ? ride
+                ? `${formatSpeed(3600 / pace, units)} ${speedUnitLabel(units)}`
+                : `${formatPace(pace, units)} ${paceUnitLabel(units)}`
+              : '–'}
+          </AppText>
         </View>
 
         <AppText variant="label" color="textSecondary">
@@ -180,7 +194,7 @@ export default function ManualRunScreen() {
         </View>
       ) : null}
 
-      <Button title={editing ? 'Änderungen speichern' : 'Lauf speichern'} onPress={save} />
+      <Button title={editing ? 'Änderungen speichern' : ride ? 'Radfahrt speichern' : 'Lauf speichern'} onPress={save} />
       <AppText variant="caption" color="textSecondary">
         Ohne GPS gibt es keine Strecke und keine Kilometerzeiten. Bestzeiten über 1, 5 und 10 km kommen deshalb nur aus
         aufgezeichneten Läufen.

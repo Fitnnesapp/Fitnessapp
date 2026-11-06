@@ -45,7 +45,7 @@ type Kind = {
 
 const KINDS: Kind[] = [
   { href: '/training/strength', title: 'Kraft', description: 'Sätze, Gewichte, Rekorde', image: SCENES['hero-kraft'] },
-  { href: '/training/running', title: 'Laufen', description: 'GPS, Pace, Strecke', image: SCENES['hero-lauf'] },
+  { href: '/training/running', title: 'Laufen', description: 'Laufen und Rad mit GPS', image: SCENES['hero-lauf'] },
   { href: '/training/home', title: 'Home', description: 'Geführt, ohne Geräte', image: SCENES['hero-home'] },
 ];
 
@@ -245,8 +245,8 @@ export default function TrainingScreen() {
       <View style={styles.pair}>
         <LinkTile
           icon="create-outline"
-          title="Lauf nachtragen"
-          text="Laufband oder ohne GPS"
+          title="Nachtragen"
+          text="Lauf oder Rad ohne GPS"
           onPress={() => router.push('/training/run-manual')}
         />
         <LinkTile
@@ -295,7 +295,9 @@ function describe(option: RepeatOption, units: Units): { key: string; icon: Icon
   if (option.kind === 'home') {
     return { key: `h-${option.programId}`, icon: 'body', title: getProgram(option.programId)?.name ?? 'Home-Workout', detail: 'Home' };
   }
-  return { key: 'run', icon: 'walk', title: 'Lauf', detail: `zuletzt ${formatDistance(option.distanceM, units)}` };
+  return option.ride
+    ? { key: 'ride', icon: 'bicycle', title: 'Radtour', detail: `zuletzt ${formatDistance(option.distanceM, units)}` }
+    : { key: 'run', icon: 'walk', title: 'Lauf', detail: `zuletzt ${formatDistance(option.distanceM, units)}` };
 }
 
 const styles = StyleSheet.create({

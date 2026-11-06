@@ -10,11 +10,11 @@ export const IDENTITY_WINDOW_DAYS = 90;
 /** Ab diesem Anteil einer Trainingsart gilt man als "Team" dieser Art, sonst Allround. */
 export const IDENTITY_SHARE = 0.6;
 
-export type Team = 'Kraft' | 'Lauf' | 'Home' | 'Allround';
+export type Team = 'Kraft' | 'Lauf' | 'Rad' | 'Home' | 'Allround';
 
 export type Identity = { team: Team; sessions: number };
 
-const TEAM_OF: Record<ActivityType, Team> = { strength: 'Kraft', running: 'Lauf', home: 'Home' };
+const TEAM_OF: Record<ActivityType, Team> = { strength: 'Kraft', running: 'Lauf', home: 'Home', cycling: 'Rad' };
 
 /** Team aus den Einheiten der letzten 90 Tage. Ohne Einheiten gibt es noch keine Identität. */
 export function trainingIdentity(activities: Activity[], now: number): Identity | null {
@@ -22,7 +22,7 @@ export function trainingIdentity(activities: Activity[], now: number): Identity 
   const recent = activities.filter((a) => a.startedAt >= from && a.startedAt <= now);
   if (recent.length === 0) return null;
 
-  const counts: Record<ActivityType, number> = { strength: 0, running: 0, home: 0 };
+  const counts: Record<ActivityType, number> = { strength: 0, running: 0, home: 0, cycling: 0 };
   for (const a of recent) counts[a.type] += 1;
 
   const [topType, topCount] = (Object.entries(counts) as [ActivityType, number][]).sort((a, b) => b[1] - a[1])[0];

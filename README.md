@@ -75,6 +75,16 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - Speicher-Migrationen: Einstellungen v4, Läufe v1, neu: eigene Übungen v1
   - **Vorlagen-Editor** (Übungen hinzufügen, entfernen, umsortieren; neue Vorlage; fertige Workouts als Vorlage kopieren) und **gespeicherte Krafttrainings korrigieren** (Gewicht, Wiederholungen, Sätze entfernen)
   - Nachtrag: eigene Übungen und nachgetragene Läufe bearbeitbar; Auflegehilfe (Scheiben pro Seite) bei Langhantel-Übungen im Workout; Intervall-Timer merkt sich die letzten Einstellungen (Einstellungen v5); Laufbestzeiten im Rekordbuch; Laufziel auch im Profil und auf dem Start-Tab
+- **Ausbau 6. November 2026 (Nutzen, Lauf & Rad, Apple Health):**
+  - **Gesundheits-Nutzen** auf dem Start: Stand zur WHO-Empfehlung (150 Ausdauerminuten, 2 Krafttage), Vorwochen-Bilanz, erfüllte Wochen; auch im Erfolgsmoment nach jeder Einheit, im Plan („Was dir dieser Plan bringt“), als 12-Wochen-Verlauf im Fortschritt und im Jahresrückblick. Begründung: [docs/design-psychologie.md](docs/design-psychologie.md) (Abschnitt Nutzen-Analyse)
+  - **Radfahren** mit GPS (km/h, Strecke, Höhenmeter) und zum Nachtragen (Indoor-Cycling); getrennt von Laufbestzeiten, Lauf-Challenges und Lauf-Abzeichen; Rad-Bestwerte im Rekordbuch, Abzeichen „Erste Radtour“ und „50 km am Stück“
+  - **Auto-Pause** (Standzeiten ab 10 s zählen nicht), **Sprachansagen** pro Kilometer (Rad alle 5 km) und **Zieltempo** aus dem Pace-Rechner mit Live-Abweichung
+  - **Apple Health**: Workouts, Läufe und Radtouren mit Strecke nach Health, ohne Duplikate, nur schreibend. Anleitung: [docs/health-sync.md](docs/health-sync.md)
+  - **Automatische Updates** per expo-updates (Prüfung beim Start und bei Rückkehr, Hinweis „Jetzt neu starten“). Einrichtung: [docs/app-updates.md](docs/app-updates.md)
+  - **Erinnerungen an Plan-Tagen** zur gewählten Tageszeit mit dem Wenn-Dann-Plan (höchstens eine am Tag)
+  - **Dein Warum**: eigener Grund fürs Training, erscheint nach Pausen und zum Wochenstart
+  - Willkommen mit Nutzenversprechen, Karte „Deine Daten“ im Profil, GPS mit iOS-Bewegungsart Fitness
+  - Speicher-Migrationen: Einstellungen v9, Läufe v2, neu: Health-Abgleich v1
 - **Phase 8 (Ausbau):**
   - Jahresrückblick (Start-Tab): Workouts, Zeit, Distanz, Volumen, Rekorde, längste Serie, stärkster Monat, Lieblingstag und -übung, wählbares Jahr
   - Vorschlag für heute aus einfachen, nachvollziehbaren Regeln (keine KI); führt nie zu einem Premium-Programm

@@ -1,6 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -8,10 +9,13 @@ import { Card } from '@/components/ui/card';
 import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
 import { useNow } from '@/hooks/use-now';
+import { useTheme } from '@/hooks/use-theme';
+import { useVoiceSplits } from '@/hooks/use-voice-splits';
 import { confirmAction } from '@/lib/confirm';
+import { paceDelta, paceDeltaText } from '@/lib/logic/announce';
 import { formatClock } from '@/lib/logic/format';
-import { activeElapsedAt, currentPace, paceSecPerKm } from '@/lib/logic/run-stats';
-import { formatDistance, formatPace, paceUnitLabel } from '@/lib/logic/units';
+import { activeElapsedAt, currentPace, isStandingStill, paceSecPerKm, speedKmh } from '@/lib/logic/run-stats';
+import { formatDistance, formatPace, formatSpeed, paceUnitLabel, speedUnitLabel } from '@/lib/logic/units';
 import { ensureTracking, stopTracking, type TrackingMode } from '@/lib/location/tracker';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
@@ -27,6 +31,7 @@ function signalOf(accuracy: number | null | undefined, ageMs: number | null): Si
 
 export default function RunScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const units = useSettings((state) => state.units);
   const active = useRunStore((state) => state.active);
   const { pauseRun, resumeRun, finishRun, discardRun } = useRunStore.getState();
@@ -46,13 +51,35 @@ export default function RunScreen() {
       .catch(() => setTrackingError(true));
   }, [hasRun]);
 
+  const voiceOn = useSettings((state) => state.voiceSplits);
+  const target = useSettings((state) => state.targetPaceSecPerKm);
+  const setVoiceSplits = useSettings((state) => state.setVoiceSplits);
+  useVoiceSplits({
+    active: running,
+    distanceM: active?.distanceM ?? 0,
+    elapsedMs: active ? activeElapsedAt(active, now) : 0,
+    sport: active?.sport === 'ride' ? 'ride' : 'run',
+  });
+
   // Beim Beenden wird active zuerst geleert; die Weiterleitung zur Zusammenfassung folgt danach.
   // Ohne diese Ausnahme würde die Umleitung hier der Zusammenfassung zuvorkommen.
   if (!active) return saving ? null : <Redirect href="/training/running" />;
 
-  const elapsedMs = activeElapsedAt(active, now);
+  const ride = active.sport === 'ride';
+  const pace = currentPace(active.points);
   const last = active.points[active.points.length - 1];
-  const signal = running
+  // Auto-Pause: im Stand meldet das Handy keine Punkte; die Uhr bleibt dann beim letzten Punkt stehen.
+  // Sobald es weitergeht, zieht die Aufzeichnung die Standzeit ab und die Uhr läuft nahtlos weiter.
+  const standing = running && active.autoPause === true && isStandingStill(last?.t, now);
+  const elapsedMs = activeElapsedAt(active, standing && last ? last.t : now);
+  // Abweichung vom Zieltempo erst ab 200 m, vorher schwankt der Schnitt zu stark
+  const delta =
+    target !== null && active.distanceM >= 200
+      ? paceDelta(paceSecPerKm(active.distanceM, elapsedMs / 1000), target)
+      : null;
+  const signal = standing
+    ? { label: 'Auto-Pause', color: 'accent' as const }
+    : running
     ? signalOf(last ? last.acc : undefined, last ? now - last.t : null)
     : { label: 'Pausiert', color: 'textSecondary' as const };
 
@@ -72,8 +99,10 @@ export default function RunScreen() {
     pauseRun();
     confirmAction({
       onCancel: wasRunning ? resumeRun : undefined,
-      title: 'Lauf beenden?',
-      message: 'Der Lauf wird gespeichert. Sehr kurze Läufe unter 20 Metern werden verworfen.',
+      title: ride ? 'Radfahrt beenden?' : 'Lauf beenden?',
+      message: ride
+        ? 'Die Radfahrt wird gespeichert. Sehr kurze Aufzeichnungen unter 20 Metern werden verworfen.'
+        : 'Der Lauf wird gespeichert. Sehr kurze Läufe unter 20 Metern werden verworfen.',
       confirmLabel: 'Beenden',
       destructive: false,
       onConfirm: finish,
@@ -85,7 +114,7 @@ export default function RunScreen() {
     pauseRun();
     confirmAction({
       onCancel: wasRunning ? resumeRun : undefined,
-      title: 'Lauf verwerfen?',
+      title: ride ? 'Radfahrt verwerfen?' : 'Lauf verwerfen?',
       message: 'Die aufgezeichnete Strecke geht verloren.',
       confirmLabel: 'Verwerfen',
       onConfirm: async () => {
@@ -102,6 +131,9 @@ export default function RunScreen() {
         <AppText variant="label" color={signal.color} accessibilityLiveRegion="polite">
           {signal.label.toUpperCase()}
         </AppText>
+        <AppText variant="eyebrow" color="textSecondary">
+          {ride ? 'RADFAHRT' : 'LAUF'}
+        </AppText>
         <AppText style={styles.distance}>{formatDistance(active.distanceM, units).split(' ')[0]}</AppText>
         <AppText variant="heading" color="textSecondary">
           {units === 'metric' ? 'Kilometer' : 'Meilen'}
@@ -115,25 +147,68 @@ export default function RunScreen() {
           </AppText>
           <AppText variant="title">{formatClock(elapsedMs)}</AppText>
         </Card>
-        <Card style={styles.stat}>
-          <AppText variant="label" color="textSecondary">
-            PACE JETZT
-          </AppText>
-          <AppText variant="title">{formatPace(running ? currentPace(active.points) : null, units)}</AppText>
-          <AppText variant="caption" color="textSecondary">
-            {paceUnitLabel(units)}
-          </AppText>
-        </Card>
-        <Card style={styles.stat}>
-          <AppText variant="label" color="textSecondary">
-            Ø PACE
-          </AppText>
-          <AppText variant="title">{formatPace(paceSecPerKm(active.distanceM, elapsedMs / 1000), units)}</AppText>
-          <AppText variant="caption" color="textSecondary">
-            {paceUnitLabel(units)}
-          </AppText>
-        </Card>
+        {ride ? (
+          <>
+            <Card style={styles.stat}>
+              <AppText variant="label" color="textSecondary">
+                TEMPO JETZT
+              </AppText>
+              <AppText variant="title">{formatSpeed(running && pace ? 3600 / pace : 0, units)}</AppText>
+              <AppText variant="caption" color="textSecondary">
+                {speedUnitLabel(units)}
+              </AppText>
+            </Card>
+            <Card style={styles.stat}>
+              <AppText variant="label" color="textSecondary">
+                Ø TEMPO
+              </AppText>
+              <AppText variant="title">{formatSpeed(speedKmh(active.distanceM, elapsedMs / 1000), units)}</AppText>
+              <AppText variant="caption" color="textSecondary">
+                {speedUnitLabel(units)}
+              </AppText>
+            </Card>
+          </>
+        ) : (
+          <>
+            <Card style={styles.stat}>
+              <AppText variant="label" color="textSecondary">
+                PACE JETZT
+              </AppText>
+              <AppText variant="title">{formatPace(running ? pace : null, units)}</AppText>
+              <AppText variant="caption" color="textSecondary">
+                {paceUnitLabel(units)}
+              </AppText>
+            </Card>
+            <Card style={styles.stat}>
+              <AppText variant="label" color="textSecondary">
+                Ø PACE
+              </AppText>
+              <AppText variant="title">{formatPace(paceSecPerKm(active.distanceM, elapsedMs / 1000), units)}</AppText>
+              <AppText variant="caption" color="textSecondary">
+                {paceUnitLabel(units)}
+              </AppText>
+            </Card>
+          </>
+        )}
       </View>
+
+      {!ride && target !== null ? (
+        <Card style={styles.target}>
+          <View style={styles.flexCol}>
+            <AppText variant="label" color="textSecondary">
+              ZIELTEMPO {formatPace(target, units)} {paceUnitLabel(units)}
+            </AppText>
+            <AppText color={delta !== null && delta <= 2 ? 'accent' : 'textSecondary'}>
+              {paceDeltaText(delta) ?? 'Startet mit den ersten Metern'}
+            </AppText>
+          </View>
+          <Ionicons
+            name={delta === null ? 'flag-outline' : delta <= 2 ? 'trending-up' : 'trending-down'}
+            size={22}
+            color={delta !== null && delta <= 2 ? theme.accent : theme.textSecondary}
+          />
+        </Card>
+      ) : null}
 
       {mode === 'foreground' && Platform.OS !== 'web' ? (
         <Card>
@@ -151,14 +226,35 @@ export default function RunScreen() {
         </AppText>
       ) : null}
 
+      <Pressable
+        accessibilityRole="switch"
+        accessibilityState={{ checked: voiceOn }}
+        accessibilityLabel="Sprachansagen pro Kilometer"
+        onPress={() => setVoiceSplits(!voiceOn)}
+        hitSlop={8}
+        style={styles.voice}>
+        <Ionicons name={voiceOn ? 'volume-high' : 'volume-mute'} size={18} color={theme.textSecondary} />
+        <AppText variant="label" color="textSecondary">
+          {voiceOn ? `Ansagen an · ${ride ? 'alle 5 km' : 'jeder km'}` : 'Ansagen aus'}
+        </AppText>
+      </Pressable>
+
       <Button title={running ? 'Pause' : 'Weiter'} onPress={running ? pauseRun : resumeRun} disabled={saving} />
-      <Button title="Lauf beenden" variant="secondary" onPress={confirmFinish} loading={saving} />
+      <Button
+        title={ride ? 'Radfahrt beenden' : 'Lauf beenden'}
+        variant="secondary"
+        onPress={confirmFinish}
+        loading={saving}
+      />
       <Button title="Verwerfen" variant="ghost" onPress={confirmDiscard} disabled={saving} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  target: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  flexCol: { flex: 1, gap: 2 },
+  voice: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.one },
   content: { gap: Spacing.four },
   center: { alignItems: 'center', gap: Spacing.one, paddingVertical: Spacing.four },
   distance: { fontSize: 88, lineHeight: 96, fontWeight: '800', letterSpacing: -2 },

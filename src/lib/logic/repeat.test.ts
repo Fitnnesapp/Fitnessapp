@@ -108,3 +108,11 @@ test('Körpergewicht bleibt leer, imperial wird umgerechnet', () => {
   assert.notEqual(draft[0].sets[1].weight, '20');
   assert.ok(Number(draft[0].sets[1].weight) > 40);
 });
+
+test('Radtour und Lauf erscheinen getrennt', () => {
+  const options = repeatOptions([], [], [{ ...run('r1', 10), sport: 'ride' }, run('r2', 20), { ...run('r3', 5), sport: 'ride' }]);
+  assert.deepEqual(
+    options.map((o) => (o.kind === 'run' ? (o.ride ? 'rad' : 'lauf') : o.kind)),
+    ['lauf', 'rad'],
+  );
+});

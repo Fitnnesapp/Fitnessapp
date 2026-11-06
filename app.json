@@ -39,18 +39,34 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Die App zeichnet deine Laufstrecke auf, solange du läufst.",
-          "locationAlwaysAndWhenInUsePermission": "Die App zeichnet deine Laufstrecke auch bei gesperrtem Bildschirm auf.",
+          "locationWhenInUsePermission": "Die App zeichnet deine Strecke auf, solange du läufst oder Rad fährst.",
+          "locationAlwaysAndWhenInUsePermission": "Die App zeichnet deine Lauf- und Radstrecke auch bei gesperrtem Bildschirm auf.",
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "Die Fitnessapp liest keine Gesundheitsdaten. Apple verlangt diesen Text trotzdem für die Verbindung.",
+          "NSHealthUpdateUsageDescription": "Damit deine Workouts, Läufe und Radtouren in Apple Health erscheinen und für deine Aktivitätsringe zählen.",
+          "background": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
     }
   }
 }

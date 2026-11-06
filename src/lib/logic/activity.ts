@@ -1,4 +1,4 @@
-export type ActivityType = 'strength' | 'home' | 'running';
+export type ActivityType = 'strength' | 'home' | 'running' | 'cycling';
 
 /** Gemeinsame Sicht auf ein Workout, unabhängig von der Trainingsart. */
 export type Activity = {
@@ -6,7 +6,7 @@ export type Activity = {
   type: ActivityType;
   startedAt: number;
   durationSeconds: number;
-  /** nur Läufe */
+  /** nur Läufe und Radfahrten */
   distanceM: number;
 };
 
@@ -42,7 +42,7 @@ export function weekStats(activities: Activity[], weekStartAt: number): WeekStat
     workouts: 0,
     durationSeconds: 0,
     distanceM: 0,
-    byType: { strength: 0, home: 0, running: 0 },
+    byType: { strength: 0, home: 0, running: 0, cycling: 0 },
     perDay: Array(7).fill(0),
   };
 

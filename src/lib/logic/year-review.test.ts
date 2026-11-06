@@ -44,7 +44,7 @@ test('nur Workouts des gewählten Jahres zählen', () => {
   const activities = [act('a', at(2025, 12, 31), 'strength'), act('b', at(2026, 1, 1), 'home'), act('c', at(2026, 6, 10), 'running', 2000, 5000)];
   const review = yearReview({ year: 2026, activities, strength: [], runs: [], now: NOW });
   assert.equal(review.workouts, 2);
-  assert.deepEqual(review.byType, { strength: 0, home: 1, running: 1 });
+  assert.deepEqual(review.byType, { strength: 0, home: 1, running: 1, cycling: 0 });
   assert.equal(review.durationSeconds, 1800 + 2000);
   assert.equal(review.distanceM, 5000);
 });

@@ -89,7 +89,10 @@ export function measure(metric: ChallengeMetric, activities: Activity[], start: 
     case 'workouts':
       return inWindow.length;
     case 'runKm':
-      return Math.floor(inWindow.reduce((sum, a) => sum + a.distanceM, 0) / 100) / 10;
+      // Nur Laufkilometer: Radfahrten zählen nicht für Lauf-Challenges
+      return (
+        Math.floor(inWindow.filter((a) => a.type === 'running').reduce((sum, a) => sum + a.distanceM, 0) / 100) / 10
+      );
     case 'minutes':
       return Math.round(inWindow.reduce((sum, a) => sum + a.durationSeconds, 0) / 60);
   }

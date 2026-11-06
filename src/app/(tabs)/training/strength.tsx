@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ActiveSessions } from '@/components/active-sessions';
 import { GoalCard } from '@/components/goal-card';
+import { RecoveryCard } from '@/components/recovery-card';
 import { RoutineCard } from '@/components/routine-card';
 import { TemplateCard } from '@/components/template-card';
 import { WeeklySetsCard } from '@/components/weekly-sets-card';
@@ -121,6 +122,8 @@ export default function StrengthScreen() {
         <QuickAction icon="barbell-outline" label="Übungen" onPress={() => router.push('/training/exercises')} />
         <QuickAction icon="calculator-outline" label="Rechner" onPress={() => router.push('/training/calculator')} />
       </View>
+
+      <RecoveryCard />
 
       <WeeklySetsCard />
 

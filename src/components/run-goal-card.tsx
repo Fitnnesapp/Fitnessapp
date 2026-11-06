@@ -10,6 +10,7 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { tapFeedback } from '@/lib/haptics';
 import { suggestWeeklyRunGoalM } from '@/lib/logic/run-insights';
+import { onlyRuns } from '@/lib/logic/run-stats';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
 
@@ -54,7 +55,7 @@ export function RunGoalCard({ weekM, weekStartAt, daysLeft }: RunGoalCardProps) 
           title="Setzen"
           variant="secondary"
           onPress={() => {
-            setGoal(suggestWeeklyRunGoalM(runs, weekStartAt));
+            setGoal(suggestWeeklyRunGoalM(onlyRuns(runs), weekStartAt));
             setEditing(true);
           }}
         />

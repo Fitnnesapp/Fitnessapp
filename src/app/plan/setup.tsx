@@ -253,9 +253,10 @@ export default function PlanSetupScreen() {
             <View style={styles.benefits}>
               {(
                 [
-                  ['calendar', 'Ein Wochenplan, der zu deinem Ziel, deiner Zeit und deinem Körper passt'],
-                  ['git-merge', 'Kraft, Laufen und Home-Workouts frei kombinierbar'],
-                  ['trending-up', 'Sichtbarer Fortschritt, Challenges wie der Winter Arc'],
+                  ['calendar', 'Du weißt jeden Tag, was dran ist: ein Plan für dein Ziel, deine Zeit und deinen Körper'],
+                  ['heart', 'Du siehst, was es deiner Gesundheit bringt: jede Woche dein Stand zur WHO-Empfehlung'],
+                  ['trending-up', 'Du wirst messbar stärker und schneller: Rekorde, Kraftziele, Laufprognose'],
+                  ['lock-closed', 'Ohne Konto und ohne Werbung: deine Daten bleiben auf deinem Handy'],
                 ] as [IconName, string][]
               ).map(([icon, text]) => (
                 <View key={text} style={styles.benefit}>

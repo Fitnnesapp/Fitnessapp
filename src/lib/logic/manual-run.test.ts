@@ -63,3 +63,15 @@ test('Bearbeiten: Tage zurück und Uhrzeit aus dem gespeicherten Lauf', () => {
   const start = new Date(2026, 10, 2, 18, 45).getTime();
   assert.equal(startFromDayAndTime(now, calendarDaysAgo(start, now), timeOfDay(start)), start);
 });
+
+test('Radfahrt nachtragen: eigene Grenzen, Sportart wird gespeichert', () => {
+  const ride = { distanceKm: 30, durationSeconds: 3600, startedAt: hourAgo - 3600_000, sport: 'ride' as const };
+  assert.equal(validateManualRun(ride, now), null);
+  // 36 km/h wäre als Lauf unmöglich, als Radfahrt normal
+  assert.match(validateManualRun({ ...ride, distanceKm: 36, sport: 'run' }, now) ?? '', /schneller/);
+  assert.equal(validateManualRun({ ...ride, distanceKm: 36 }, now), null);
+  assert.match(validateManualRun({ ...ride, durationSeconds: 1200 }, now) ?? '', /60 km\/h/);
+  assert.match(validateManualRun({ ...ride, distanceKm: 350 }, now) ?? '', /300 km pro Radfahrt/);
+  assert.equal(createManualRun(ride, 'r').sport, 'ride');
+  assert.equal(createManualRun({ ...ride, sport: 'run' }, 'l').sport, undefined);
+});

@@ -5,7 +5,7 @@ import { useNow } from '@/hooks/use-now';
 import { streaks } from '@/lib/logic/activity';
 import type { BadgeContext } from '@/lib/logic/badges';
 import { findRecords } from '@/lib/logic/personal-records';
-import { findRunRecords } from '@/lib/logic/run-stats';
+import { findRunRecords, isRide, onlyRuns } from '@/lib/logic/run-stats';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
@@ -15,7 +15,11 @@ export function useBadgeContext(): BadgeContext {
   const activities = useActivities();
   const strength = useWorkouts((state) => state.history);
   const home = useHomeSessions((state) => state.sessions);
-  const runs = useRunStore((state) => state.history);
+  const allRuns = useRunStore((state) => state.history);
+  // Lauf-Abzeichen (5 und 10 km, Laufrekorde) zählen nur Läufe, keine Radfahrten
+  const runs = useMemo(() => onlyRuns(allRuns), [allRuns]);
+  const rides = useMemo(() => allRuns.filter((r) => isRide(r)), [allRuns]);
+  const longestRideM = useMemo(() => Math.max(0, ...rides.map((r) => r.distanceM)), [rides]);
   const now = useNow(60_000);
 
   const longestStreak = useMemo(() => streaks(activities, now).longest, [activities, now]);
@@ -35,7 +39,9 @@ export function useBadgeContext(): BadgeContext {
       longestRunM,
       recordCount,
       longestStreak,
+      rideCount: rides.length,
+      longestRideM,
     }),
-    [strength.length, home.length, runs.length, longestRunM, recordCount, longestStreak],
+    [strength.length, home.length, runs.length, longestRunM, recordCount, longestStreak, rides.length, longestRideM],
   );
 }

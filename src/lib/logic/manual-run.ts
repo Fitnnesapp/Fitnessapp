@@ -21,21 +21,34 @@ export type ManualRunInput = {
   distanceKm: number;
   durationSeconds: number;
   startedAt: number;
+  /** Lauf (Standard) oder Rad, z.B. Indoor-Cycling */
+  sport?: 'run' | 'ride';
 };
+
+/** Radfahren: 3 bis 60 km/h, bis 300 km */
+export const MANUAL_RIDE_LIMITS = { maxKm: 300, fastestSecPerKm: 60, slowestSecPerKm: 1200 } as const;
 
 const DAY = 24 * 60 * 60 * 1000;
 
 /** Fehlertext oder null, wenn die Angaben plausibel sind. */
 export function validateManualRun(input: ManualRunInput, now: number): string | null {
   const { distanceKm, durationSeconds, startedAt } = input;
+  const ride = input.sport === 'ride';
+  const what = ride ? 'Radfahrt' : 'Lauf';
+  const maxKm = ride ? MANUAL_RIDE_LIMITS.maxKm : MANUAL_RUN_LIMITS.maxKm;
   if (!Number.isFinite(distanceKm) || distanceKm < MANUAL_RUN_LIMITS.minKm) return 'Gib eine Distanz an.';
-  if (distanceKm > MANUAL_RUN_LIMITS.maxKm) return `Höchstens ${MANUAL_RUN_LIMITS.maxKm} km pro Lauf.`;
+  if (distanceKm > maxKm) return `Höchstens ${maxKm} km pro ${what}.`;
   if (!Number.isFinite(durationSeconds) || durationSeconds < MANUAL_RUN_LIMITS.minSeconds) return 'Gib eine Dauer von mindestens einer Minute an.';
-  if (durationSeconds > MANUAL_RUN_LIMITS.maxSeconds) return 'Höchstens 12 Stunden pro Lauf.';
+  if (durationSeconds > MANUAL_RUN_LIMITS.maxSeconds) return `Höchstens 12 Stunden pro ${what}.`;
   const pace = durationSeconds / distanceKm;
-  if (pace < MANUAL_RUN_LIMITS.fastestSecPerKm) return 'Das wäre schneller als 2:00 min/km. Prüf Distanz und Zeit.';
-  if (pace > MANUAL_RUN_LIMITS.slowestSecPerKm) return 'Das wäre langsamer als 20:00 min/km. Prüf Distanz und Zeit.';
-  if (startedAt + durationSeconds * 1000 > now + 60_000) return 'Der Lauf liegt in der Zukunft.';
+  if (ride) {
+    if (pace < MANUAL_RIDE_LIMITS.fastestSecPerKm) return 'Das wäre schneller als 60 km/h. Prüf Distanz und Zeit.';
+    if (pace > MANUAL_RIDE_LIMITS.slowestSecPerKm) return 'Das wäre langsamer als 3 km/h. Prüf Distanz und Zeit.';
+  } else {
+    if (pace < MANUAL_RUN_LIMITS.fastestSecPerKm) return 'Das wäre schneller als 2:00 min/km. Prüf Distanz und Zeit.';
+    if (pace > MANUAL_RUN_LIMITS.slowestSecPerKm) return 'Das wäre langsamer als 20:00 min/km. Prüf Distanz und Zeit.';
+  }
+  if (startedAt + durationSeconds * 1000 > now + 60_000) return `Die ${ride ? 'Radfahrt' : 'Einheit'} liegt in der Zukunft.`;
   if (now - startedAt > MANUAL_RUN_LIMITS.maxDaysBack * DAY) return 'Nachtragen geht für die letzten 30 Tage.';
   return null;
 }
@@ -54,6 +67,7 @@ export function createManualRun(input: ManualRunInput, id: string): RunSession {
     bests: { k1: null, k5: null, k10: null },
     points: [],
     manual: true,
+    ...(input.sport === 'ride' ? { sport: 'ride' as const } : {}),
   };
 }
 

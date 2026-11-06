@@ -14,6 +14,9 @@ import { formatDistance, formatWeight } from '@/lib/logic/units';
 import { yearReview, yearsWithActivity } from '@/lib/logic/year-review';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
+import { useBenefitEntries } from '@/hooks/use-weekly-benefit';
+import { weeksMetInYear } from '@/lib/logic/health-benefit';
+import { onlyRuns } from '@/lib/logic/run-stats';
 import { useWorkouts } from '@/lib/storage/workout-store';
 
 const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
@@ -34,9 +37,12 @@ export default function YearReviewScreen() {
   const year = picked ?? years[0];
 
   const review = useMemo(
-    () => yearReview({ year, activities, strength, runs, now }),
+    // Längster Lauf und Laufrekorde nur aus Läufen, Radfahrten zählen in Workouts und Strecke
+    () => yearReview({ year, activities, strength, runs: onlyRuns(runs), now }),
     [year, activities, strength, runs, now],
   );
+  const benefitEntries = useBenefitEntries();
+  const who = useMemo(() => weeksMetInYear(benefitEntries, year, now), [benefitEntries, year, now]);
 
   if (review.workouts === 0) {
     return (
@@ -72,13 +78,29 @@ export default function YearReviewScreen() {
         <AppText color="textSecondary">
           an {review.activeDays} {review.activeDays === 1 ? 'Tag' : 'Tagen'}: Kraft {review.byType.strength} · Home{' '}
           {review.byType.home} · Laufen {review.byType.running}
+          {review.byType.cycling > 0 ? ` · Rad ${review.byType.cycling}` : ''}
         </AppText>
       </Card>
+
+      {who.met > 0 ? (
+        <Card>
+          <AppText variant="label" color="accent">
+            GESUNDHEITS-NUTZEN
+          </AppText>
+          <AppText variant="display">
+            {who.met} <AppText color="textSecondary">{who.met === 1 ? 'Woche' : 'Wochen'}</AppText>
+          </AppText>
+          <AppText color="textSecondary">
+            mit beiden WHO-Empfehlungen (mindestens 150 Ausdauerminuten und 2 Krafttage), von {who.weeks} Wochen seit
+            deinem ersten Training.
+          </AppText>
+        </Card>
+      ) : null}
 
       <StatGrid
         items={[
           { label: 'Trainingszeit', value: formatDuration(review.durationSeconds * 1000) },
-          { label: 'Gelaufen', value: formatDistance(review.distanceM, units) },
+          { label: 'Strecke', value: formatDistance(review.distanceM, units) },
           { label: 'Gehoben', value: formatWeight(review.volumeKg, units) },
           { label: 'Rekorde', value: String(review.recordCount) },
           { label: 'Längste Serie', value: `${review.longestStreak} ${review.longestStreak === 1 ? 'Tag' : 'Tage'}` },

@@ -9,6 +9,7 @@ import { LinkTile } from '@/components/link-tile';
 import { MonthCalendar } from '@/components/month-calendar';
 import { MuscleBalanceCard } from '@/components/muscle-balance-card';
 import { PremiumPrompt } from '@/components/premium-prompt';
+import { HealthWeeksCard } from '@/components/health-weeks-card';
 import { ProgressOverview } from '@/components/progress-overview';
 import { AppText } from '@/components/ui/app-text';
 import { Card } from '@/components/ui/card';
@@ -21,8 +22,8 @@ import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
 import { BADGES } from '@/lib/logic/badges';
 import { dayKey, formatClock, formatDate, formatDuration, formatTime } from '@/lib/logic/format';
-import { paceSecPerKm } from '@/lib/logic/run-stats';
-import { formatDistance, formatPace, formatWeight, paceUnitLabel } from '@/lib/logic/units';
+import { isRide, paceSecPerKm, speedKmh } from '@/lib/logic/run-stats';
+import { formatDistance, formatPace, formatSpeed, formatWeight, paceUnitLabel, speedUnitLabel } from '@/lib/logic/units';
 import { summarizeWorkout } from '@/lib/logic/workout-stats';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useHomeSessions } from '@/lib/storage/home-store';
@@ -42,7 +43,7 @@ const KIND_FILTERS: { value: Entry['kind'] | null; label: string }[] = [
   { value: null, label: 'Alle' },
   { value: 'strength', label: 'Kraft' },
   { value: 'home', label: 'Home' },
-  { value: 'run', label: 'Läufe' },
+  { value: 'run', label: 'Lauf & Rad' },
 ];
 
 /** Ohne Premium sind die letzten 30 Tage sichtbar. Ältere Workouts bleiben gespeichert. */
@@ -56,11 +57,11 @@ const TYPE_ICON = {
   run: 'walk-outline',
 } as const;
 
-function TypeTitle({ kind, label }: { kind: Entry['kind']; label: string }) {
+function TypeTitle({ kind, label, ride }: { kind: Entry['kind']; label: string; ride?: boolean }) {
   const theme = useTheme();
   return (
     <View style={styles.titleRow}>
-      <Ionicons name={TYPE_ICON[kind]} size={22} color={theme.accent} />
+      <Ionicons name={ride ? 'bicycle-outline' : TYPE_ICON[kind]} size={22} color={theme.accent} />
       <AppText variant="heading">{label}</AppText>
     </View>
   );
@@ -126,6 +127,7 @@ export default function HistoryScreen() {
       ListHeaderComponent={
         <View style={styles.header}>
           <ProgressOverview />
+          <HealthWeeksCard />
           <ConsistencyCard />
           <SectionHeader title="Erfolge" />
           <View style={styles.tiles}>
@@ -184,12 +186,18 @@ export default function HistoryScreen() {
           return (
             <Card onPress={() => router.push({ pathname: '/history/[id]', params: { id: run.id } })}>
               <View style={styles.row}>
-                <TypeTitle kind="run" label={run.manual ? 'Lauf · nachgetragen' : 'Lauf'} />
+                <TypeTitle
+                  kind="run"
+                  ride={isRide(run)}
+                  label={(isRide(run) ? 'Radfahrt' : 'Lauf') + (run.manual ? ' · nachgetragen' : '')}
+                />
                 <AppText color="textSecondary">{formatTime(run.startedAt)}</AppText>
               </View>
               <AppText variant="caption">
                 {formatDistance(run.distanceM, units)} · {formatClock(run.durationSeconds * 1000)} ·{' '}
-                {formatPace(paceSecPerKm(run.distanceM, run.durationSeconds), units)} {paceUnitLabel(units)}
+                {isRide(run)
+                  ? `${formatSpeed(speedKmh(run.distanceM, run.durationSeconds), units)} ${speedUnitLabel(units)}`
+                  : `${formatPace(paceSecPerKm(run.distanceM, run.durationSeconds), units)} ${paceUnitLabel(units)}`}
               </AppText>
             </Card>
           );

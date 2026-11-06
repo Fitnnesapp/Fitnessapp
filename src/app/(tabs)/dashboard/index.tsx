@@ -6,9 +6,11 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ActiveSessions } from '@/components/active-sessions';
 import { ChallengeCard } from '@/components/challenge-card';
 import { EventGoalCard } from '@/components/event-goal-card';
+import { HealthBenefitCard } from '@/components/health-benefit-card';
 import { QuickGrid } from '@/components/quick-grid';
+import { UpdateBanner } from '@/components/update-banner';
+import { WhyCard } from '@/components/why-card';
 import { GoalCard } from '@/components/goal-card';
-import { RecoveryCard } from '@/components/recovery-card';
 import { WhatsNewCard } from '@/components/whats-new-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -281,6 +283,10 @@ export default function DashboardScreen() {
         </ImageCard>
       </FadeIn>
 
+      <WhyCard now={now} />
+
+      <UpdateBanner />
+
       {/* Schnellzugriff: alle Bereiche an fester Stelle, statt sie über die Seite zu verteilen */}
       <QuickGrid />
 
@@ -415,10 +421,12 @@ export default function DashboardScreen() {
       </FadeIn>
 
       {/* Gemerktes Event: festes Datum vor Augen, mit der passenden Vorbereitungsphase */}
+      {/* Nutzen statt nur Zahlen: Fortschritt zur WHO-Empfehlung dieser Woche */}
+      <HealthBenefitCard now={now} />
+
       {myEvent ? <EventGoalCard event={myEvent} now={now} /> : null}
 
       {/* Erholung: was kann ich heute trainieren? */}
-      <RecoveryCard />
 
       {/* 5. Nahe Ziele: nächstes Abzeichen (Goal-Gradient), Challenge, Event */}
       {upcoming && upcomingBadge ? (

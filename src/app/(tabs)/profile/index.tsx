@@ -3,6 +3,10 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState, type ComponentProps, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { AppleHealthCard } from '@/components/apple-health-card';
+import { AppVersionCard } from '@/components/app-version-card';
+import { PrivacyCard } from '@/components/privacy-card';
+import { WhyEditor } from '@/components/why-editor';
 import { BackupCard } from '@/components/backup-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -26,9 +30,11 @@ import { memberSince, monthYear, personalBests } from '@/lib/logic/personal-best
 import { GOAL_LABELS, LIMITATION_LABELS, planDayCount } from '@/lib/logic/plan';
 import { displayToKg, formatDistance, formatWeight, kgToDisplay, parseNumber, weightUnitLabel } from '@/lib/logic/units';
 import { lifetimeTotals } from '@/lib/logic/weekly-review';
+import { onlyRuns } from '@/lib/logic/run-stats';
 import { requestReminderPermission, remindersSupported } from '@/lib/notifications';
 import { useChallengeStore } from '@/lib/storage/challenge-store';
 import { useCustomExercises } from '@/lib/storage/custom-exercise-store';
+import { useHealthSync } from '@/lib/storage/health-sync-store';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useGoalsStore } from '@/lib/storage/goals-store';
 import { useNewsStore } from '@/lib/storage/news-store';
@@ -84,6 +90,11 @@ export default function ProfileScreen() {
   const resetNews = useNewsStore((state) => state.reset);
   const resetSavedEvents = useSavedEvents((state) => state.reset);
   const resetCustomExercises = useCustomExercises((state) => state.reset);
+  const resetHealthSync = useHealthSync((state) => state.reset);
+  const autoPause = useSettings((state) => state.autoPause);
+  const setAutoPause = useSettings((state) => state.setAutoPause);
+  const voiceSplits = useSettings((state) => state.voiceSplits);
+  const setVoiceSplits = useSettings((state) => state.setVoiceSplits);
   const runGoalM = useSettings((state) => state.weeklyRunGoalM);
   const setRunGoalM = useSettings((state) => state.setWeeklyRunGoalM);
   const health = useHealthStore();
@@ -95,7 +106,7 @@ export default function ProfileScreen() {
   const lifetime = useMemo(() => lifetimeTotals(activities), [activities]);
   const streak = useMemo(() => streaks(activities, now), [activities, now]);
   const since = useMemo(() => memberSince(activities), [activities]);
-  const bests = useMemo(() => personalBests(strengthHistory, runHistory), [strengthHistory, runHistory]);
+  const bests = useMemo(() => personalBests(strengthHistory, onlyRuns(runHistory)), [strengthHistory, runHistory]);
   const name = displayName.trim();
 
   async function toggleReminder() {
@@ -138,6 +149,7 @@ export default function ProfileScreen() {
         resetNews();
         resetSavedEvents();
         resetCustomExercises();
+        resetHealthSync();
         health.revoke();
         setWeightText('');
       },
@@ -270,6 +282,7 @@ export default function ProfileScreen() {
             </View>
           )}
         </View>
+        <WhyEditor />
         <View style={styles.field}>
           <AppText variant="label" color="textSecondary">
             Laufziel pro Woche
@@ -309,11 +322,25 @@ export default function ProfileScreen() {
             ))}
           </View>
         </View>
+        <SettingRow
+          icon="pause-circle"
+          title="Auto-Pause bei Lauf und Rad"
+          text="Standzeiten ab 10 Sekunden, etwa an der Ampel, zählen nicht zu Zeit und Tempo."
+          onPress={() => setAutoPause(!autoPause)}>
+          <Toggle on={autoPause} />
+        </SettingRow>
+        <SettingRow
+          icon="volume-high"
+          title="Sprachansagen bei Lauf und Rad"
+          text="Nach jedem Kilometer (Rad: alle 5) Zeit und Tempo, mit Zieltempo auch die Abweichung."
+          onPress={() => setVoiceSplits(!voiceSplits)}>
+          <Toggle on={voiceSplits} />
+        </SettingRow>
         {remindersSupported ? (
           <SettingRow
             icon="notifications"
-            title="Serien-Erinnerung um 19 Uhr"
-            text="Höchstens einmal am Tag, nur wenn du eine Serie hast und noch nicht trainiert hast."
+            title="Erinnerungen"
+            text="An Plan-Tagen zu deiner Tageszeit mit deinem Wenn-Dann-Plan, sonst um 19 Uhr für deine Serie. Höchstens eine am Tag, nie nach einem Training."
             onPress={toggleReminder}>
             <Toggle on={streakReminder} />
           </SettingRow>
@@ -333,7 +360,11 @@ export default function ProfileScreen() {
       </Card>
 
       {/* 5. Gesundheit und Datenschutz */}
+      <AppVersionCard />
+
       <SectionHeader title="Gesundheit & Daten" />
+      <PrivacyCard />
+      <AppleHealthCard />
       <Card style={styles.settings}>
         <AppText variant="eyebrow" color="textSecondary">
           Gesundheitsangaben
