@@ -94,3 +94,28 @@ export function weeksMet(entries: readonly BenefitEntry[], currentWeekStart: num
   }
   return count;
 }
+
+type PlanSessionLike = {
+  day: number;
+  kind: 'strength' | 'program' | 'run';
+  minutes: number;
+  /** nur bei Home-Programmen */
+  category?: 'HIIT' | 'Core' | 'Mobility' | 'Ganzkörper';
+};
+
+/** Was ein Wochenplan nach WHO bringt, wenn man ihn so trainiert wie geplant. */
+export function planWeeklyBenefit(sessions: readonly PlanSessionLike[]): WeeklyBenefit {
+  const monday = new Date(2026, 0, 5).getTime(); // beliebiger Montag als Rechenwoche
+  const entries: BenefitEntry[] = sessions.map((session) => ({
+    startedAt: new Date(2026, 0, 5 + session.day, 18).getTime(),
+    durationSeconds: session.minutes * 60,
+    intensity:
+      session.kind === 'run' || session.category === 'HIIT'
+        ? 'intensiv'
+        : session.category === 'Ganzkörper'
+          ? 'moderat'
+          : 'keine',
+    strengthening: session.kind === 'strength' || session.category === 'Ganzkörper' || session.category === 'Core',
+  }));
+  return weeklyBenefit(entries, monday);
+}

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { benefitMessage, enduranceIntensity, weeklyBenefit, weeksMet } from './health-benefit.ts';
+import { benefitMessage, enduranceIntensity, planWeeklyBenefit, weeklyBenefit, weeksMet } from './health-benefit.ts';
 
 const monday = new Date(2026, 10, 2).getTime();
 const day = (n: number, h = 18) => new Date(2026, 10, 2 + n, h).getTime();
@@ -45,4 +45,16 @@ test('Erfüllte Wochen der letzten 12, aktuelle Woche zählt nicht', () => {
   ];
   const entries = [...full(0), ...full(1), ...full(3), ...full(13)];
   assert.equal(weeksMet(entries, monday), 2);
+});
+
+test('Plan-Nutzen: Läufe und HIIT doppelt, Krafttage nach Wochentag', () => {
+  const plan = planWeeklyBenefit([
+    { day: 0, kind: 'strength', minutes: 60 },
+    { day: 2, kind: 'run', minutes: 40 },
+    { day: 4, kind: 'strength', minutes: 60 },
+    { day: 4, kind: 'program', minutes: 15, category: 'Mobility' },
+    { day: 5, kind: 'program', minutes: 20, category: 'HIIT' },
+  ]);
+  assert.deepEqual(plan, { aerobicMinutes: 120, strengthDays: 2, aerobicMet: false, strengthMet: true });
+  assert.equal(planWeeklyBenefit([{ day: 1, kind: 'run', minutes: 80 }]).aerobicMet, true);
 });

@@ -12,6 +12,8 @@ import { OnImage, Radius, Spacing } from '@/constants/theme';
 import { SCENES } from '@/data/images';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
+import { getProgram } from '@/data/programs';
+import { planWeeklyBenefit, WHO_AEROBIC_MINUTES, WHO_STRENGTH_DAYS } from '@/lib/logic/health-benefit';
 import { dayHeading } from '@/lib/logic/motivation';
 import {
   GOAL_LABELS,
@@ -102,6 +104,40 @@ export default function PlanScreen() {
           <AppText color="textSecondary">Start: {dayHeading(plan.startsAt)}. Bis dahin darfst du gern schon reinschnuppern.</AppText>
         )}
       </View>
+
+      {/* Nutzen des Plans: was er nach WHO bringt, wenn man ihn wie geplant trainiert */}
+      {(() => {
+        const benefit = planWeeklyBenefit(
+          plan.sessions.map((session) => ({
+            day: session.day,
+            kind: session.kind,
+            minutes: session.minutes,
+            category: session.programId ? getProgram(session.programId)?.category : undefined,
+          })),
+        );
+        const both = benefit.aerobicMet && benefit.strengthMet;
+        return (
+          <Card>
+            <View style={styles.row}>
+              <Ionicons name={both ? 'heart' : 'heart-outline'} size={20} color={theme.accent} />
+              <AppText variant="heading">Was dir dieser Plan bringt</AppText>
+            </View>
+            <AppText color="textSecondary">
+              Etwa {benefit.aerobicMinutes} von {WHO_AEROBIC_MINUTES} Ausdauerminuten und {benefit.strengthDays} von{' '}
+              {WHO_STRENGTH_DAYS} Krafttagen der WHO-Empfehlung pro Woche.
+            </AppText>
+            <AppText color={both ? 'accent' : 'text'}>
+              {both
+                ? 'Wie geplant trainiert, erfüllst du beide Empfehlungen: das Pensum, das in großen Studien am stärksten mit einem längeren, gesünderen Leben zusammenhängt.'
+                : benefit.strengthMet
+                  ? 'Für die volle Empfehlung fehlt Ausdauer: Ein zusätzlicher lockerer Lauf oder eine Radtour an einem Ruhetag schließt die Lücke.'
+                  : benefit.aerobicMet
+                    ? 'Für die volle Empfehlung fehlt Kraft: Belege einen Ruhetag mit einem kurzen Kraft- oder Ganzkörper-Workout.'
+                    : 'Ein guter Anfang. Mit einer weiteren Einheit pro Woche kommst du der WHO-Empfehlung deutlich näher.'}
+            </AppText>
+          </Card>
+        );
+      })()}
 
       {plan.notes.length > 0 ? (
         <Card style={{ borderColor: theme.accent }}>
