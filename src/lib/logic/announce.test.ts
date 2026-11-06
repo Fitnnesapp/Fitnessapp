@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { announcementText, crossedMark, spokenDuration, unitLengthM } from './announce.ts';
+import { announcementText, crossedMark, paceDelta, paceDeltaSpoken, paceDeltaText, spokenDuration, unitLengthM } from './announce.ts';
 
 test('Marken: jeder Kilometer beim Laufen, alle 5 beim Rad, Meilen bei imperial', () => {
   assert.equal(crossedMark(990, 1005, 1000, 1), 1);
@@ -29,4 +29,15 @@ test('Ansagetext für Lauf und Rad', () => {
     announcementText({ mark: 10, sport: 'ride', units: 'metric', elapsedSeconds: 1500, segmentSeconds: 720 }),
     '10 Kilometer. Zeit 25 Minuten. Tempo zuletzt 25 Kilometer pro Stunde.',
   );
+});
+
+test('Zieltempo: Abweichung, Anzeige und Ansage', () => {
+  assert.equal(paceDelta(292, 300), -8);
+  assert.equal(paceDelta(null, 300), null);
+  assert.equal(paceDelta(300, null), null);
+  assert.equal(paceDeltaText(-8), '8 s/km schneller als dein Ziel');
+  assert.equal(paceDeltaText(12), '12 s/km langsamer als dein Ziel');
+  assert.equal(paceDeltaText(2), 'Genau im Zieltempo');
+  assert.equal(paceDeltaSpoken(-8), ' Du bist 8 Sekunden pro Kilometer schneller als dein Zieltempo.');
+  assert.equal(paceDeltaSpoken(null), '');
 });

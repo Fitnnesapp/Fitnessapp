@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { TextField } from '@/components/ui/text-field';
@@ -19,6 +20,8 @@ export function PaceCalculatorCard() {
   const [raceIndex, setRaceIndex] = useState(1);
   const [timeText, setTimeText] = useState('');
 
+  const target = useSettings((state) => state.targetPaceSecPerKm);
+  const setTargetPace = useSettings((state) => state.setTargetPace);
   const race = RACE_DISTANCES[raceIndex];
   const seconds = parseDuration(timeText);
   const valid = seconds !== null && seconds >= 60;
@@ -61,18 +64,35 @@ export function PaceCalculatorCard() {
           <AppText variant="caption" color="textSecondary">
             Bei gleichmäßigem Tempo. Die Zwischenzeiten gelten in Kilometern.
           </AppText>
+          <Button
+            title={target !== null && Math.abs(target - pace) < 1 ? 'Ist dein Zieltempo' : 'Als Zieltempo für Läufe übernehmen'}
+            variant="secondary"
+            disabled={target !== null && Math.abs(target - pace) < 1}
+            onPress={() => setTargetPace(pace)}
+          />
         </>
       ) : (
         <AppText variant="caption" color="textSecondary">
           Gib eine Zielzeit ein, z.B. 50:00 oder 1:55:00, und sieh das nötige Tempo samt Zwischenzeiten.
         </AppText>
       )}
+      {target !== null ? (
+        <View style={styles.targetRow}>
+          <AppText variant="caption" color="textSecondary" style={styles.flex}>
+            Zieltempo: {formatPace(target, units)} {paceUnitLabel(units)}. Beim Lauf siehst und hörst du, ob du davor oder
+            dahinter liegst.
+          </AppText>
+          <Button title="Entfernen" variant="ghost" onPress={() => setTargetPace(null)} />
+        </View>
+      ) : null}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
   card: { gap: Spacing.three },
+  targetRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  flex: { flex: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   splits: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   split: {

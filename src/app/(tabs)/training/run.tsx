@@ -12,6 +12,7 @@ import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { useVoiceSplits } from '@/hooks/use-voice-splits';
 import { confirmAction } from '@/lib/confirm';
+import { paceDelta, paceDeltaText } from '@/lib/logic/announce';
 import { formatClock } from '@/lib/logic/format';
 import { activeElapsedAt, currentPace, isStandingStill, paceSecPerKm, speedKmh } from '@/lib/logic/run-stats';
 import { formatDistance, formatPace, formatSpeed, paceUnitLabel, speedUnitLabel } from '@/lib/logic/units';
@@ -51,6 +52,7 @@ export default function RunScreen() {
   }, [hasRun]);
 
   const voiceOn = useSettings((state) => state.voiceSplits);
+  const target = useSettings((state) => state.targetPaceSecPerKm);
   const setVoiceSplits = useSettings((state) => state.setVoiceSplits);
   useVoiceSplits({
     active: running,
@@ -70,6 +72,11 @@ export default function RunScreen() {
   // Sobald es weitergeht, zieht die Aufzeichnung die Standzeit ab und die Uhr läuft nahtlos weiter.
   const standing = running && active.autoPause === true && isStandingStill(last?.t, now);
   const elapsedMs = activeElapsedAt(active, standing && last ? last.t : now);
+  // Abweichung vom Zieltempo erst ab 200 m, vorher schwankt der Schnitt zu stark
+  const delta =
+    target !== null && active.distanceM >= 200
+      ? paceDelta(paceSecPerKm(active.distanceM, elapsedMs / 1000), target)
+      : null;
   const signal = standing
     ? { label: 'Auto-Pause', color: 'accent' as const }
     : running
@@ -185,6 +192,24 @@ export default function RunScreen() {
         )}
       </View>
 
+      {!ride && target !== null ? (
+        <Card style={styles.target}>
+          <View style={styles.flexCol}>
+            <AppText variant="label" color="textSecondary">
+              ZIELTEMPO {formatPace(target, units)} {paceUnitLabel(units)}
+            </AppText>
+            <AppText color={delta !== null && delta <= 2 ? 'accent' : 'textSecondary'}>
+              {paceDeltaText(delta) ?? 'Startet mit den ersten Metern'}
+            </AppText>
+          </View>
+          <Ionicons
+            name={delta === null ? 'flag-outline' : delta <= 2 ? 'trending-up' : 'trending-down'}
+            size={22}
+            color={delta !== null && delta <= 2 ? theme.accent : theme.textSecondary}
+          />
+        </Card>
+      ) : null}
+
       {mode === 'foreground' && Platform.OS !== 'web' ? (
         <Card>
           <AppText variant="heading">Nur im Vordergrund</AppText>
@@ -227,6 +252,8 @@ export default function RunScreen() {
 }
 
 const styles = StyleSheet.create({
+  target: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  flexCol: { flex: 1, gap: 2 },
   voice: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.one },
   content: { gap: Spacing.four },
   center: { alignItems: 'center', gap: Spacing.one, paddingVertical: Spacing.four },

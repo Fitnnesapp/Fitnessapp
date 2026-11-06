@@ -168,6 +168,14 @@ export const FEATURES: readonly FeatureItem[] = [
     href: '/profile',
   },
   {
+    id: 'target-pace',
+    kind: 'funktion',
+    title: 'Zieltempo für Läufe',
+    subtitle: 'Im Pace-Rechner festlegen, beim Lauf live und per Ansage vergleichen',
+    keywords: ['Zieltempo', 'Wunschtempo', 'Tempo halten', 'zu schnell', 'zu langsam'],
+    href: '/training/running',
+  },
+  {
     id: 'interval-timer',
     kind: 'funktion',
     title: 'Intervall-Timer',

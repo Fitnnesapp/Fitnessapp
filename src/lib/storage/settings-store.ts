@@ -31,6 +31,8 @@ type SettingsState = {
   autoPause: boolean;
   /** Sprachansage nach jedem Kilometer (Rad: alle 5) */
   voiceSplits: boolean;
+  /** Zieltempo für Läufe in Sekunden pro Kilometer, null = keins */
+  targetPaceSecPerKm: number | null;
   /** true, sobald der Speicher vom Gerät geladen wurde */
   hydrated: boolean;
   setDisplayName: (name: string) => void;
@@ -45,6 +47,7 @@ type SettingsState = {
   setWhy: (why: string) => void;
   setAutoPause: (on: boolean) => void;
   setVoiceSplits: (on: boolean) => void;
+  setTargetPace: (secPerKm: number | null) => void;
   reset: () => void;
 };
 
@@ -61,6 +64,7 @@ const DEFAULTS = {
   why: '',
   autoPause: true,
   voiceSplits: true,
+  targetPaceSecPerKm: null as number | null,
 };
 
 type PersistedSettings = Pick<
@@ -77,10 +81,11 @@ type PersistedSettings = Pick<
   | 'why'
   | 'autoPause'
   | 'voiceSplits'
+  | 'targetPaceSecPerKm'
 >;
 
 /** Version des gespeicherten Formats. Bei Änderungen hochzählen und in `migrate` umwandeln. */
-const SETTINGS_STORE_VERSION = 8;
+const SETTINGS_STORE_VERSION = 9;
 
 /** Alle Einstellungen liegen ausschließlich lokal auf dem Gerät, es gibt keine Netzwerkzugriffe. */
 export const useSettings = create<SettingsState>()(
@@ -100,6 +105,9 @@ export const useSettings = create<SettingsState>()(
       setWhy: (why) => set({ why: cleanWhy(why) }),
       setAutoPause: (on) => set({ autoPause: on }),
       setVoiceSplits: (on) => set({ voiceSplits: on }),
+      // 2:00 bis 20:00 min/km, null entfernt das Ziel
+      setTargetPace: (secPerKm) =>
+        set({ targetPaceSecPerKm: secPerKm === null ? null : Math.min(1200, Math.max(120, Math.round(secPerKm))) }),
       setLastInterval: (interval) =>
         set({
           lastInterval: {
@@ -128,6 +136,7 @@ export const useSettings = create<SettingsState>()(
         why,
         autoPause,
         voiceSplits,
+        targetPaceSecPerKm,
       }): PersistedSettings => ({
         displayName,
         units,
@@ -141,6 +150,7 @@ export const useSettings = create<SettingsState>()(
         why,
         autoPause,
         voiceSplits,
+        targetPaceSecPerKm,
       }),
       // Version 0 → 1: neue Einstellung "Darstellung" (Standard: System)
       // Version 1 → 2: Wochenziel ohne Plan (Standard: 3 Tage)
@@ -149,7 +159,8 @@ export const useSettings = create<SettingsState>()(
       // Version 4 → 5: zuletzt genutzter Intervall-Timer (Standard: keiner)
       // Version 5 → 6: persönliches Warum (Standard: leer)
       // Version 6 → 7: Auto-Pause bei Lauf und Rad (Standard: an)
-      // Version 7 → 8: Sprachansagen pro Kilometer (Standard: an). Bestehende Werte bleiben jeweils erhalten.
+      // Version 7 → 8: Sprachansagen pro Kilometer (Standard: an)
+      // Version 8 → 9: Zieltempo für Läufe (Standard: keins). Bestehende Werte bleiben jeweils erhalten.
       migrate: (persisted) => ({ ...DEFAULTS, ...(persisted as Partial<PersistedSettings>) }),
       onRehydrateStorage: () => () => useSettings.setState({ hydrated: true }),
     },

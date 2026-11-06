@@ -49,3 +49,23 @@ export function announcementText(input: {
   }
   return `${head} Letzter ${input.units === 'metric' ? 'Kilometer' : 'Meile'} in ${spokenDuration(input.segmentSeconds)}.`;
 }
+
+/** Abweichung vom Zieltempo in Sekunden pro Kilometer (negativ = schneller als das Ziel). */
+export function paceDelta(avgSecPerKm: number | null, targetSecPerKm: number | null): number | null {
+  if (avgSecPerKm === null || targetSecPerKm === null || !Number.isFinite(avgSecPerKm) || avgSecPerKm <= 0) return null;
+  return Math.round(avgSecPerKm - targetSecPerKm);
+}
+
+/** "8 s/km schneller als dein Ziel", "im Ziel" bei weniger als 3 Sekunden Abweichung. */
+export function paceDeltaText(delta: number | null): string | null {
+  if (delta === null) return null;
+  if (Math.abs(delta) < 3) return 'Genau im Zieltempo';
+  return `${Math.abs(delta)} s/km ${delta < 0 ? 'schneller' : 'langsamer'} als dein Ziel`;
+}
+
+/** Zusatz für die Kilometer-Ansage. */
+export function paceDeltaSpoken(delta: number | null): string {
+  if (delta === null) return '';
+  if (Math.abs(delta) < 3) return ' Du liegst genau im Zieltempo.';
+  return ` Du bist ${Math.abs(delta)} Sekunden pro Kilometer ${delta < 0 ? 'schneller' : 'langsamer'} als dein Zieltempo.`;
+}
