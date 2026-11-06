@@ -8,7 +8,9 @@ export type BadgeKey =
   | 'home_10'
   | 'streak_7'
   | 'streak_30'
-  | 'all_rounder';
+  | 'all_rounder'
+  | 'first_ride'
+  | 'ride_50';
 
 export type Badge = {
   key: BadgeKey;
@@ -28,6 +30,8 @@ export const BADGES: readonly Badge[] = [
   { key: 'streak_7', name: 'Eine Woche am Ball', description: '7 Trainingstage in Folge', icon: 'flame-outline' },
   { key: 'streak_30', name: 'Ein Monat am Ball', description: '30 Trainingstage in Folge', icon: 'bonfire-outline' },
   { key: 'all_rounder', name: 'Allrounder', description: 'Kraft, Home-Workout und Lauf mindestens je einmal gemacht', icon: 'apps-outline' },
+  { key: 'first_ride', name: 'Erste Radtour', description: 'Deine erste Radfahrt aufgezeichnet oder nachgetragen', icon: 'bicycle-outline' },
+  { key: 'ride_50', name: '50 km am Stück', description: 'Eine Radfahrt über mindestens 50 km geschafft', icon: 'trail-sign-outline' },
 ];
 
 /** Alles, was zur Bewertung der Abzeichen nötig ist. */
@@ -41,11 +45,15 @@ export type BadgeContext = {
   recordCount: number;
   /** Längste jemals erreichte Serie */
   longestStreak: number;
+  /** Radfahrten (seit dem Radfahren, ältere Stände kennen sie nicht) */
+  rideCount?: number;
+  /** Weiteste Radfahrt in Metern */
+  longestRideM?: number;
 };
 
 /** Alle Abzeichen, deren Bedingung erfüllt ist. */
 export function earnedBadges(ctx: BadgeContext): BadgeKey[] {
-  const total = ctx.strengthCount + ctx.homeCount + ctx.runCount;
+  const total = ctx.strengthCount + ctx.homeCount + ctx.runCount + (ctx.rideCount ?? 0);
 
   const rules: Record<BadgeKey, boolean> = {
     first_workout: total >= 1,
@@ -58,6 +66,8 @@ export function earnedBadges(ctx: BadgeContext): BadgeKey[] {
     streak_7: ctx.longestStreak >= 7,
     streak_30: ctx.longestStreak >= 30,
     all_rounder: ctx.strengthCount >= 1 && ctx.homeCount >= 1 && ctx.runCount >= 1,
+    first_ride: (ctx.rideCount ?? 0) >= 1,
+    ride_50: (ctx.longestRideM ?? 0) >= 50_000,
   };
 
   return BADGES.filter((b) => rules[b.key]).map((b) => b.key);

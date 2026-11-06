@@ -57,7 +57,7 @@ export type BadgeProgress = {
 
 /** Messbarer Fortschritt für jedes Abzeichen. */
 export function badgeProgress(ctx: BadgeContext): BadgeProgress[] {
-  const total = ctx.strengthCount + ctx.homeCount + ctx.runCount;
+  const total = ctx.strengthCount + ctx.homeCount + ctx.runCount + (ctx.rideCount ?? 0);
   const typesDone = [ctx.strengthCount, ctx.homeCount, ctx.runCount].filter((n) => n > 0).length;
 
   const values: Record<BadgeKey, [number, number]> = {
@@ -71,6 +71,8 @@ export function badgeProgress(ctx: BadgeContext): BadgeProgress[] {
     streak_7: [ctx.longestStreak, 7],
     streak_30: [ctx.longestStreak, 30],
     all_rounder: [typesDone, 3],
+    first_ride: [ctx.rideCount ?? 0, 1],
+    ride_50: [(ctx.longestRideM ?? 0) / 1000, 50],
   };
 
   return BADGES.map((badge) => {
