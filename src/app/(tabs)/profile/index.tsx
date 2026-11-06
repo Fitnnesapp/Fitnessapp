@@ -90,6 +90,8 @@ export default function ProfileScreen() {
   const resetSavedEvents = useSavedEvents((state) => state.reset);
   const resetCustomExercises = useCustomExercises((state) => state.reset);
   const resetHealthSync = useHealthSync((state) => state.reset);
+  const autoPause = useSettings((state) => state.autoPause);
+  const setAutoPause = useSettings((state) => state.setAutoPause);
   const runGoalM = useSettings((state) => state.weeklyRunGoalM);
   const setRunGoalM = useSettings((state) => state.setWeeklyRunGoalM);
   const health = useHealthStore();
@@ -317,6 +319,13 @@ export default function ProfileScreen() {
             ))}
           </View>
         </View>
+        <SettingRow
+          icon="pause-circle"
+          title="Auto-Pause bei Lauf und Rad"
+          text="Standzeiten ab 10 Sekunden, etwa an der Ampel, zählen nicht zu Zeit und Tempo."
+          onPress={() => setAutoPause(!autoPause)}>
+          <Toggle on={autoPause} />
+        </SettingRow>
         {remindersSupported ? (
           <SettingRow
             icon="notifications"

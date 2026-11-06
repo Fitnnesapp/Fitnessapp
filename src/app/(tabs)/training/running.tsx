@@ -39,6 +39,7 @@ export default function RunningScreen() {
   const theme = useTheme();
   const now = useNow(60_000);
   const units = useSettings((state) => state.units);
+  const autoPause = useSettings((state) => state.autoPause);
   const active = useRunStore((state) => state.active);
   const allSessions = useRunStore((state) => state.history);
   // Bestzeiten, Prognose und Laufziel nur aus Läufen; Radfahrten erscheinen in der Liste darunter
@@ -72,7 +73,7 @@ export default function RunningScreen() {
         return;
       }
       setDenied(false);
-      startRun(sport);
+      startRun(sport, autoPause);
       router.push('/training/run');
     } finally {
       setBusy(false);

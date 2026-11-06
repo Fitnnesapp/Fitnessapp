@@ -27,6 +27,8 @@ type SettingsState = {
   lastInterval: IntervalSettings | null;
   /** Persönlicher Grund fürs Training in eigenen Worten, leer = keiner */
   why: string;
+  /** Auto-Pause bei Lauf und Rad: Standzeiten zählen nicht */
+  autoPause: boolean;
   /** true, sobald der Speicher vom Gerät geladen wurde */
   hydrated: boolean;
   setDisplayName: (name: string) => void;
@@ -39,6 +41,7 @@ type SettingsState = {
   setWeeklyRunGoalM: (meters: number | null) => void;
   setLastInterval: (settings: IntervalSettings) => void;
   setWhy: (why: string) => void;
+  setAutoPause: (on: boolean) => void;
   reset: () => void;
 };
 
@@ -53,6 +56,7 @@ const DEFAULTS = {
   weeklyRunGoalM: null as number | null,
   lastInterval: null as IntervalSettings | null,
   why: '',
+  autoPause: true,
 };
 
 type PersistedSettings = Pick<
@@ -67,10 +71,11 @@ type PersistedSettings = Pick<
   | 'weeklyRunGoalM'
   | 'lastInterval'
   | 'why'
+  | 'autoPause'
 >;
 
 /** Version des gespeicherten Formats. Bei Änderungen hochzählen und in `migrate` umwandeln. */
-const SETTINGS_STORE_VERSION = 6;
+const SETTINGS_STORE_VERSION = 7;
 
 /** Alle Einstellungen liegen ausschließlich lokal auf dem Gerät, es gibt keine Netzwerkzugriffe. */
 export const useSettings = create<SettingsState>()(
@@ -88,6 +93,7 @@ export const useSettings = create<SettingsState>()(
       setWeeklyRunGoalM: (meters) =>
         set({ weeklyRunGoalM: meters === null ? null : Math.min(300_000, Math.max(1_000, Math.round(meters))) }),
       setWhy: (why) => set({ why: cleanWhy(why) }),
+      setAutoPause: (on) => set({ autoPause: on }),
       setLastInterval: (interval) =>
         set({
           lastInterval: {
@@ -114,6 +120,7 @@ export const useSettings = create<SettingsState>()(
         weeklyRunGoalM,
         lastInterval,
         why,
+        autoPause,
       }): PersistedSettings => ({
         displayName,
         units,
@@ -125,13 +132,15 @@ export const useSettings = create<SettingsState>()(
         weeklyRunGoalM,
         lastInterval,
         why,
+        autoPause,
       }),
       // Version 0 → 1: neue Einstellung "Darstellung" (Standard: System)
       // Version 1 → 2: Wochenziel ohne Plan (Standard: 3 Tage)
       // Version 2 → 3: gemerkte Satzpause (Standard: 90 s)
       // Version 3 → 4: Laufziel pro Woche (Standard: keins)
       // Version 4 → 5: zuletzt genutzter Intervall-Timer (Standard: keiner)
-      // Version 5 → 6: persönliches Warum (Standard: leer). Bestehende Werte bleiben jeweils erhalten.
+      // Version 5 → 6: persönliches Warum (Standard: leer)
+      // Version 6 → 7: Auto-Pause bei Lauf und Rad (Standard: an). Bestehende Werte bleiben jeweils erhalten.
       migrate: (persisted) => ({ ...DEFAULTS, ...(persisted as Partial<PersistedSettings>) }),
       onRehydrateStorage: () => () => useSettings.setState({ hydrated: true }),
     },

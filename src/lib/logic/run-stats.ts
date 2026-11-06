@@ -28,9 +28,37 @@ export function haversineM(a: Coordinate, b: Coordinate): number {
 }
 
 /** Aktive Laufzeit in ms zum Zeitpunkt `at`. */
-export function activeElapsedAt(run: Pick<ActiveRun, 'status' | 'elapsedBase' | 'runningSince'>, at: number): number {
+export function activeElapsedAt(
+  run: Pick<ActiveRun, 'status' | 'elapsedBase' | 'runningSince' | 'idleMs'>,
+  at: number,
+): number {
   if (run.status !== 'running' || run.runningSince === null) return run.elapsedBase;
-  return run.elapsedBase + Math.max(0, at - run.runningSince);
+  // Erkannte Standzeit (Auto-Pause) zählt nicht zur aktiven Zeit
+  return run.elapsedBase + Math.max(0, at - run.runningSince - (run.idleMs ?? 0));
+}
+
+/** Auto-Pause: Standzeiten ab 10 Sekunden zählen nicht, z.B. an der Ampel. */
+export const AUTO_PAUSE_MIN_MS = 10_000;
+/** Darunter gilt man als stehend (0,8 m/s ≈ 2,9 km/h, langsames Gehen) */
+const MIN_MOVING_SPEED_MS = 0.8;
+/** Puffer für normale Lücken zwischen GPS-Messungen */
+const GAP_GRACE_MS = 3_000;
+
+/**
+ * Standzeit zwischen zwei Punkten. Das Handy meldet im Stand kaum neue Punkte (erst nach 5 m Bewegung).
+ * Ist die Lücke viel länger, als die zurückgelegte Strecke selbst langsam gebraucht hätte, war man
+ * dazwischen stehen geblieben. Kurze Lücken bleiben aktive Zeit.
+ */
+export function idleBetween(previous: TrackPoint, next: TrackPoint, stepM: number): number {
+  const gap = next.t - previous.t;
+  const movingMs = (stepM / MIN_MOVING_SPEED_MS) * 1000;
+  const idle = gap - movingMs - GAP_GRACE_MS;
+  return idle >= AUTO_PAUSE_MIN_MS ? Math.round(idle) : 0;
+}
+
+/** Steht man gerade? Dann zeigt die Aufzeichnung "Auto-Pause" und hält die Uhr an. */
+export function isStandingStill(lastPointAt: number | undefined, now: number): boolean {
+  return lastPointAt !== undefined && now - lastPointAt >= AUTO_PAUSE_MIN_MS + GAP_GRACE_MS;
 }
 
 export type StepResult = { accepted: false } | { accepted: true; stepM: number };

@@ -34,6 +34,10 @@ export type ActiveRun = {
   distanceM: number;
   /** Sportart der Aufzeichnung, fehlt bei älteren Ständen und heißt dann Lauf */
   sport?: Sport;
+  /** Auto-Pause an: erkannte Standzeit wird abgezogen */
+  autoPause?: boolean;
+  /** Seit dem letzten Fortsetzen erkannte Standzeit in ms */
+  idleMs?: number;
 };
 
 /** Beste Zeiten über feste Distanzen in Sekunden, null wenn der Lauf kürzer war. */

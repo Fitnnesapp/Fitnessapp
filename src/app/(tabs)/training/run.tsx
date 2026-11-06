@@ -10,7 +10,7 @@ import { Spacing } from '@/constants/theme';
 import { useNow } from '@/hooks/use-now';
 import { confirmAction } from '@/lib/confirm';
 import { formatClock } from '@/lib/logic/format';
-import { activeElapsedAt, currentPace, paceSecPerKm, speedKmh } from '@/lib/logic/run-stats';
+import { activeElapsedAt, currentPace, isStandingStill, paceSecPerKm, speedKmh } from '@/lib/logic/run-stats';
 import { formatDistance, formatPace, formatSpeed, paceUnitLabel, speedUnitLabel } from '@/lib/logic/units';
 import { ensureTracking, stopTracking, type TrackingMode } from '@/lib/location/tracker';
 import { useRunStore } from '@/lib/storage/run-store';
@@ -50,11 +50,16 @@ export default function RunScreen() {
   // Ohne diese Ausnahme würde die Umleitung hier der Zusammenfassung zuvorkommen.
   if (!active) return saving ? null : <Redirect href="/training/running" />;
 
-  const elapsedMs = activeElapsedAt(active, now);
   const ride = active.sport === 'ride';
   const pace = currentPace(active.points);
   const last = active.points[active.points.length - 1];
-  const signal = running
+  // Auto-Pause: im Stand meldet das Handy keine Punkte; die Uhr bleibt dann beim letzten Punkt stehen.
+  // Sobald es weitergeht, zieht die Aufzeichnung die Standzeit ab und die Uhr läuft nahtlos weiter.
+  const standing = running && active.autoPause === true && isStandingStill(last?.t, now);
+  const elapsedMs = activeElapsedAt(active, standing && last ? last.t : now);
+  const signal = standing
+    ? { label: 'Auto-Pause', color: 'accent' as const }
+    : running
     ? signalOf(last ? last.acc : undefined, last ? now - last.t : null)
     : { label: 'Pausiert', color: 'textSecondary' as const };
 

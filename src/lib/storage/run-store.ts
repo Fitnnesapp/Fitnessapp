@@ -6,6 +6,8 @@ import {
   computeBests,
   elevationGain,
   evaluatePoint,
+  idleBetween,
+  isStandingStill,
   MAX_RIDE_SPEED_MS,
   MAX_SPEED_MS,
   toTrackPoint,
@@ -23,7 +25,7 @@ type RunState = {
   history: RunSession[];
   hydrated: boolean;
 
-  startRun: (sport?: Sport) => void;
+  startRun: (sport?: Sport, autoPause?: boolean) => void;
   pauseRun: () => void;
   resumeRun: () => void;
   /** Übernimmt neue GPS-Messungen in den laufenden Lauf. Im Status pausiert werden sie ignoriert. */
@@ -52,11 +54,13 @@ export const useRunStore = create<RunState>()(
       history: [],
       hydrated: false,
 
-      startRun: (sport = 'run') => {
+      startRun: (sport = 'run', autoPause = false) => {
         const now = Date.now();
         set({
           active: {
             sport,
+            autoPause,
+            idleMs: 0,
             id: newId(),
             startedAt: now,
             status: 'running',
@@ -73,7 +77,8 @@ export const useRunStore = create<RunState>()(
         if (!active || active.status !== 'running') return;
         const now = Date.now();
         set({
-          active: { ...active, status: 'paused', elapsedBase: activeElapsedAt(active, now), runningSince: null },
+          // Standzeit ist in elapsedBase schon abgezogen, deshalb zurücksetzen
+          active: { ...active, status: 'paused', elapsedBase: activeElapsedAt(active, now), runningSince: null, idleMs: 0 },
         });
       },
 
@@ -89,12 +94,14 @@ export const useRunStore = create<RunState>()(
 
         const points = [...active.points];
         let distanceM = active.distanceM;
+        let idleMs = active.idleMs ?? 0;
 
         for (const raw of [...locations].sort((a, b) => a.t - b.t)) {
           // Messungen aus der Zeit vor dem letzten Fortsetzen gehören nicht zur aktiven Zeit
           if (active.runningSince !== null && raw.t < active.runningSince) continue;
 
-          const point = toTrackPoint(raw, activeElapsedAt(active, raw.t));
+          const previous = points[points.length - 1];
+          let point = toTrackPoint(raw, activeElapsedAt({ ...active, idleMs }, raw.t));
           const result = evaluatePoint(
             points[points.length - 1] ?? null,
             point,
@@ -102,11 +109,20 @@ export const useRunStore = create<RunState>()(
           );
           if (!result.accepted) continue;
 
+          // Auto-Pause: Standzeit vor diesem Punkt abziehen und die aktive Zeit des Punkts neu berechnen
+          if (active.autoPause && previous) {
+            const idle = idleBetween(previous, point, result.stepM);
+            if (idle > 0) {
+              idleMs += idle;
+              point = { ...point, e: Math.max(previous.e, activeElapsedAt({ ...active, idleMs }, raw.t)) };
+            }
+          }
+
           points.push(point);
           distanceM += result.stepM;
         }
 
-        if (points.length !== active.points.length) set({ active: { ...active, points, distanceM } });
+        if (points.length !== active.points.length) set({ active: { ...active, points, distanceM, idleMs } });
       },
 
       finishRun: async () => {
@@ -114,7 +130,10 @@ export const useRunStore = create<RunState>()(
         if (!active) return null;
 
         const endedAt = Date.now();
-        const durationSeconds = Math.round(activeElapsedAt(active, endedAt) / 1000);
+        // Auto-Pause: wer nach dem Ziel noch steht, bevor er auf Beenden tippt, bekommt diese Zeit nicht angerechnet
+        const last = active.points[active.points.length - 1];
+        const countUntil = active.autoPause && last && isStandingStill(last.t, endedAt) ? last.t : endedAt;
+        const durationSeconds = Math.round(activeElapsedAt(active, countUntil) / 1000);
         const saved = active.distanceM >= MIN_SAVED_DISTANCE_M;
 
         if (saved) {
