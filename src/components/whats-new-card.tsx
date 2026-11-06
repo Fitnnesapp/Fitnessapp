@@ -14,11 +14,11 @@ import { CURRENT_NEWS, useNewsStore } from '@/lib/storage/news-store';
 type Item = { icon: ComponentProps<typeof Ionicons>['name']; title: string; text: string; href: Href };
 
 const ITEMS: Item[] = [
-  { icon: 'flash', title: 'Fertige Workouts', text: 'Push, Pull, Beine, 5×5 und mehr, mit Tagesempfehlung', href: '/training/strength' },
-  { icon: 'body', title: 'Muskelkarte', text: 'Sieh, was jede Übung trainiert und was erholt ist', href: '/training/exercises' },
-  { icon: 'flag', title: 'Kraftziele & Rekordbuch', text: 'Zielgewicht setzen und Bestwerte im Blick', href: '/history/records' },
-  { icon: 'stopwatch', title: 'Laufprognose', text: 'Bestzeiten und was heute über 5 km bis Marathon drin wäre', href: '/training/running' },
-  { icon: 'cloud-download', title: 'Datensicherung', text: 'Alles als Datei sichern und aufs neue Handy mitnehmen', href: '/profile' },
+  { icon: 'heart', title: 'Dein Gesundheits-Nutzen', text: 'Jede Woche dein Stand zur WHO-Empfehlung', href: '/dashboard' },
+  { icon: 'bicycle', title: 'Radfahren', text: 'Radtouren mit GPS aufzeichnen oder nachtragen', href: '/training/running' },
+  { icon: 'pause-circle', title: 'Auto-Pause & Ansagen', text: 'Ampelstopps zählen nicht, jeder Kilometer wird angesagt', href: '/training/running' },
+  { icon: 'heart-circle', title: 'Apple Health', text: 'Workouts landen automatisch in der Health-App', href: '/profile' },
+  { icon: 'compass', title: 'Dein Warum', text: 'Halte fest, wofür du trainierst', href: '/profile' },
 ];
 
 /** Einmalige Karte mit neuen Funktionen. Verschwindet nach "Verstanden" bis zur nächsten Ausgabe. */
@@ -34,7 +34,7 @@ export function WhatsNewCard() {
       <AppText variant="eyebrow" color="accent">
         Neu in deiner App
       </AppText>
-      <AppText variant="title">Mehr Training, mehr Durchblick</AppText>
+      <AppText variant="title">Mehr Nutzen aus jedem Training</AppText>
       {ITEMS.map((item) => (
         <Pressable
           key={item.title}

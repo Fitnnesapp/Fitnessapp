@@ -11,7 +11,6 @@ import { QuickGrid } from '@/components/quick-grid';
 import { UpdateBanner } from '@/components/update-banner';
 import { WhyCard } from '@/components/why-card';
 import { GoalCard } from '@/components/goal-card';
-import { RecoveryCard } from '@/components/recovery-card';
 import { WhatsNewCard } from '@/components/whats-new-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -428,7 +427,6 @@ export default function DashboardScreen() {
       {myEvent ? <EventGoalCard event={myEvent} now={now} /> : null}
 
       {/* Erholung: was kann ich heute trainieren? */}
-      <RecoveryCard />
 
       {/* 5. Nahe Ziele: nächstes Abzeichen (Goal-Gradient), Challenge, Event */}
       {upcoming && upcomingBadge ? (
