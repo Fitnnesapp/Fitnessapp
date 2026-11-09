@@ -65,6 +65,7 @@ const UNITS: { value: UnitsPreference; label: string }[] = [
  */
 /** Schnellauswahl fürs Laufziel in km bzw. Meilen */
 const RUN_GOAL_STEPS = [10, 20, 30, 40];
+const RIDE_GOAL_STEPS = [30, 50, 80, 120];
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -97,6 +98,8 @@ export default function ProfileScreen() {
   const setVoiceSplits = useSettings((state) => state.setVoiceSplits);
   const runGoalM = useSettings((state) => state.weeklyRunGoalM);
   const setRunGoalM = useSettings((state) => state.setWeeklyRunGoalM);
+  const rideGoalM = useSettings((state) => state.weeklyRideGoalM);
+  const setRideGoalM = useSettings((state) => state.setWeeklyRideGoalM);
   const health = useHealthStore();
   const streakReminder = useSettings((state) => state.streakReminder);
   const setStreakReminder = useSettings((state) => state.setStreakReminder);
@@ -303,7 +306,31 @@ export default function ProfileScreen() {
           </View>
           {runGoalM !== null && !RUN_GOAL_STEPS.some((value) => Math.abs(runGoalM - value * (units === 'metric' ? 1000 : 1609.344)) < 1) ? (
             <AppText variant="caption" color="textSecondary">
-              Aktuell: {formatDistance(runGoalM, units)}. Feiner einstellen auf der Running-Seite.
+              Aktuell: {formatDistance(runGoalM, units)}. Feiner einstellen unter „Laufen & Rad“.
+            </AppText>
+          ) : null}
+        </View>
+        <View style={styles.field}>
+          <AppText variant="label" color="textSecondary">
+            Radziel pro Woche
+          </AppText>
+          <View style={styles.chips}>
+            <Chip label="Keins" selected={rideGoalM === null} onPress={() => setRideGoalM(null)} />
+            {RIDE_GOAL_STEPS.map((value) => {
+              const meters = value * (units === 'metric' ? 1000 : 1609.344);
+              return (
+                <Chip
+                  key={value}
+                  label={`${value} ${units === 'metric' ? 'km' : 'mi'}`}
+                  selected={rideGoalM !== null && Math.abs(rideGoalM - meters) < 1}
+                  onPress={() => setRideGoalM(meters)}
+                />
+              );
+            })}
+          </View>
+          {rideGoalM !== null && !RIDE_GOAL_STEPS.some((value) => Math.abs(rideGoalM - value * (units === 'metric' ? 1000 : 1609.344)) < 1) ? (
+            <AppText variant="caption" color="textSecondary">
+              Aktuell: {formatDistance(rideGoalM, units)}. Feiner einstellen unter „Laufen & Rad“.
             </AppText>
           ) : null}
         </View>
