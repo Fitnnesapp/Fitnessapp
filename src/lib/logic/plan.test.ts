@@ -183,7 +183,7 @@ test('Einheit für einen Tag nur, wenn der Plan schon gilt', () => {
 
 test('Wenn-Dann-Satz für Haupt- und Zusatzeinheit', () => {
   const plan = build({ doubleSessions: true, goals: ['muskeln'] });
-  assert.equal(ifThenSentence(plan.sessions[0], 'abends'), 'Wenn es Montag abends ist, mache ich Kraft: Ganzkörper A.');
+  assert.equal(ifThenSentence(plan.sessions[0], 'abends'), 'Wenn es Montag abends ist, dann starte ich: Kraft: Ganzkörper A.');
   const extra = plan.sessions.find((s) => s.extra);
   assert.ok(extra && ifThenSentence(extra, 'abends').startsWith('Danach'));
 });

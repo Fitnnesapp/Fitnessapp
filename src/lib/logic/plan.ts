@@ -80,7 +80,7 @@ export const GOAL_LABELS: Record<PlanGoal, string> = {
   muskeln: 'Muskeln aufbauen',
   fitness: 'Fit und gesund bleiben',
   abnehmen: 'Abnehmen',
-  ausdauer: 'Ausdauer und Laufen',
+  ausdauer: 'Ausdauer: Laufen oder Rad',
   beweglichkeit: 'Beweglicher werden',
 };
 
@@ -518,10 +518,10 @@ export function sessionForDay(plan: TrainingPlan, at: number): PlanSession | nul
   return sessionsForDay(plan, at)[0] ?? null;
 }
 
-/** Satz als Wenn-Dann-Plan, z.B. "Wenn es Montag abends ist, mache ich Kraft: Ganzkörper A." */
+/** Satz als Wenn-Dann-Plan, z.B. "Wenn es Montag abends ist, dann starte ich: Kraft: Ganzkörper A." */
 export function ifThenSentence(session: PlanSession, time: PlanTime): string {
   if (session.extra) return `Danach, ebenfalls am ${WEEKDAY_NAMES[session.day]}: ${session.title}.`;
-  return `Wenn es ${WEEKDAY_NAMES[session.day]} ${TIME_PHRASE[time]} ist, mache ich ${session.title}.`;
+  return `Wenn es ${WEEKDAY_NAMES[session.day]} ${TIME_PHRASE[time]} ist, dann starte ich: ${session.title}.`;
 }
 
 /** Anzahl verschiedener Trainingstage im Plan. */
