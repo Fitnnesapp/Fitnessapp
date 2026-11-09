@@ -97,7 +97,7 @@ export function weeksMet(entries: readonly BenefitEntry[], currentWeekStart: num
 
 type PlanSessionLike = {
   day: number;
-  kind: 'strength' | 'program' | 'run';
+  kind: 'strength' | 'program' | 'run' | 'ride';
   minutes: number;
   /** nur bei Home-Programmen */
   category?: 'HIIT' | 'Core' | 'Mobility' | 'Ganzkörper';
@@ -112,7 +112,7 @@ export function planWeeklyBenefit(sessions: readonly PlanSessionLike[]): WeeklyB
     intensity:
       session.kind === 'run' || session.category === 'HIIT'
         ? 'intensiv'
-        : session.category === 'Ganzkörper'
+        : session.kind === 'ride' || session.category === 'Ganzkörper'
           ? 'moderat'
           : 'keine',
     strengthening: session.kind === 'strength' || session.category === 'Ganzkörper' || session.category === 'Core',

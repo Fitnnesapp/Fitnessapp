@@ -32,6 +32,7 @@ import {
   type PlanLevel,
   type PlanPlace,
   type PlanTime,
+  type PlanCardio,
   type RunExperience,
 } from '@/lib/logic/plan';
 import { displayToKg, kgToDisplay, parseNumber, weightUnitLabel } from '@/lib/logic/units';
@@ -58,10 +59,16 @@ const LEVELS: { value: PlanLevel; title: string; hint: string; icon: IconName }[
 const PLACES: { value: PlanPlace; hint: string; icon: IconName }[] = [
   { value: 'studio', hint: 'Hanteln, Geräte, Laufband', icon: 'business' },
   { value: 'zuhause', hint: 'Im Wohnzimmer, mit oder ohne Geräte', icon: 'home' },
-  { value: 'draussen', hint: 'Laufen im Park oder auf der Straße', icon: 'leaf' },
+  { value: 'draussen', hint: 'Laufen oder Radfahren, im Park oder auf der Straße', icon: 'leaf' },
 ];
 
 const EQUIPMENT: HomeEquipment[] = ['kurzhanteln', 'kettlebell', 'widerstandsband', 'klimmzugstange'];
+
+const CARDIO_OPTIONS: { value: PlanCardio; label: string }[] = [
+  { value: 'laufen', label: 'Laufen' },
+  { value: 'rad', label: 'Radfahren' },
+  { value: 'beides', label: 'Beides' },
+];
 
 const RUN_LEVELS: { value: RunExperience; title: string; hint: string }[] = [
   { value: 'keine', title: 'Ich laufe noch nicht', hint: 'Start mit Gehen und Laufen im Wechsel' },
@@ -111,6 +118,7 @@ export default function PlanSetupScreen() {
   const [places, setPlaces] = useState<PlanPlace[]>(prev?.places ?? []);
   const [equipment, setEquipment] = useState<HomeEquipment[]>(prev?.equipment ?? []);
   const [runExperience, setRunExperience] = useState<RunExperience>(prev?.runExperience ?? 'bis5');
+  const [cardio, setCardio] = useState<PlanCardio>(prev?.cardio ?? 'laufen');
   const [consent, setConsent] = useState<boolean | null>(health.consentAt ? true : null);
   const [ageText, setAgeText] = useState(health.age !== null ? String(health.age) : '');
   const [weightText, setWeightText] = useState(
@@ -189,7 +197,7 @@ export default function PlanSetupScreen() {
     }
 
     const plan = buildPlan(
-      { goals, level, places, equipment, runExperience, days: chosenDays, doubleSessions, minutes, time, body },
+      { goals, level, places, equipment, runExperience, cardio, days: chosenDays, doubleSessions, minutes, time, body },
       {
         allowedProgramIds: isPremium ? PROGRAMS.map((p) => p.id) : FREE_PROGRAM_IDS,
         programs: PROGRAMS,
@@ -352,11 +360,28 @@ export default function PlanSetupScreen() {
 
         {step === 'run' ? (
           <>
-            <AppText variant="title">Wie weit läufst du aktuell?</AppText>
-            <AppText color="textSecondary">Damit Läufe weder unter- noch überfordern.</AppText>
-            {RUN_LEVELS.map((r) => (
-              <OptionCard key={r.value} title={r.title} hint={r.hint} selected={runExperience === r.value} onPress={() => setRunExperience(r.value)} />
-            ))}
+            <AppText variant="title">Wie trainierst du deine Ausdauer?</AppText>
+            <AppText color="textSecondary">Laufen, Radfahren oder beides im Wechsel. Rad schont die Gelenke.</AppText>
+            <View style={styles.chips}>
+              {CARDIO_OPTIONS.map((option) => (
+                <Chip key={option.value} label={option.label} selected={cardio === option.value} onPress={() => setCardio(option.value)} />
+              ))}
+            </View>
+            {cardio !== 'rad' ? (
+              <>
+                <AppText variant="heading">Wie weit läufst du aktuell?</AppText>
+                <AppText variant="caption" color="textSecondary">
+                  Damit Läufe weder unter- noch überfordern.
+                </AppText>
+                {RUN_LEVELS.map((r) => (
+                  <OptionCard key={r.value} title={r.title} hint={r.hint} selected={runExperience === r.value} onPress={() => setRunExperience(r.value)} />
+                ))}
+              </>
+            ) : (
+              <AppText variant="caption" color="textSecondary">
+                Dein Plan enthält lockere Radrunden und eine längere Tour. Aufzeichnen kannst du sie unter „Laufen & Rad“.
+              </AppText>
+            )}
           </>
         ) : null}
 

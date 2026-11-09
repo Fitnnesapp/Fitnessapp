@@ -32,6 +32,7 @@ const KIND_ICON: Record<PlanSession['kind'], keyof typeof Ionicons.glyphMap> = {
   strength: 'barbell',
   program: 'body',
   run: 'walk',
+  ride: 'bicycle',
 };
 
 /** Wochenplan mit Wenn-Dann-Sätzen. Jeder Tag lässt sich selbst belegen, die heutige Einheit direkt starten. */

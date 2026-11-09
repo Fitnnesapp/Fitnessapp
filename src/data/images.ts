@@ -22,9 +22,9 @@ export const SCENES = {
 export type SceneKey = keyof typeof SCENES;
 
 /** Bild zu einer Trainingsart. */
-export function sceneForKind(kind: 'strength' | 'run' | 'program' | 'rest'): ImageSourcePropType {
+export function sceneForKind(kind: 'strength' | 'run' | 'ride' | 'program' | 'rest'): ImageSourcePropType {
   if (kind === 'strength') return SCENES['hero-kraft'];
-  if (kind === 'run') return SCENES['hero-lauf'];
+  if (kind === 'run' || kind === 'ride') return SCENES['hero-lauf'];
   if (kind === 'program') return SCENES['hero-home'];
   return SCENES['challenge-neustart'];
 }

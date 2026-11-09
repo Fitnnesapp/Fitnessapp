@@ -14,6 +14,6 @@ export function hrefForSession(session: PlanSession, answers?: PlanAnswers): Hre
     if (routineId && getRoutine(routineId)) return { pathname: '/training/routine/[id]', params: { id: routineId } };
     return '/training/strength';
   }
-  if (session.kind === 'run') return '/training/running';
+  if (session.kind === 'run' || session.kind === 'ride') return '/training/running';
   return { pathname: '/training/program/[id]', params: { id: session.programId ?? '' } };
 }

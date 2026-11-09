@@ -58,7 +58,7 @@ type Hero = {
   href: Href | null;
   cta: string;
   note: string;
-  kind: 'strength' | 'run' | 'program' | 'rest';
+  kind: 'strength' | 'run' | 'ride' | 'program' | 'rest';
 };
 
 function hrefFor(target: SuggestionTarget): Href {

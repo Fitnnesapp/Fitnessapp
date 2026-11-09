@@ -7,6 +7,7 @@ import {
   combineGoals,
   ifThenSentence,
   migratePlanV1,
+  migratePlanV2,
   missedLastPlanned,
   nextMonday,
   nextSession,
@@ -234,4 +235,46 @@ test('Pläne aus Version 1 werden übernommen', () => {
   assert.deepEqual(plan.answers.places, ['studio', 'zuhause', 'draussen']);
   assert.equal(plan.sessions[0].id, '1-0');
   assert.equal(plan.answers.body, null);
+});
+
+test('Ausdauer mit Rad: alle Ausdauer-Einheiten werden Radfahrten, auch ohne Lauferfahrung', () => {
+  const plan = build({ goals: ['ausdauer'], days: [1, 3, 6], runExperience: 'keine', cardio: 'rad' });
+  assert.deepEqual(plan.sessions.map((s) => s.kind), ['ride', 'ride', 'ride']);
+  assert.equal(plan.sessions[2].title, 'Lange Radtour');
+  assert.ok(plan.sessions[2].minutes > plan.sessions[1].minutes);
+  assert.ok(plan.sessions.every((s) => !s.title.includes('Lauf')));
+});
+
+test('Ausdauer mit beidem: Rad und Lauf wechseln sich ab, Intervalle bleiben beim Laufen', () => {
+  const plan = build({ goals: ['ausdauer'], level: 'fortgeschritten', days: [1, 3, 6], cardio: 'beides' });
+  assert.deepEqual(plan.sessions.map((s) => s.kind), ['ride', 'run', 'run']);
+  assert.equal(plan.sessions[1].title, 'Intervall-Lauf');
+  const four = build({ goals: ['ausdauer'], level: 'fortgeschritten', days: [0, 1, 3, 6], cardio: 'beides' });
+  assert.ok(four.sessions.some((s) => s.kind === 'ride') && four.sessions.some((s) => s.kind === 'run'));
+});
+
+test('ohne Angabe zur Ausdauer-Art bleibt es beim Laufen', () => {
+  const plan = build({ goals: ['ausdauer'], days: [1, 3, 6] });
+  assert.ok(plan.sessions.every((s) => s.kind === 'run'));
+  const migrated = migratePlanV2(plan);
+  assert.equal(migrated.answers.cardio, 'laufen');
+  assert.deepEqual(migrated.sessions, plan.sessions);
+  assert.equal(migratePlanV2({ ...plan, answers: { ...plan.answers, cardio: 'rad' } }).answers.cardio, 'rad');
+});
+
+test('Knie und Rad: keine Rad-Intervalle, dafür ein Hinweis zur Schonung', () => {
+  const plan = build({
+    goals: ['ausdauer'],
+    level: 'fortgeschritten',
+    days: [1, 3, 6],
+    cardio: 'rad',
+    body: { age: 30, limitations: ['knie'] },
+  });
+  assert.ok(plan.sessions.every((s) => s.kind === 'ride' && s.title !== 'Rad-Intervalle'));
+  assert.ok(plan.notes.some((n) => n.includes('Radfahren')));
+});
+
+test('Vorlagen für einen Tag enthalten Radfahrten', () => {
+  const templates = sessionTemplates(answers(), options());
+  assert.ok(templates.some((t) => t.group === 'Radfahren' && t.session.kind === 'ride'));
 });
