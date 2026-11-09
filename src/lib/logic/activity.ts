@@ -27,6 +27,9 @@ export type WeekStats = {
   workouts: number;
   durationSeconds: number;
   distanceM: number;
+  /** Distanz nur aus Läufen bzw. nur aus Radfahrten, für die getrennten Wochenziele */
+  runDistanceM: number;
+  rideDistanceM: number;
   byType: Record<ActivityType, number>;
   /** Anzahl Workouts je Wochentag, Montag zuerst */
   perDay: number[];
@@ -42,6 +45,8 @@ export function weekStats(activities: Activity[], weekStartAt: number): WeekStat
     workouts: 0,
     durationSeconds: 0,
     distanceM: 0,
+    runDistanceM: 0,
+    rideDistanceM: 0,
     byType: { strength: 0, home: 0, running: 0, cycling: 0 },
     perDay: Array(7).fill(0),
   };
@@ -52,6 +57,8 @@ export function weekStats(activities: Activity[], weekStartAt: number): WeekStat
     stats.workouts += 1;
     stats.durationSeconds += a.durationSeconds;
     stats.distanceM += a.distanceM;
+    if (a.type === 'running') stats.runDistanceM += a.distanceM;
+    if (a.type === 'cycling') stats.rideDistanceM += a.distanceM;
     stats.byType[a.type] += 1;
     const day = dayStarts.findIndex((s, i) => i < 7 && a.startedAt >= s && a.startedAt < dayStarts[i + 1]);
     stats.perDay[day] += 1;

@@ -99,8 +99,11 @@ export default function DashboardScreen() {
   const name = useSettings((state) => state.displayName).trim();
   const goalSetting = useSettings((state) => state.weeklyGoalDays);
   const runGoalM = useSettings((state) => state.weeklyRunGoalM);
-  const runGoalText =
-    runGoalM !== null ? formatProgress(Math.round((runGoalM / (units === 'metric' ? 1000 : 1609.344)) * 10) / 10) : '';
+  const rideGoalM = useSettings((state) => state.weeklyRideGoalM);
+  const goalText = (meters: number | null) =>
+    meters !== null ? formatProgress(Math.round((meters / (units === 'metric' ? 1000 : 1609.344)) * 10) / 10) : '';
+  const runGoalText = goalText(runGoalM);
+  const rideGoalText = goalText(rideGoalM);
   const activities = useActivities();
   const now = useNow(60_000);
   const strengthHistory = useWorkouts((state) => state.history);
@@ -143,6 +146,9 @@ export default function DashboardScreen() {
   const today = (new Date(now).getDay() + 6) % 7;
   const time = durationParts(week.durationSeconds);
   const distance = distanceParts(week.distanceM, units);
+  // Die Wochenziele zählen getrennt: Radkilometer füllen nicht das Laufziel
+  const runDistance = distanceParts(week.runDistanceM, units);
+  const rideDistance = distanceParts(week.rideDistanceM, units);
 
   // Genau eine nächste Handlung: mit Plan die heutige Einheit, sonst der regelbasierte Vorschlag
   const hero = useMemo((): Hero => {
@@ -368,20 +374,39 @@ export default function DashboardScreen() {
           {runGoalM !== null ? (
             <Pressable
               accessibilityRole="link"
-              accessibilityLabel={`Laufziel: ${distance.value} von ${runGoalText} ${distance.unit}`}
+              accessibilityLabel={`Laufziel: ${runDistance.value} von ${runGoalText} ${runDistance.unit}`}
               onPress={() => router.push('/training/running')}
               style={({ pressed }) => [styles.runGoal, pressed && { opacity: 0.6 }]}>
               <View style={styles.inline}>
                 <Ionicons
-                  name={week.distanceM >= runGoalM ? 'checkmark-circle' : 'walk-outline'}
+                  name={week.runDistanceM >= runGoalM ? 'checkmark-circle' : 'walk-outline'}
                   size={18}
                   color={theme.accent}
                 />
                 <AppText variant="caption" color="textSecondary" style={styles.flex}>
-                  Laufziel: {distance.value} von {runGoalText} {distance.unit}
+                  Laufziel: {runDistance.value} von {runGoalText} {runDistance.unit}
                 </AppText>
               </View>
-              <ProgressBar progress={Math.min(1, week.distanceM / runGoalM)} height={6} />
+              <ProgressBar progress={Math.min(1, week.runDistanceM / runGoalM)} height={6} />
+            </Pressable>
+          ) : null}
+          {rideGoalM !== null ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={`Radziel: ${rideDistance.value} von ${rideGoalText} ${rideDistance.unit}`}
+              onPress={() => router.push('/training/running')}
+              style={({ pressed }) => [styles.runGoal, pressed && { opacity: 0.6 }]}>
+              <View style={styles.inline}>
+                <Ionicons
+                  name={week.rideDistanceM >= rideGoalM ? 'checkmark-circle' : 'bicycle-outline'}
+                  size={18}
+                  color={theme.accent}
+                />
+                <AppText variant="caption" color="textSecondary" style={styles.flex}>
+                  Radziel: {rideDistance.value} von {rideGoalText} {rideDistance.unit}
+                </AppText>
+              </View>
+              <ProgressBar progress={Math.min(1, week.rideDistanceM / rideGoalM)} height={6} />
             </Pressable>
           ) : null}
 

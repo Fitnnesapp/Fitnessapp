@@ -105,3 +105,18 @@ test('Zeitumstellung und Monatsgrenze brechen die Serie nicht', () => {
     4,
   );
 });
+
+test('Wochenstatistik trennt Lauf- und Radkilometer für die Wochenziele', () => {
+  const start = at(2026, 10, 12, 0);
+  const stats = weekStats(
+    [
+      act('r', at(2026, 10, 13), 'running', 1800, 5000),
+      act('b', at(2026, 10, 14), 'cycling', 3600, 25_000),
+      act('alt', at(2026, 10, 5), 'cycling', 3600, 40_000),
+    ],
+    start,
+  );
+  assert.equal(stats.runDistanceM, 5000);
+  assert.equal(stats.rideDistanceM, 25_000);
+  assert.equal(stats.distanceM, 30_000);
+});
