@@ -25,6 +25,8 @@ import { isRide, onlyRuns, paceSecPerKm, speedKmh } from '@/lib/logic/run-stats'
 import { formatDistance, formatPace, formatSpeed, paceUnitLabel, speedUnitLabel } from '@/lib/logic/units';
 import { requestTrackingPermission } from '@/lib/location/tracker';
 import { useRunStore } from '@/lib/storage/run-store';
+import { primarySport } from '@/lib/logic/plan';
+import { usePlanStore } from '@/lib/storage/plan-store';
 import { useSettings } from '@/lib/storage/settings-store';
 import type { Sport } from '@/types/running';
 
@@ -46,6 +48,11 @@ export default function RunningScreen() {
   const history = useMemo(() => onlyRuns(allSessions), [allSessions]);
   const startRun = useRunStore((state) => state.startRun);
 
+  // Steht heute eine Radfahrt im Plan oder setzt der Plan ganz aufs Rad, ist die Radtour die Hauptaktion
+  const plan = usePlanStore((state) => state.plan);
+  const primary: Sport = plan ? primarySport(plan, now) : 'run';
+  const rideFirst = primary === 'ride';
+
   const [denied, setDenied] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -55,6 +62,13 @@ export default function RunningScreen() {
   const weekM = useMemo(
     () => history.filter((run) => run.startedAt >= currentWeekStart).reduce((sum, run) => sum + run.distanceM, 0),
     [history, currentWeekStart],
+  );
+  const weekRideM = useMemo(
+    () =>
+      allSessions
+        .filter((session) => isRide(session) && session.startedAt >= currentWeekStart)
+        .reduce((sum, session) => sum + session.distanceM, 0),
+    [allSessions, currentWeekStart],
   );
   // Tage bis einschließlich Sonntag
   const daysLeft = 7 - ((new Date(now).getDay() + 6) % 7);
@@ -100,21 +114,25 @@ export default function RunningScreen() {
           <ImageCard
             source={SCENES['hero-lauf']}
             height={300}
-            onPress={busy ? undefined : () => void start()}
-            accessibilityLabel="Lauf starten">
+            onPress={busy ? undefined : () => void start(primary)}
+            accessibilityLabel={rideFirst ? 'Radtour starten' : 'Lauf starten'}>
             <AppText variant="eyebrow" style={{ color: OnImage.accent }}>
-              {weekM > 0 ? `DIESE WOCHE ${formatDistance(weekM, units).toUpperCase()}` : 'BEREIT?'}
+              {(rideFirst ? weekRideM : weekM) > 0
+                ? `DIESE WOCHE ${formatDistance(rideFirst ? weekRideM : weekM, units).toUpperCase()}${rideFirst ? ' AUF DEM RAD' : ''}`
+                : 'BEREIT?'}
             </AppText>
             <AppText variant="display" style={styles.heroTitle}>
-              {history.length === 0 ? 'Dein erster Lauf' : 'Raus mit dir'}
+              {rideFirst ? 'Rauf aufs Rad' : history.length === 0 ? 'Dein erster Lauf' : 'Raus mit dir'}
             </AppText>
             <AppText style={styles.onImageSoft}>
-              Distanz, Tempo, Kilometerzeiten und Höhenmeter per GPS. Die Strecke bleibt auf deinem Handy.
+              {rideFirst
+                ? 'Distanz, Geschwindigkeit und Höhenmeter per GPS. Die Strecke bleibt auf deinem Handy.'
+                : 'Distanz, Tempo, Kilometerzeiten und Höhenmeter per GPS. Die Strecke bleibt auf deinem Handy.'}
             </AppText>
             <View style={[styles.cta, { backgroundColor: OnImage.accent }]}>
               <Ionicons name="play" size={20} color={OnImage.onAccent} />
               <AppText variant="heading" style={{ color: OnImage.onAccent }}>
-                {busy ? 'Einen Moment …' : 'Lauf starten'}
+                {busy ? 'Einen Moment …' : rideFirst ? 'Radtour starten' : 'Lauf starten'}
               </AppText>
             </View>
           </ImageCard>
@@ -123,10 +141,10 @@ export default function RunningScreen() {
 
       {!active ? (
         <Button
-          title="Radtour mit GPS starten"
+          title={rideFirst ? 'Lauf mit GPS starten' : 'Radtour mit GPS starten'}
           variant="secondary"
           disabled={busy}
-          onPress={() => void start('ride')}
+          onPress={() => void start(rideFirst ? 'run' : 'ride')}
         />
       ) : null}
 

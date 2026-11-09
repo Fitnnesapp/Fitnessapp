@@ -620,3 +620,13 @@ export function migratePlanV1(old: PlanV1): TrainingPlan {
 export function migratePlanV2(plan: TrainingPlan): TrainingPlan {
   return plan.answers.cardio ? plan : { ...plan, answers: { ...plan.answers, cardio: 'laufen' } };
 }
+
+/**
+ * Welche Ausdauer-Art heute vorne steht: die heute geplante Einheit entscheidet,
+ * sonst die im Plan gewählte Art (bei "beides" das Laufen).
+ */
+export function primarySport(plan: TrainingPlan, now: number): 'run' | 'ride' {
+  const today = sessionsForDay(plan, now).find((s) => s.kind === 'run' || s.kind === 'ride');
+  if (today) return today.kind === 'ride' ? 'ride' : 'run';
+  return plan.answers.cardio === 'rad' ? 'ride' : 'run';
+}

@@ -12,6 +12,7 @@ import {
   nextMonday,
   nextSession,
   planDayCount,
+  primarySport,
   plannedDaysThisWeek,
   weekGoalDays,
   recommendedDays,
@@ -277,4 +278,16 @@ test('Knie und Rad: keine Rad-Intervalle, dafür ein Hinweis zur Schonung', () =
 test('Vorlagen für einen Tag enthalten Radfahrten', () => {
   const templates = sessionTemplates(answers(), options());
   assert.ok(templates.some((t) => t.group === 'Radfahren' && t.session.kind === 'ride'));
+});
+
+test('primarySport: heutige Einheit entscheidet, sonst die gewählte Ausdauer-Art', () => {
+  // NOW ist ein Samstag (Tag 5)
+  const both = build({ goals: ['ausdauer'], level: 'fortgeschritten', days: [1, 3, 5], cardio: 'beides' });
+  const saturday = both.sessions.find((s) => s.day === 5);
+  assert.equal(primarySport(both, NOW), saturday?.kind === 'ride' ? 'ride' : 'run');
+  const rideOnly = build({ goals: ['ausdauer'], days: [1, 3], cardio: 'rad' });
+  assert.equal(primarySport(rideOnly, NOW), 'ride');
+  assert.equal(primarySport(build({ goals: ['ausdauer'], days: [1, 3] }), NOW), 'run');
+  const rideToday = build({ goals: ['ausdauer'], days: [5], cardio: 'rad' });
+  assert.equal(primarySport(rideToday, NOW), 'ride');
 });
