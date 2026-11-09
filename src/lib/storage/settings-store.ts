@@ -23,6 +23,8 @@ type SettingsState = {
   restSeconds: number;
   /** Wöchentliches Laufziel in Metern, null = kein Ziel */
   weeklyRunGoalM: number | null;
+  /** Wochenziel fürs Radfahren in Metern, null = keins */
+  weeklyRideGoalM: number | null;
   /** Zuletzt gestartete Einstellungen des Intervall-Timers, null = Standard (Tabata) */
   lastInterval: IntervalSettings | null;
   /** Persönlicher Grund fürs Training in eigenen Worten, leer = keiner */
@@ -43,6 +45,7 @@ type SettingsState = {
   setWeeklyGoalDays: (days: number) => void;
   setRestSeconds: (seconds: number) => void;
   setWeeklyRunGoalM: (meters: number | null) => void;
+  setWeeklyRideGoalM: (meters: number | null) => void;
   setLastInterval: (settings: IntervalSettings) => void;
   setWhy: (why: string) => void;
   setAutoPause: (on: boolean) => void;
@@ -60,6 +63,7 @@ const DEFAULTS = {
   weeklyGoalDays: 3,
   restSeconds: 90,
   weeklyRunGoalM: null as number | null,
+  weeklyRideGoalM: null as number | null,
   lastInterval: null as IntervalSettings | null,
   why: '',
   autoPause: true,
@@ -77,6 +81,7 @@ type PersistedSettings = Pick<
   | 'weeklyGoalDays'
   | 'restSeconds'
   | 'weeklyRunGoalM'
+  | 'weeklyRideGoalM'
   | 'lastInterval'
   | 'why'
   | 'autoPause'
@@ -85,7 +90,7 @@ type PersistedSettings = Pick<
 >;
 
 /** Version des gespeicherten Formats. Bei Änderungen hochzählen und in `migrate` umwandeln. */
-const SETTINGS_STORE_VERSION = 9;
+const SETTINGS_STORE_VERSION = 10;
 
 /** Alle Einstellungen liegen ausschließlich lokal auf dem Gerät, es gibt keine Netzwerkzugriffe. */
 export const useSettings = create<SettingsState>()(
@@ -102,6 +107,9 @@ export const useSettings = create<SettingsState>()(
       // 1 bis 300 km pro Woche, null schaltet das Ziel ab
       setWeeklyRunGoalM: (meters) =>
         set({ weeklyRunGoalM: meters === null ? null : Math.min(300_000, Math.max(1_000, Math.round(meters))) }),
+      // 5 bis 1000 km pro Woche, null schaltet das Ziel ab
+      setWeeklyRideGoalM: (meters) =>
+        set({ weeklyRideGoalM: meters === null ? null : Math.min(1_000_000, Math.max(5_000, Math.round(meters))) }),
       setWhy: (why) => set({ why: cleanWhy(why) }),
       setAutoPause: (on) => set({ autoPause: on }),
       setVoiceSplits: (on) => set({ voiceSplits: on }),
@@ -132,6 +140,7 @@ export const useSettings = create<SettingsState>()(
         weeklyGoalDays,
         restSeconds,
         weeklyRunGoalM,
+        weeklyRideGoalM,
         lastInterval,
         why,
         autoPause,
@@ -146,6 +155,7 @@ export const useSettings = create<SettingsState>()(
         weeklyGoalDays,
         restSeconds,
         weeklyRunGoalM,
+        weeklyRideGoalM,
         lastInterval,
         why,
         autoPause,
@@ -160,7 +170,8 @@ export const useSettings = create<SettingsState>()(
       // Version 5 → 6: persönliches Warum (Standard: leer)
       // Version 6 → 7: Auto-Pause bei Lauf und Rad (Standard: an)
       // Version 7 → 8: Sprachansagen pro Kilometer (Standard: an)
-      // Version 8 → 9: Zieltempo für Läufe (Standard: keins). Bestehende Werte bleiben jeweils erhalten.
+      // Version 8 → 9: Zieltempo für Läufe (Standard: keins)
+      // Version 9 → 10: Wochenziel fürs Radfahren (Standard: keins). Bestehende Werte bleiben jeweils erhalten.
       migrate: (persisted) => ({ ...DEFAULTS, ...(persisted as Partial<PersistedSettings>) }),
       onRehydrateStorage: () => () => useSettings.setState({ hydrated: true }),
     },

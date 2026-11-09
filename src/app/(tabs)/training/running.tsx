@@ -53,6 +53,8 @@ export default function RunningScreen() {
   const primary: Sport = plan ? primarySport(plan, now) : 'run';
   const rideFirst = primary === 'ride';
 
+  const hasRides = useMemo(() => allSessions.some(isRide), [allSessions]);
+  const rideGoalSet = useSettings((state) => state.weeklyRideGoalM !== null);
   const [denied, setDenied] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -156,7 +158,11 @@ export default function RunningScreen() {
         />
       ) : null}
 
+      {rideFirst ? <RunGoalCard sport="ride" weekM={weekRideM} weekStartAt={currentWeekStart} daysLeft={daysLeft} /> : null}
       <RunGoalCard weekM={weekM} weekStartAt={currentWeekStart} daysLeft={daysLeft} />
+      {!rideFirst && (hasRides || rideGoalSet) ? (
+        <RunGoalCard sport="ride" weekM={weekRideM} weekStartAt={currentWeekStart} daysLeft={daysLeft} />
+      ) : null}
 
       {denied ? (
         <Card>

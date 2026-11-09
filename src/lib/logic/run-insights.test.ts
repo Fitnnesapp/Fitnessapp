@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { evenSplits, formatRaceTime, predictRaces, riegel, runBestsSummary, suggestWeeklyRunGoalM } from './run-insights.ts';
+import { evenSplits, formatRaceTime, predictRaces, riegel, runBestsSummary, suggestWeeklyRideGoalM, suggestWeeklyRunGoalM } from './run-insights.ts';
 
 const NOW = Date.UTC(2026, 10, 4);
 const DAY = 86_400_000;
@@ -86,4 +86,15 @@ test('Zwischenzeiten bei gleichmäßigem Tempo', () => {
   assert.equal(half[3].meters, 20000);
   assert.equal(half[4].seconds, 6000);
   assert.deepEqual(evenSplits(0, 100), []);
+});
+
+test('Rad-Wochenziel: Schnitt plus 10 %, auf 10 km gerundet, ohne Fahrten 40 km', () => {
+  const week = 7 * DAY;
+  assert.equal(suggestWeeklyRideGoalM([], NOW), 40_000);
+  // 4 Wochen mit je 62 km → 68,2 km → 70 km
+  const rides = [1, 2, 3, 4].map((i) => ({ startedAt: NOW - i * week + DAY, distanceM: 62_000 }));
+  assert.equal(suggestWeeklyRideGoalM(rides, NOW), 70_000);
+  // Fahrten dieser Woche zählen nicht, kleine Umfänge ergeben mindestens 20 km
+  assert.equal(suggestWeeklyRideGoalM([{ startedAt: NOW + DAY, distanceM: 90_000 }], NOW), 40_000);
+  assert.equal(suggestWeeklyRideGoalM([{ startedAt: NOW - DAY, distanceM: 8_000 }], NOW), 20_000);
 });
