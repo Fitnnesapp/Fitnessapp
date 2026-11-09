@@ -85,6 +85,11 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - **Dein Warum**: eigener Grund fürs Training, erscheint nach Pausen und zum Wochenstart
   - Willkommen mit Nutzenversprechen, Karte „Deine Daten“ im Profil, GPS mit iOS-Bewegungsart Fitness
   - Speicher-Migrationen: Einstellungen v9, Läufe v2, neu: Health-Abgleich v1
+- **Ausbau 9. November 2026 (Radfahren im Plan):**
+  - **Trainingsplan mit Rad**: Im Plan-Einstieg wählbar, ob die Ausdauer mit Laufen, Radfahren oder beidem im Wechsel trainiert wird. Rad-Einheiten (lockere Runde, Intervalle, lange Tour) im Plan und beim Belegen einzelner Tage; bei Kniebeschwerden mit Hinweis zur Schonung
+  - **Laufen & Rad**: Steht heute eine Radfahrt im Plan, ist „Radtour starten“ die Hauptaktion
+  - **Wochenziel fürs Rad** (eigene Karte, im Profil einstellbar, Fortschritt auf dem Start). Das Laufziel auf dem Start zählt jetzt nur noch Laufkilometer
+  - Speicher-Migrationen: Plan v3, Einstellungen v10
 - **Phase 8 (Ausbau):**
   - Jahresrückblick (Start-Tab): Workouts, Zeit, Distanz, Volumen, Rekorde, längste Serie, stärkster Monat, Lieblingstag und -übung, wählbares Jahr
   - Vorschlag für heute aus einfachen, nachvollziehbaren Regeln (keine KI); führt nie zu einem Premium-Programm
