@@ -7,9 +7,11 @@ import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ImageCard } from '@/components/ui/image-card';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { Screen } from '@/components/ui/screen';
 import { OnImage, Radius, Spacing } from '@/constants/theme';
 import { SCENES } from '@/data/images';
+import { useActivities } from '@/hooks/use-activities';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { getProgram } from '@/data/programs';
@@ -19,6 +21,7 @@ import {
   GOAL_LABELS,
   ifThenSentence,
   planDayCount,
+  planWeekProgress,
   PLACE_LABELS,
   weekdayOf,
   WEEKDAY_NAMES,
@@ -42,6 +45,7 @@ export default function PlanScreen() {
   const now = useNow(60_000);
   const plan = usePlanStore((state) => state.plan);
   const clearPlan = usePlanStore((state) => state.clearPlan);
+  const activities = useActivities();
   const { neu } = useLocalSearchParams<{ neu?: string }>();
 
   if (!plan) {
@@ -75,6 +79,7 @@ export default function PlanScreen() {
   const started = now >= plan.startsAt;
   const today = weekdayOf(now);
   const totalMinutes = plan.sessions.reduce((sum, s) => sum + s.minutes, 0);
+  const week = planWeekProgress(plan, activities, now);
   const openDay = (day: number) => router.push({ pathname: '/plan/day', params: { d: String(day) } });
 
   return (
@@ -105,6 +110,25 @@ export default function PlanScreen() {
           <AppText color="textSecondary">Start: {dayHeading(plan.startsAt)}. Bis dahin darfst du gern schon reinschnuppern.</AppText>
         )}
       </View>
+
+      {started && week.planned > 0 ? (
+        <Card>
+          <AppText variant="label" color="textSecondary">
+            DIESE WOCHE
+          </AppText>
+          <AppText variant="title">
+            {week.done} <AppText color="textSecondary">von {week.planned} geplanten Tagen</AppText>
+          </AppText>
+          <ProgressBar progress={week.done / week.planned} />
+          <AppText variant="caption" color={week.done >= week.planned ? 'accent' : 'textSecondary'}>
+            {week.done >= week.planned
+              ? 'Alle geplanten Tage dieser Woche geschafft.'
+              : week.done === 0
+                ? 'Ein Tag zählt, sobald du an ihm trainiert hast, egal welche Einheit.'
+                : 'Jeder erledigte Tag zählt. Der nächste steht unten.'}
+          </AppText>
+        </Card>
+      ) : null}
 
       {/* Nutzen des Plans: was er nach WHO bringt, wenn man ihn wie geplant trainiert */}
       {(() => {
@@ -157,6 +181,7 @@ export default function PlanScreen() {
       {WEEKDAY_NAMES.map((name, day) => {
         const sessions = plan.sessions.filter((s) => s.day === day);
         const isToday = started && day === today;
+        const isDone = started && week.doneDays[day];
 
         if (sessions.length === 0) {
           return (
@@ -181,12 +206,16 @@ export default function PlanScreen() {
           <Card key={name} style={isToday ? { borderColor: theme.accent, borderWidth: 2 } : undefined}>
             <View style={styles.row}>
               <View style={[styles.dayBadge, { backgroundColor: isToday ? theme.accent : theme.surfaceAlt }]}>
-                <AppText variant="label" style={{ color: isToday ? theme.onAccent : theme.text }}>
-                  {name.slice(0, 2)}
-                </AppText>
+                {isDone ? (
+                  <Ionicons name="checkmark" size={22} color={isToday ? theme.onAccent : theme.accent} />
+                ) : (
+                  <AppText variant="label" style={{ color: isToday ? theme.onAccent : theme.text }}>
+                    {name.slice(0, 2)}
+                  </AppText>
+                )}
               </View>
-              <AppText variant="caption" color={isToday ? 'accent' : 'textSecondary'} style={styles.flex}>
-                {isToday ? 'HEUTE' : name.toUpperCase()}
+              <AppText variant="caption" color={isToday || isDone ? 'accent' : 'textSecondary'} style={styles.flex}>
+                {isToday ? (isDone ? 'HEUTE · ERLEDIGT' : 'HEUTE') : isDone ? `${name.toUpperCase()} · ERLEDIGT` : name.toUpperCase()}
                 {sessions.length > 1 ? ' · 2 EINHEITEN' : ''}
               </AppText>
               <Pressable accessibilityRole="button" accessibilityLabel={`${name} bearbeiten`} onPress={() => openDay(day)} hitSlop={10}>
@@ -217,7 +246,11 @@ export default function PlanScreen() {
               <AppText variant="caption">{ifThenSentence(sessions[0], plan.answers.time)}</AppText>
             </View>
             {isToday ? (
-              <Button title="Jetzt starten" onPress={() => router.push(hrefForSession(sessions[0], plan.answers))} />
+              <Button
+                title={isDone ? 'Noch eine Einheit starten' : 'Jetzt starten'}
+                variant={isDone ? 'secondary' : 'primary'}
+                onPress={() => router.push(hrefForSession(sessions[0], plan.answers))}
+              />
             ) : null}
           </Card>
         );

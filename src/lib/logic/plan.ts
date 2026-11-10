@@ -573,6 +573,35 @@ export function plannedDaysThisWeek(plan: TrainingPlan, weekStartAt: number): nu
   return days.size;
 }
 
+export type PlanWeekProgress = {
+  /** Je Wochentag (0 = Montag): geplanter Tag dieser Woche, an dem trainiert wurde */
+  doneDays: boolean[];
+  /** Geplante Trainingstage dieser Woche (ab Planstart) */
+  planned: number;
+  done: number;
+};
+
+/**
+ * Fortschritt im Plan für die laufende Woche. Ein geplanter Tag gilt als erledigt, sobald an ihm
+ * irgendein Training stattfand: Wer statt des Laufs aufs Rad steigt, hat den Tag trotzdem genutzt.
+ */
+export function planWeekProgress(plan: TrainingPlan, activities: Activity[], now: number): PlanWeekProgress {
+  const today = new Date(now);
+  const mondayOffset = (today.getDay() + 6) % 7;
+  const trainedDays = new Set(activities.map((a) => dayKey(a.startedAt)));
+  const doneDays = Array<boolean>(7).fill(false);
+  let planned = 0;
+  for (let day = 0; day < 7; day++) {
+    if (!plan.sessions.some((s) => s.day === day)) continue;
+    const at = new Date(today.getFullYear(), today.getMonth(), today.getDate() - mondayOffset + day).getTime();
+    // Tage vor dem Planstart gehören noch nicht zum Plan (startsAt ist ein Tagesbeginn)
+    if (at < startOfDay(plan.startsAt)) continue;
+    planned += 1;
+    doneDays[day] = day <= mondayOffset && trainedDays.has(dayKey(at));
+  }
+  return { doneDays, planned, done: doneDays.filter(Boolean).length };
+}
+
 /**
  * Wochenziel in Trainingstagen: die geplanten Tage dieser Woche, sonst der Standard.
  * Liegt die Woche vor dem Planstart (0 geplante Tage), gilt der Standard statt eines Ziels von 0 oder 1.

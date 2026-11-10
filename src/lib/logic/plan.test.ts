@@ -12,6 +12,7 @@ import {
   nextMonday,
   nextSession,
   planDayCount,
+  planWeekProgress,
   primarySport,
   plannedDaysThisWeek,
   weekGoalDays,
@@ -290,4 +291,23 @@ test('primarySport: heutige Einheit entscheidet, sonst die gewählte Ausdauer-Ar
   assert.equal(primarySport(build({ goals: ['ausdauer'], days: [1, 3] }), NOW), 'run');
   const rideToday = build({ goals: ['ausdauer'], days: [5], cardio: 'rad' });
   assert.equal(primarySport(rideToday, NOW), 'ride');
+});
+
+test('Wochenfortschritt: geplante Tage mit Training gelten als erledigt', () => {
+  // NOW ist Samstag, der 24.10.2026; die Woche beginnt am Montag, 19.10.
+  const plan = { ...build({ days: [0, 2, 4, 6] }), startsAt: new Date(2026, 9, 1).getTime() };
+  const act = (d: number, type: Activity['type'] = 'home'): Activity => ({ id: String(d), type, startedAt: new Date(2026, 9, d, 18).getTime(), durationSeconds: 600, distanceM: 0 });
+  const progress = planWeekProgress(plan, [act(12), act(19), act(20), act(21, 'cycling')], NOW);
+  // Montag und Mittwoch erledigt, Dienstag war nicht geplant, der 12. liegt in der Vorwoche
+  assert.deepEqual(progress.doneDays, [true, false, true, false, false, false, false]);
+  assert.equal(progress.planned, 4);
+  assert.equal(progress.done, 2);
+});
+
+test('Wochenfortschritt: Tage vor dem Planstart zählen nicht', () => {
+  const plan = { ...build({ days: [0, 2, 4] }), startsAt: new Date(2026, 9, 21).getTime() };
+  const act: Activity = { id: 'mo', type: 'home', startedAt: new Date(2026, 9, 19, 18).getTime(), durationSeconds: 600, distanceM: 0 };
+  const progress = planWeekProgress(plan, [act], NOW);
+  assert.equal(progress.planned, 2);
+  assert.equal(progress.done, 0);
 });
