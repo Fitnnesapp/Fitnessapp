@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-import { ifThenSentence, sessionForDay, type TrainingPlan } from '@/lib/logic/plan';
+import { ifThenSentence, isPlanPaused, sessionForDay, type TrainingPlan } from '@/lib/logic/plan';
 import {
   nextPlanReminderAt,
   nextReminderAt,
@@ -32,7 +32,8 @@ function planReminder(plan: TrainingPlan | null, enabled: boolean, trainedToday:
     enabled,
     planDays,
     time: plan.answers.time,
-    startsAt: plan.startsAt,
+    // In einer Pause kommt die nächste Erinnerung erst am ersten Trainingstag danach
+    startsAt: plan.pause && isPlanPaused(plan, now) ? Math.max(plan.startsAt, plan.pause.until) : plan.startsAt,
     trainedToday,
     now,
   });
@@ -59,6 +60,8 @@ export async function syncStreakReminder(input: {
     await Notifications.cancelAllScheduledNotificationsAsync();
 
     let streakAt = nextReminderAt(input);
+    // Während einer Plan-Pause (Krankheit, Urlaub) gibt es auch keine Serien-Erinnerung
+    if (streakAt !== null && input.plan && isPlanPaused(input.plan, streakAt)) streakAt = null;
     // Kam heute schon die Plan-Erinnerung, entfällt die Serien-Erinnerung am selben Abend
     if (streakAt !== null && input.plan && sameDay(streakAt, input.now)) {
       const planDays = [...new Set(input.plan.sessions.filter((s) => !s.extra).map((s) => s.day))];

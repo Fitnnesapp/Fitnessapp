@@ -4,6 +4,9 @@ import { test } from 'node:test';
 import type { Activity } from './activity.ts';
 import {
   buildPlan,
+  isPlanPaused,
+  pausePlan,
+  resumePlan,
   catchUpSession,
   combineGoals,
   ifThenSentence,
@@ -336,4 +339,39 @@ test('Nachholen: nicht an geplanten Tagen und nicht für Tage vor dem Planstart'
   assert.equal(catchUpSession(fresh, [], NOW), null);
   const later = { ...build({ days: [0, 2] }), startsAt: new Date(2026, 9, 26).getTime() };
   assert.equal(catchUpSession(later, [], NOW), null);
+});
+
+test('Pause: keine Einheiten, nichts verpasst, nächste Einheit erst danach', () => {
+  // NOW ist Samstag, der 24.10.2026. Geplant: Montag, Mittwoch, Freitag, Sonntag.
+  const base = { ...build({ days: [0, 2, 4, 6] }), startsAt: new Date(2026, 9, 1).getTime() };
+  const thursday = new Date(2026, 9, 22, 9).getTime();
+  const paused = pausePlan(base, thursday, 7); // Do 22.10. bis einschließlich Mi 28.10.
+  assert.equal(isPlanPaused(paused, new Date(2026, 9, 21, 23).getTime()), false);
+  assert.equal(isPlanPaused(paused, NOW), true);
+  assert.equal(isPlanPaused(paused, new Date(2026, 9, 28, 23).getTime()), true);
+  assert.equal(isPlanPaused(paused, new Date(2026, 9, 29, 0).getTime()), false);
+  const sunday = new Date(2026, 9, 25, 12).getTime();
+  assert.deepEqual(sessionsForDay(paused, sunday), []);
+  // Freitag fiel in die Pause: gilt nicht als verpasst, wenn Mittwoch trainiert wurde
+  const wed: Activity = { id: 'mi', type: 'home', startedAt: new Date(2026, 9, 21, 18).getTime(), durationSeconds: 600, distanceM: 0 };
+  assert.equal(missedLastPlanned(paused, [wed], NOW), false);
+  assert.equal(catchUpSession(paused, [], NOW), null);
+  // Nächste Einheit: Freitag, 30.10. (Montag und Mittwoch liegen in der Pause)
+  assert.deepEqual([nextSession(paused, NOW)?.session.day, nextSession(paused, NOW)?.inDays], [4, 6]);
+  // Diese Woche zählen nur Montag und Mittwoch
+  assert.equal(plannedDaysThisWeek(paused, new Date(2026, 9, 19).getTime()), 2);
+  assert.equal(planWeekProgress(paused, [wed], NOW).planned, 2);
+});
+
+test('Pause beenden: vergangene Pausentage bleiben Pause, ab heute gilt der Plan wieder', () => {
+  const base = { ...build({ days: [0, 2, 4, 6] }), startsAt: new Date(2026, 9, 1).getTime() };
+  const paused = pausePlan(base, new Date(2026, 9, 22, 9).getTime(), 7);
+  const resumed = resumePlan(paused, NOW);
+  assert.equal(isPlanPaused(resumed, NOW), false);
+  assert.equal(isPlanPaused(resumed, new Date(2026, 9, 23, 12).getTime()), true);
+  assert.equal(sessionsForDay(resumed, new Date(2026, 9, 25, 12).getTime()).length > 0, true);
+  // Am selben Tag wieder beendet: die Pause verschwindet ganz
+  const sameDay = resumePlan(pausePlan(base, NOW, 3), NOW);
+  assert.equal(sameDay.pause, undefined);
+  assert.equal(resumePlan(base, NOW), base);
 });

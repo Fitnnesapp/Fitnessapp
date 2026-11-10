@@ -1,11 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { IconBadge } from '@/components/ui/icon-badge';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
 import { ImageCard } from '@/components/ui/image-card';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { Screen } from '@/components/ui/screen';
@@ -21,9 +23,12 @@ import {
   catchUpSession,
   GOAL_LABELS,
   ifThenSentence,
+  isPlanPaused,
+  pausePlan,
   planDayCount,
   planWeekProgress,
   PLACE_LABELS,
+  resumePlan,
   weekdayOf,
   WEEKDAY_NAMES,
   type PlanSession,
@@ -31,6 +36,12 @@ import {
 import { confirmAction } from '@/lib/confirm';
 import { hrefForSession } from '@/lib/plan-href';
 import { usePlanStore } from '@/lib/storage/plan-store';
+
+const PAUSE_OPTIONS = [
+  { days: 3, label: '3 Tage' },
+  { days: 7, label: '1 Woche' },
+  { days: 14, label: '2 Wochen' },
+];
 
 const KIND_ICON: Record<PlanSession['kind'], keyof typeof Ionicons.glyphMap> = {
   strength: 'barbell',
@@ -46,6 +57,8 @@ export default function PlanScreen() {
   const now = useNow(60_000);
   const plan = usePlanStore((state) => state.plan);
   const clearPlan = usePlanStore((state) => state.clearPlan);
+  const setPlan = usePlanStore((state) => state.setPlan);
+  const [pausing, setPausing] = useState(false);
   const activities = useActivities();
   const { neu } = useLocalSearchParams<{ neu?: string }>();
 
@@ -78,6 +91,7 @@ export default function PlanScreen() {
   }
 
   const started = now >= plan.startsAt;
+  const paused = isPlanPaused(plan, now);
   const today = weekdayOf(now);
   const totalMinutes = plan.sessions.reduce((sum, s) => sum + s.minutes, 0);
   const week = planWeekProgress(plan, activities, now);
@@ -113,7 +127,23 @@ export default function PlanScreen() {
         )}
       </View>
 
-      {started && week.planned > 0 ? (
+      {paused && plan.pause ? (
+        <Card style={{ borderColor: theme.accent }}>
+          <View style={styles.row}>
+            <Ionicons name="pause-circle" size={22} color={theme.accent} />
+            <AppText variant="heading" style={styles.flex}>
+              Plan pausiert
+            </AppText>
+          </View>
+          <AppText color="textSecondary">
+            Bis einschließlich {dayHeading(plan.pause.until - 1)}. In der Pause gibt es keine Erinnerungen, und nichts gilt
+            als verpasst. Erhol dich gut.
+          </AppText>
+          <Button title="Pause beenden" variant="secondary" onPress={() => setPlan(resumePlan(plan, now))} />
+        </Card>
+      ) : null}
+
+      {started && !paused && week.planned > 0 ? (
         <Card>
           <AppText variant="label" color="textSecondary">
             DIESE WOCHE
@@ -202,7 +232,7 @@ export default function PlanScreen() {
 
       {WEEKDAY_NAMES.map((name, day) => {
         const sessions = plan.sessions.filter((s) => s.day === day);
-        const isToday = started && day === today;
+        const isToday = started && !paused && day === today;
         const isDone = started && week.doneDays[day];
 
         if (sessions.length === 0) {
@@ -285,6 +315,37 @@ export default function PlanScreen() {
 
       {neu ? <Button title="Los geht's" onPress={() => router.replace('/dashboard')} /> : null}
       <Button title="Fragen neu beantworten" variant="secondary" onPress={() => router.push('/plan/setup')} />
+      {paused && plan.pause ? (
+        <>
+          <AppText variant="caption" color="accent">
+            Plan pausiert bis einschließlich {dayHeading(plan.pause.until - 1)}.
+          </AppText>
+          <Button title="Pause beenden" variant="ghost" onPress={() => setPlan(resumePlan(plan, now))} />
+        </>
+      ) : pausing ? (
+        <Card>
+          <AppText variant="heading">Wie lange pausieren?</AppText>
+          <AppText variant="caption" color="textSecondary">
+            Für Krankheit, Urlaub oder volle Wochen. Die Pause beginnt heute, du kannst sie jederzeit beenden.
+          </AppText>
+          <View style={styles.pauseChips}>
+            {PAUSE_OPTIONS.map((option) => (
+              <Chip
+                key={option.days}
+                label={option.label}
+                selected={false}
+                onPress={() => {
+                  setPlan(pausePlan(plan, now, option.days));
+                  setPausing(false);
+                }}
+              />
+            ))}
+          </View>
+          <Button title="Abbrechen" variant="ghost" onPress={() => setPausing(false)} />
+        </Card>
+      ) : (
+        <Button title="Plan pausieren" variant="ghost" onPress={() => setPausing(true)} />
+      )}
       <Button
         title="Plan beenden"
         variant="ghost"
@@ -327,4 +388,5 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   restDay: { width: 40, textAlign: 'center' },
+  pauseChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
 });

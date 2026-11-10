@@ -74,6 +74,8 @@ export type TrainingPlan = {
   createdAt: number;
   /** Ab diesem Zeitpunkt (Tagesbeginn) gilt der Plan */
   startsAt: number;
+  /** Pause, z.B. bei Krankheit oder im Urlaub: von (Tagesbeginn) bis ausschließlich `until` (Tagesbeginn danach) */
+  pause?: { from: number; until: number };
 };
 
 export const GOAL_LABELS: Record<PlanGoal, string> = {
@@ -502,6 +504,33 @@ export function nextMonday(now: number): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + daysUntil).getTime();
 }
 
+/** Liegt der Zeitpunkt in einer Pause des Plans? */
+export function isPlanPaused(plan: TrainingPlan, at: number): boolean {
+  return plan.pause !== undefined && at >= plan.pause.from && at < plan.pause.until;
+}
+
+/** Pausiert den Plan ab heute für die angegebene Zahl ganzer Tage (heute eingeschlossen). */
+export function pausePlan(plan: TrainingPlan, now: number, days: number): TrainingPlan {
+  const d = new Date(now);
+  const from = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const until = new Date(d.getFullYear(), d.getMonth(), d.getDate() + Math.max(1, Math.round(days))).getTime();
+  return { ...plan, pause: { from, until } };
+}
+
+/**
+ * Beendet die Pause ab heute. Die bereits pausierten Tage bleiben als Pause gespeichert,
+ * damit sie nicht nachträglich als verpasst gelten.
+ */
+export function resumePlan(plan: TrainingPlan, now: number): TrainingPlan {
+  if (!plan.pause) return plan;
+  const until = Math.min(plan.pause.until, startOfDay(now));
+  if (until <= plan.pause.from) {
+    const { pause: _pause, ...rest } = plan;
+    return rest;
+  }
+  return { ...plan, pause: { from: plan.pause.from, until } };
+}
+
 /** Wochentag (0 = Montag) eines Zeitpunkts. */
 export function weekdayOf(at: number): number {
   return (new Date(at).getDay() + 6) % 7;
@@ -509,7 +538,7 @@ export function weekdayOf(at: number): number {
 
 /** Alle für einen Tag geplanten Einheiten (Haupteinheit zuerst), falls der Plan schon gilt. */
 export function sessionsForDay(plan: TrainingPlan, at: number): PlanSession[] {
-  if (at < plan.startsAt) return [];
+  if (at < plan.startsAt || isPlanPaused(plan, at)) return [];
   return plan.sessions.filter((s) => s.day === weekdayOf(at));
 }
 
@@ -540,6 +569,8 @@ export function missedLastPlanned(plan: TrainingPlan, activities: Activity[], no
     const d = new Date(today);
     const day = new Date(d.getFullYear(), d.getMonth(), d.getDate() - back).getTime();
     if (day < plan.startsAt) return false;
+    // Pausentage sind keine verpassten Einheiten
+    if (isPlanPaused(plan, day)) continue;
     if (plan.sessions.some((s) => s.day === weekdayOf(day))) return !trainedDays.has(dayKey(day));
   }
   return false;
@@ -552,7 +583,7 @@ export function nextSession(plan: TrainingPlan, now: number): { session: PlanSes
   for (let ahead = 1; ahead <= 14; ahead++) {
     const d = new Date(today);
     const day = new Date(d.getFullYear(), d.getMonth(), d.getDate() + ahead).getTime();
-    if (day < plan.startsAt) continue;
+    if (day < plan.startsAt || isPlanPaused(plan, day)) continue;
     const session = plan.sessions.find((s) => s.day === weekdayOf(day));
     if (session) return { session, inDays: ahead };
   }
@@ -567,7 +598,10 @@ export function plannedDaysThisWeek(plan: TrainingPlan, weekStartAt: number): nu
   const start = new Date(weekStartAt);
   const days = new Set(
     plan.sessions
-      .filter((s) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + s.day).getTime() >= plan.startsAt)
+      .filter((s) => {
+        const at = new Date(start.getFullYear(), start.getMonth(), start.getDate() + s.day).getTime();
+        return at >= plan.startsAt && !isPlanPaused(plan, at);
+      })
       .map((s) => s.day),
   );
   return days.size;
@@ -595,7 +629,7 @@ export function planWeekProgress(plan: TrainingPlan, activities: Activity[], now
     if (!plan.sessions.some((s) => s.day === day)) continue;
     const at = new Date(today.getFullYear(), today.getMonth(), today.getDate() - mondayOffset + day).getTime();
     // Tage vor dem Planstart gehören noch nicht zum Plan (startsAt ist ein Tagesbeginn)
-    if (at < startOfDay(plan.startsAt)) continue;
+    if (at < startOfDay(plan.startsAt) || isPlanPaused(plan, at)) continue;
     planned += 1;
     doneDays[day] = day <= mondayOffset && trainedDays.has(dayKey(at));
   }
@@ -608,7 +642,7 @@ export function planWeekProgress(plan: TrainingPlan, activities: Activity[], now
  * solange nicht schon an einem anderen freien Tag dieser Woche nachgeholt wurde.
  */
 export function catchUpSession(plan: TrainingPlan, activities: Activity[], now: number): PlanSession | null {
-  if (now < plan.startsAt) return null;
+  if (now < plan.startsAt || isPlanPaused(plan, now)) return null;
   const today = new Date(now);
   const todayIndex = (today.getDay() + 6) % 7;
   if (plan.sessions.some((s) => s.day === todayIndex)) return null;
@@ -620,6 +654,7 @@ export function catchUpSession(plan: TrainingPlan, activities: Activity[], now: 
   for (let day = todayIndex - 1; day >= 0; day--) {
     const at = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (todayIndex - day)).getTime();
     if (at < startOfDay(plan.startsAt)) break;
+    if (isPlanPaused(plan, at)) continue;
     const main = plan.sessions.find((s) => s.day === day && !s.extra) ?? plan.sessions.find((s) => s.day === day);
     const trained = trainedDays.has(dayKey(at));
     if (main && !trained) missed.push(main);

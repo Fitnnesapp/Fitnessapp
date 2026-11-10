@@ -18,7 +18,7 @@ type PlanState = {
 };
 
 /** Version des gespeicherten Formats. Bei Änderungen hochzählen und in `migrate` umwandeln. */
-const PLAN_STORE_VERSION = 3;
+const PLAN_STORE_VERSION = 4;
 
 /** Persönlicher Trainingsplan, ausschließlich lokal gespeichert. */
 export const usePlanStore = create<PlanState>()(
@@ -45,6 +45,7 @@ export const usePlanStore = create<PlanState>()(
         if (version < 2 && state.plan) plan = migratePlanV1(state.plan as Parameters<typeof migratePlanV1>[0]);
         // Version 2 → 3: Ausdauer-Art (Laufen, Rad, beides); bestehende Pläne bleiben beim Laufen
         if (version < 3 && plan) plan = migratePlanV2(plan);
+        // Version 3 → 4: optionale Pause (`plan.pause`); bestehende Pläne haben keine und bleiben unverändert
         return { ...state, plan };
       },
       onRehydrateStorage: () => () => usePlanStore.setState({ hydrated: true }),

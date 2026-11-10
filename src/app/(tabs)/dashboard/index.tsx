@@ -36,7 +36,7 @@ import { closestGoal } from '@/lib/logic/goals';
 import { nextSavedEvent } from '@/lib/logic/events';
 import { compareWithLastWeek, trainingIdentity } from '@/lib/logic/identity';
 import { dayHeading, greeting, nextBadge, weeklyGoal } from '@/lib/logic/motivation';
-import { catchUpSession, missedLastPlanned, nextSession, sessionsForDay, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
+import { catchUpSession, isPlanPaused, missedLastPlanned, nextSession, sessionsForDay, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
 import { suggestWorkout, type SuggestionTarget } from '@/lib/logic/suggestions';
 import type { Units } from '@/lib/logic/units';
 import { hrefForSession } from '@/lib/plan-href';
@@ -192,6 +192,17 @@ export default function DashboardScreen() {
       };
     }
     const upcomingSession = nextSession(plan, now);
+    if (isPlanPaused(plan, now) && plan.pause) {
+      return {
+        label: 'Plan pausiert',
+        title: 'Erhol dich gut',
+        text: `Pause bis einschließlich ${dayHeading(plan.pause.until - 1)}.`,
+        href: null,
+        cta: '',
+        note: 'Nichts gilt als verpasst.',
+        kind: 'rest',
+      };
+    }
     const when = upcomingSession ? (upcomingSession.inDays === 1 ? 'Morgen' : WEEKDAY_NAMES[upcomingSession.session.day]) : null;
     return {
       label: session ? 'Heute erledigt' : now < plan.startsAt ? 'Dein Plan startet bald' : 'Ruhetag laut Plan',
