@@ -8,6 +8,7 @@ import { useNow } from '@/hooks/use-now';
 import { streaks } from '@/lib/logic/activity';
 import { earnedBadges, newlyEarned } from '@/lib/logic/badges';
 import { syncStreakReminder } from '@/lib/notifications';
+import { usePlanStore } from '@/lib/storage/plan-store';
 import { useGamification } from '@/lib/storage/gamification-store';
 import { useSettings } from '@/lib/storage/settings-store';
 
@@ -33,9 +34,12 @@ export function GamificationSync() {
   const earned = useGamification((state) => state.earned);
   const award = useGamification((state) => state.award);
   const reminderOn = useSettings((state) => state.streakReminder);
+  const plan = usePlanStore((state) => state.plan);
   const now = useNow(60_000);
 
-  const streak = useMemo(() => streaks(activities, now), [activities, now]);
+  const planPause = usePlanStore((state) => state.plan?.pause);
+
+  const streak = useMemo(() => streaks(activities, now, undefined, planPause), [activities, now, planPause]);
   const { current: currentStreak, trainedToday } = streak;
 
   useEffect(() => {
@@ -49,8 +53,9 @@ export function GamificationSync() {
       currentStreak,
       trainedToday,
       now,
+      plan,
     });
-  }, [reminderOn, currentStreak, trainedToday, now]);
+  }, [reminderOn, currentStreak, trainedToday, now, plan]);
 
   return null;
 }

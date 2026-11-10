@@ -111,3 +111,10 @@ test('Vorlage bearbeiten führt zu den Vorlagen', () => {
 test('Vertippt führt zum Korrigieren', () => {
   assert.equal(top('gewicht falsch eingetragen'), 'edit-workout');
 });
+
+test('Neue Funktionen vom 6. November sind auffindbar', () => {
+  assert.equal(top('fahrrad'), 'cycling');
+  assert.equal(top('apple health'), 'apple-health');
+  assert.equal(top('wie viel sport ist gesund'), 'health-benefit');
+  assert.equal(top('keine lust motivation'), 'why');
+});

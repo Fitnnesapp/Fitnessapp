@@ -8,11 +8,13 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { Radius, Spacing } from '@/constants/theme';
 import { useActivities } from '@/hooks/use-activities';
 import { useChallenges } from '@/hooks/use-challenges';
+import { useWeeklyBenefit } from '@/hooks/use-weekly-benefit';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
 import { streaks, weekStart } from '@/lib/logic/activity';
 import { celebrate, ordinalText, weekEffectText } from '@/lib/logic/celebration';
 import { challengeStatus, formatValue } from '@/lib/logic/challenges';
+import { WHO_AEROBIC_MINUTES, WHO_STRENGTH_DAYS } from '@/lib/logic/health-benefit';
 import { nextSession, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
 import { successFeedback } from '@/lib/haptics';
 import { usePlanStore } from '@/lib/storage/plan-store';
@@ -39,8 +41,11 @@ export function CelebrationCard({ sessionId, headline, records = [] }: Celebrati
   const goalSetting = useSettings((state) => state.weeklyGoalDays);
   const goalDays = session ? weekGoalDays(plan, weekStart(session.startedAt), goalSetting) : goalSetting;
   const result = useMemo(() => celebrate(activities, sessionId, goalDays), [activities, sessionId, goalDays]);
-  const streak = useMemo(() => streaks(activities, now), [activities, now]);
+  const planPause = usePlanStore((state) => state.plan?.pause);
+  const streak = useMemo(() => streaks(activities, now, undefined, planPause), [activities, now, planPause]);
   const upcoming = plan ? nextSession(plan, now) : null;
+  // Nutzen sichtbar machen: was diese Einheit zur WHO-Empfehlung der Woche beigetragen hat
+  const benefit = useWeeklyBenefit(session?.startedAt ?? now);
   const { entries: challengeEntries } = useChallenges();
   const activeChallenges = challengeEntries
     .filter(
@@ -108,6 +113,19 @@ export function CelebrationCard({ sessionId, headline, records = [] }: Celebrati
             <AppText color="textSecondary">{streak.current} Tage in Folge</AppText>
           </View>
         ) : null}
+
+        <View style={styles.inline} accessibilityLabel="Stand zur WHO-Empfehlung dieser Woche">
+          <Ionicons
+            name={benefit.aerobicMet && benefit.strengthMet ? 'heart' : 'heart-outline'}
+            size={18}
+            color={theme.accent}
+          />
+          <AppText color="textSecondary">
+            {benefit.aerobicMet && benefit.strengthMet
+              ? 'WHO-Empfehlung dieser Woche erfüllt'
+              : `Gesundheit: ${Math.min(benefit.aerobicMinutes, WHO_AEROBIC_MINUTES)}/${WHO_AEROBIC_MINUTES} Ausdauer-Min. · ${Math.min(benefit.strengthDays, WHO_STRENGTH_DAYS)}/${WHO_STRENGTH_DAYS} Krafttage`}
+          </AppText>
+        </View>
 
         {hasRecords ? (
           <View style={styles.records}>

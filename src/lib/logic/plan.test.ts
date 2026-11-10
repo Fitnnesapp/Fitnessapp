@@ -4,13 +4,20 @@ import { test } from 'node:test';
 import type { Activity } from './activity.ts';
 import {
   buildPlan,
+  isPlanPaused,
+  pausePlan,
+  resumePlan,
+  catchUpSession,
   combineGoals,
   ifThenSentence,
   migratePlanV1,
+  migratePlanV2,
   missedLastPlanned,
   nextMonday,
   nextSession,
   planDayCount,
+  planWeekProgress,
+  primarySport,
   plannedDaysThisWeek,
   weekGoalDays,
   recommendedDays,
@@ -182,7 +189,7 @@ test('Einheit für einen Tag nur, wenn der Plan schon gilt', () => {
 
 test('Wenn-Dann-Satz für Haupt- und Zusatzeinheit', () => {
   const plan = build({ doubleSessions: true, goals: ['muskeln'] });
-  assert.equal(ifThenSentence(plan.sessions[0], 'abends'), 'Wenn es Montag abends ist, mache ich Kraft: Ganzkörper A.');
+  assert.equal(ifThenSentence(plan.sessions[0], 'abends'), 'Wenn es Montag abends ist, dann starte ich: Kraft: Ganzkörper A.');
   const extra = plan.sessions.find((s) => s.extra);
   assert.ok(extra && ifThenSentence(extra, 'abends').startsWith('Danach'));
 });
@@ -234,4 +241,137 @@ test('Pläne aus Version 1 werden übernommen', () => {
   assert.deepEqual(plan.answers.places, ['studio', 'zuhause', 'draussen']);
   assert.equal(plan.sessions[0].id, '1-0');
   assert.equal(plan.answers.body, null);
+});
+
+test('Ausdauer mit Rad: alle Ausdauer-Einheiten werden Radfahrten, auch ohne Lauferfahrung', () => {
+  const plan = build({ goals: ['ausdauer'], days: [1, 3, 6], runExperience: 'keine', cardio: 'rad' });
+  assert.deepEqual(plan.sessions.map((s) => s.kind), ['ride', 'ride', 'ride']);
+  assert.equal(plan.sessions[2].title, 'Lange Radtour');
+  assert.ok(plan.sessions[2].minutes > plan.sessions[1].minutes);
+  assert.ok(plan.sessions.every((s) => !s.title.includes('Lauf')));
+});
+
+test('Ausdauer mit beidem: Rad und Lauf wechseln sich ab, Intervalle bleiben beim Laufen', () => {
+  const plan = build({ goals: ['ausdauer'], level: 'fortgeschritten', days: [1, 3, 6], cardio: 'beides' });
+  assert.deepEqual(plan.sessions.map((s) => s.kind), ['ride', 'run', 'run']);
+  assert.equal(plan.sessions[1].title, 'Intervall-Lauf');
+  const four = build({ goals: ['ausdauer'], level: 'fortgeschritten', days: [0, 1, 3, 6], cardio: 'beides' });
+  assert.ok(four.sessions.some((s) => s.kind === 'ride') && four.sessions.some((s) => s.kind === 'run'));
+});
+
+test('ohne Angabe zur Ausdauer-Art bleibt es beim Laufen', () => {
+  const plan = build({ goals: ['ausdauer'], days: [1, 3, 6] });
+  assert.ok(plan.sessions.every((s) => s.kind === 'run'));
+  const migrated = migratePlanV2(plan);
+  assert.equal(migrated.answers.cardio, 'laufen');
+  assert.deepEqual(migrated.sessions, plan.sessions);
+  assert.equal(migratePlanV2({ ...plan, answers: { ...plan.answers, cardio: 'rad' } }).answers.cardio, 'rad');
+});
+
+test('Knie und Rad: keine Rad-Intervalle, dafür ein Hinweis zur Schonung', () => {
+  const plan = build({
+    goals: ['ausdauer'],
+    level: 'fortgeschritten',
+    days: [1, 3, 6],
+    cardio: 'rad',
+    body: { age: 30, limitations: ['knie'] },
+  });
+  assert.ok(plan.sessions.every((s) => s.kind === 'ride' && s.title !== 'Rad-Intervalle'));
+  assert.ok(plan.notes.some((n) => n.includes('Radfahren')));
+});
+
+test('Vorlagen für einen Tag enthalten Radfahrten', () => {
+  const templates = sessionTemplates(answers(), options());
+  assert.ok(templates.some((t) => t.group === 'Radfahren' && t.session.kind === 'ride'));
+});
+
+test('primarySport: heutige Einheit entscheidet, sonst die gewählte Ausdauer-Art', () => {
+  // NOW ist ein Samstag (Tag 5)
+  const both = build({ goals: ['ausdauer'], level: 'fortgeschritten', days: [1, 3, 5], cardio: 'beides' });
+  const saturday = both.sessions.find((s) => s.day === 5);
+  assert.equal(primarySport(both, NOW), saturday?.kind === 'ride' ? 'ride' : 'run');
+  const rideOnly = build({ goals: ['ausdauer'], days: [1, 3], cardio: 'rad' });
+  assert.equal(primarySport(rideOnly, NOW), 'ride');
+  assert.equal(primarySport(build({ goals: ['ausdauer'], days: [1, 3] }), NOW), 'run');
+  const rideToday = build({ goals: ['ausdauer'], days: [5], cardio: 'rad' });
+  assert.equal(primarySport(rideToday, NOW), 'ride');
+});
+
+test('Wochenfortschritt: geplante Tage mit Training gelten als erledigt', () => {
+  // NOW ist Samstag, der 24.10.2026; die Woche beginnt am Montag, 19.10.
+  const plan = { ...build({ days: [0, 2, 4, 6] }), startsAt: new Date(2026, 9, 1).getTime() };
+  const act = (d: number, type: Activity['type'] = 'home'): Activity => ({ id: String(d), type, startedAt: new Date(2026, 9, d, 18).getTime(), durationSeconds: 600, distanceM: 0 });
+  const progress = planWeekProgress(plan, [act(12), act(19), act(20), act(21, 'cycling')], NOW);
+  // Montag und Mittwoch erledigt, Dienstag war nicht geplant, der 12. liegt in der Vorwoche
+  assert.deepEqual(progress.doneDays, [true, false, true, false, false, false, false]);
+  assert.equal(progress.planned, 4);
+  assert.equal(progress.done, 2);
+});
+
+test('Wochenfortschritt: Tage vor dem Planstart zählen nicht', () => {
+  const plan = { ...build({ days: [0, 2, 4] }), startsAt: new Date(2026, 9, 21).getTime() };
+  const act: Activity = { id: 'mo', type: 'home', startedAt: new Date(2026, 9, 19, 18).getTime(), durationSeconds: 600, distanceM: 0 };
+  const progress = planWeekProgress(plan, [act], NOW);
+  assert.equal(progress.planned, 2);
+  assert.equal(progress.done, 0);
+});
+
+test('Nachholen: verpasste Einheit nur an einem freien, noch trainingsfreien Tag anbieten', () => {
+  // NOW ist Samstag, der 24.10.2026. Geplant: Montag, Mittwoch, Freitag.
+  const plan = { ...build({ days: [0, 2, 4] }), startsAt: new Date(2026, 9, 1).getTime() };
+  const act = (d: number): Activity => ({ id: String(d), type: 'home', startedAt: new Date(2026, 9, d, 18).getTime(), durationSeconds: 600, distanceM: 0 });
+  // Alles erledigt: nichts nachzuholen
+  assert.equal(catchUpSession(plan, [act(19), act(21), act(23)], NOW), null);
+  // Freitag verpasst: die Freitags-Einheit wird angeboten
+  assert.equal(catchUpSession(plan, [act(19), act(21)], NOW)?.day, 4);
+  // Mittwoch verpasst, aber am Donnerstag (frei) schon nachgeholt
+  assert.equal(catchUpSession(plan, [act(19), act(22), act(23)], NOW), null);
+  // Heute schon trainiert: kein Angebot mehr
+  assert.equal(catchUpSession(plan, [act(19), act(21), act(24)], NOW), null);
+  // Mehrere verpasst: die jüngste zuerst
+  assert.equal(catchUpSession(plan, [], NOW)?.day, 4);
+});
+
+test('Nachholen: nicht an geplanten Tagen und nicht für Tage vor dem Planstart', () => {
+  const today = { ...build({ days: [0, 5] }), startsAt: new Date(2026, 9, 1).getTime() };
+  assert.equal(catchUpSession(today, [], NOW), null);
+  const fresh = { ...build({ days: [0, 2] }), startsAt: new Date(2026, 9, 22).getTime() };
+  assert.equal(catchUpSession(fresh, [], NOW), null);
+  const later = { ...build({ days: [0, 2] }), startsAt: new Date(2026, 9, 26).getTime() };
+  assert.equal(catchUpSession(later, [], NOW), null);
+});
+
+test('Pause: keine Einheiten, nichts verpasst, nächste Einheit erst danach', () => {
+  // NOW ist Samstag, der 24.10.2026. Geplant: Montag, Mittwoch, Freitag, Sonntag.
+  const base = { ...build({ days: [0, 2, 4, 6] }), startsAt: new Date(2026, 9, 1).getTime() };
+  const thursday = new Date(2026, 9, 22, 9).getTime();
+  const paused = pausePlan(base, thursday, 7); // Do 22.10. bis einschließlich Mi 28.10.
+  assert.equal(isPlanPaused(paused, new Date(2026, 9, 21, 23).getTime()), false);
+  assert.equal(isPlanPaused(paused, NOW), true);
+  assert.equal(isPlanPaused(paused, new Date(2026, 9, 28, 23).getTime()), true);
+  assert.equal(isPlanPaused(paused, new Date(2026, 9, 29, 0).getTime()), false);
+  const sunday = new Date(2026, 9, 25, 12).getTime();
+  assert.deepEqual(sessionsForDay(paused, sunday), []);
+  // Freitag fiel in die Pause: gilt nicht als verpasst, wenn Mittwoch trainiert wurde
+  const wed: Activity = { id: 'mi', type: 'home', startedAt: new Date(2026, 9, 21, 18).getTime(), durationSeconds: 600, distanceM: 0 };
+  assert.equal(missedLastPlanned(paused, [wed], NOW), false);
+  assert.equal(catchUpSession(paused, [], NOW), null);
+  // Nächste Einheit: Freitag, 30.10. (Montag und Mittwoch liegen in der Pause)
+  assert.deepEqual([nextSession(paused, NOW)?.session.day, nextSession(paused, NOW)?.inDays], [4, 6]);
+  // Diese Woche zählen nur Montag und Mittwoch
+  assert.equal(plannedDaysThisWeek(paused, new Date(2026, 9, 19).getTime()), 2);
+  assert.equal(planWeekProgress(paused, [wed], NOW).planned, 2);
+});
+
+test('Pause beenden: vergangene Pausentage bleiben Pause, ab heute gilt der Plan wieder', () => {
+  const base = { ...build({ days: [0, 2, 4, 6] }), startsAt: new Date(2026, 9, 1).getTime() };
+  const paused = pausePlan(base, new Date(2026, 9, 22, 9).getTime(), 7);
+  const resumed = resumePlan(paused, NOW);
+  assert.equal(isPlanPaused(resumed, NOW), false);
+  assert.equal(isPlanPaused(resumed, new Date(2026, 9, 23, 12).getTime()), true);
+  assert.equal(sessionsForDay(resumed, new Date(2026, 9, 25, 12).getTime()).length > 0, true);
+  // Am selben Tag wieder beendet: die Pause verschwindet ganz
+  const sameDay = resumePlan(pausePlan(base, NOW, 3), NOW);
+  assert.equal(sameDay.pause, undefined);
+  assert.equal(resumePlan(base, NOW), base);
 });

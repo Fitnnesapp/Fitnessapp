@@ -1,23 +1,34 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { IconBadge } from '@/components/ui/icon-badge';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
 import { ImageCard } from '@/components/ui/image-card';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { Screen } from '@/components/ui/screen';
 import { OnImage, Radius, Spacing } from '@/constants/theme';
 import { SCENES } from '@/data/images';
+import { useActivities } from '@/hooks/use-activities';
 import { useNow } from '@/hooks/use-now';
 import { useTheme } from '@/hooks/use-theme';
+import { getProgram } from '@/data/programs';
+import { planWeeklyBenefit, WHO_AEROBIC_MINUTES, WHO_STRENGTH_DAYS } from '@/lib/logic/health-benefit';
 import { dayHeading } from '@/lib/logic/motivation';
 import {
+  catchUpSession,
   GOAL_LABELS,
   ifThenSentence,
+  isPlanPaused,
+  pausePlan,
   planDayCount,
+  planWeekProgress,
   PLACE_LABELS,
+  resumePlan,
   weekdayOf,
   WEEKDAY_NAMES,
   type PlanSession,
@@ -26,10 +37,17 @@ import { confirmAction } from '@/lib/confirm';
 import { hrefForSession } from '@/lib/plan-href';
 import { usePlanStore } from '@/lib/storage/plan-store';
 
+const PAUSE_OPTIONS = [
+  { days: 3, label: '3 Tage' },
+  { days: 7, label: '1 Woche' },
+  { days: 14, label: '2 Wochen' },
+];
+
 const KIND_ICON: Record<PlanSession['kind'], keyof typeof Ionicons.glyphMap> = {
   strength: 'barbell',
   program: 'body',
   run: 'walk',
+  ride: 'bicycle',
 };
 
 /** Wochenplan mit Wenn-Dann-Sätzen. Jeder Tag lässt sich selbst belegen, die heutige Einheit direkt starten. */
@@ -39,6 +57,9 @@ export default function PlanScreen() {
   const now = useNow(60_000);
   const plan = usePlanStore((state) => state.plan);
   const clearPlan = usePlanStore((state) => state.clearPlan);
+  const setPlan = usePlanStore((state) => state.setPlan);
+  const [pausing, setPausing] = useState(false);
+  const activities = useActivities();
   const { neu } = useLocalSearchParams<{ neu?: string }>();
 
   if (!plan) {
@@ -70,8 +91,11 @@ export default function PlanScreen() {
   }
 
   const started = now >= plan.startsAt;
+  const paused = isPlanPaused(plan, now);
   const today = weekdayOf(now);
   const totalMinutes = plan.sessions.reduce((sum, s) => sum + s.minutes, 0);
+  const week = planWeekProgress(plan, activities, now);
+  const catchUp = catchUpSession(plan, activities, now);
   const openDay = (day: number) => router.push({ pathname: '/plan/day', params: { d: String(day) } });
 
   return (
@@ -103,6 +127,95 @@ export default function PlanScreen() {
         )}
       </View>
 
+      {paused && plan.pause ? (
+        <Card style={{ borderColor: theme.accent }}>
+          <View style={styles.row}>
+            <Ionicons name="pause-circle" size={22} color={theme.accent} />
+            <AppText variant="heading" style={styles.flex}>
+              Plan pausiert
+            </AppText>
+          </View>
+          <AppText color="textSecondary">
+            Bis einschließlich {dayHeading(plan.pause.until - 1)}. In der Pause gibt es keine Erinnerungen, nichts gilt als
+            verpasst, und deine Serie bleibt erhalten. Erhol dich gut.
+          </AppText>
+          <Button title="Pause beenden" variant="secondary" onPress={() => setPlan(resumePlan(plan, now))} />
+        </Card>
+      ) : null}
+
+      {started && !paused && week.planned > 0 ? (
+        <Card>
+          <AppText variant="label" color="textSecondary">
+            DIESE WOCHE
+          </AppText>
+          <AppText variant="title">
+            {week.done} <AppText color="textSecondary">von {week.planned} geplanten Tagen</AppText>
+          </AppText>
+          <ProgressBar progress={week.done / week.planned} />
+          <AppText variant="caption" color={week.done >= week.planned ? 'accent' : 'textSecondary'}>
+            {week.done >= week.planned
+              ? 'Alle geplanten Tage dieser Woche geschafft.'
+              : week.done === 0
+                ? 'Ein Tag zählt, sobald du an ihm trainiert hast, egal welche Einheit.'
+                : 'Jeder erledigte Tag zählt. Der nächste steht unten.'}
+          </AppText>
+        </Card>
+      ) : null}
+
+      {catchUp ? (
+        <Card style={{ borderColor: theme.accent }}>
+          <View style={styles.row}>
+            <Ionicons name="refresh" size={20} color={theme.accent} />
+            <AppText variant="heading" style={styles.flex}>
+              Heute nachholen?
+            </AppText>
+          </View>
+          <AppText color="textSecondary">
+            {catchUp.title} ist am {WEEKDAY_NAMES[catchUp.day]} ausgefallen. Heute ist frei: Wenn du magst, holst du die
+            Einheit nach. Dein Plan bleibt, wie er ist.
+          </AppText>
+          <Button
+            title={`Nachholen · ${catchUp.minutes} Min`}
+            variant="secondary"
+            onPress={() => router.push(hrefForSession(catchUp, plan.answers))}
+          />
+        </Card>
+      ) : null}
+
+      {/* Nutzen des Plans: was er nach WHO bringt, wenn man ihn wie geplant trainiert */}
+      {(() => {
+        const benefit = planWeeklyBenefit(
+          plan.sessions.map((session) => ({
+            day: session.day,
+            kind: session.kind,
+            minutes: session.minutes,
+            category: session.programId ? getProgram(session.programId)?.category : undefined,
+          })),
+        );
+        const both = benefit.aerobicMet && benefit.strengthMet;
+        return (
+          <Card>
+            <View style={styles.row}>
+              <Ionicons name={both ? 'heart' : 'heart-outline'} size={20} color={theme.accent} />
+              <AppText variant="heading">Was dir dieser Plan bringt</AppText>
+            </View>
+            <AppText color="textSecondary">
+              Etwa {benefit.aerobicMinutes} von {WHO_AEROBIC_MINUTES} Ausdauerminuten und {benefit.strengthDays} von{' '}
+              {WHO_STRENGTH_DAYS} Krafttagen der WHO-Empfehlung pro Woche.
+            </AppText>
+            <AppText color={both ? 'accent' : 'text'}>
+              {both
+                ? 'Wie geplant trainiert, erfüllst du beide Empfehlungen: das Pensum, das in großen Studien am stärksten mit einem längeren, gesünderen Leben zusammenhängt.'
+                : benefit.strengthMet
+                  ? 'Für die volle Empfehlung fehlt Ausdauer: Ein zusätzlicher lockerer Lauf oder eine Radtour an einem Ruhetag schließt die Lücke.'
+                  : benefit.aerobicMet
+                    ? 'Für die volle Empfehlung fehlt Kraft: Belege einen Ruhetag mit einem kurzen Kraft- oder Ganzkörper-Workout.'
+                    : 'Ein guter Anfang. Mit einer weiteren Einheit pro Woche kommst du der WHO-Empfehlung deutlich näher.'}
+            </AppText>
+          </Card>
+        );
+      })()}
+
       {plan.notes.length > 0 ? (
         <Card style={{ borderColor: theme.accent }}>
           <View style={styles.row}>
@@ -119,7 +232,8 @@ export default function PlanScreen() {
 
       {WEEKDAY_NAMES.map((name, day) => {
         const sessions = plan.sessions.filter((s) => s.day === day);
-        const isToday = started && day === today;
+        const isToday = started && !paused && day === today;
+        const isDone = started && week.doneDays[day];
 
         if (sessions.length === 0) {
           return (
@@ -144,12 +258,16 @@ export default function PlanScreen() {
           <Card key={name} style={isToday ? { borderColor: theme.accent, borderWidth: 2 } : undefined}>
             <View style={styles.row}>
               <View style={[styles.dayBadge, { backgroundColor: isToday ? theme.accent : theme.surfaceAlt }]}>
-                <AppText variant="label" style={{ color: isToday ? theme.onAccent : theme.text }}>
-                  {name.slice(0, 2)}
-                </AppText>
+                {isDone ? (
+                  <Ionicons name="checkmark" size={22} color={isToday ? theme.onAccent : theme.accent} />
+                ) : (
+                  <AppText variant="label" style={{ color: isToday ? theme.onAccent : theme.text }}>
+                    {name.slice(0, 2)}
+                  </AppText>
+                )}
               </View>
-              <AppText variant="caption" color={isToday ? 'accent' : 'textSecondary'} style={styles.flex}>
-                {isToday ? 'HEUTE' : name.toUpperCase()}
+              <AppText variant="caption" color={isToday || isDone ? 'accent' : 'textSecondary'} style={styles.flex}>
+                {isToday ? (isDone ? 'HEUTE · ERLEDIGT' : 'HEUTE') : isDone ? `${name.toUpperCase()} · ERLEDIGT` : name.toUpperCase()}
                 {sessions.length > 1 ? ' · 2 EINHEITEN' : ''}
               </AppText>
               <Pressable accessibilityRole="button" accessibilityLabel={`${name} bearbeiten`} onPress={() => openDay(day)} hitSlop={10}>
@@ -180,7 +298,11 @@ export default function PlanScreen() {
               <AppText variant="caption">{ifThenSentence(sessions[0], plan.answers.time)}</AppText>
             </View>
             {isToday ? (
-              <Button title="Jetzt starten" onPress={() => router.push(hrefForSession(sessions[0], plan.answers))} />
+              <Button
+                title={isDone ? 'Noch eine Einheit starten' : 'Jetzt starten'}
+                variant={isDone ? 'secondary' : 'primary'}
+                onPress={() => router.push(hrefForSession(sessions[0], plan.answers))}
+              />
             ) : null}
           </Card>
         );
@@ -193,6 +315,37 @@ export default function PlanScreen() {
 
       {neu ? <Button title="Los geht's" onPress={() => router.replace('/dashboard')} /> : null}
       <Button title="Fragen neu beantworten" variant="secondary" onPress={() => router.push('/plan/setup')} />
+      {paused && plan.pause ? (
+        <>
+          <AppText variant="caption" color="accent">
+            Plan pausiert bis einschließlich {dayHeading(plan.pause.until - 1)}.
+          </AppText>
+          <Button title="Pause beenden" variant="ghost" onPress={() => setPlan(resumePlan(plan, now))} />
+        </>
+      ) : pausing ? (
+        <Card>
+          <AppText variant="heading">Wie lange pausieren?</AppText>
+          <AppText variant="caption" color="textSecondary">
+            Für Krankheit, Urlaub oder volle Wochen. Die Pause beginnt heute, du kannst sie jederzeit beenden.
+          </AppText>
+          <View style={styles.pauseChips}>
+            {PAUSE_OPTIONS.map((option) => (
+              <Chip
+                key={option.days}
+                label={option.label}
+                selected={false}
+                onPress={() => {
+                  setPlan(pausePlan(plan, now, option.days));
+                  setPausing(false);
+                }}
+              />
+            ))}
+          </View>
+          <Button title="Abbrechen" variant="ghost" onPress={() => setPausing(false)} />
+        </Card>
+      ) : (
+        <Button title="Plan pausieren" variant="ghost" onPress={() => setPausing(true)} />
+      )}
       <Button
         title="Plan beenden"
         variant="ghost"
@@ -235,4 +388,5 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   restDay: { width: 40, textAlign: 'center' },
+  pauseChips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
 });

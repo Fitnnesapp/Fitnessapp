@@ -145,3 +145,12 @@ test('Eigene Challenge zählt Trainings ab dem Beitritt', () => {
   const progress = challengeProgress(c, { joinedAt: now, target: c.target }, activities, now + 7_200_000);
   assert.equal(progress.value, 1);
 });
+
+test('Laufkilometer-Challenges zählen keine Radfahrten', () => {
+  const start = 1_000;
+  const activities = [
+    { id: 'r', type: 'running' as const, startedAt: start + 1, durationSeconds: 1800, distanceM: 5000 },
+    { id: 'b', type: 'cycling' as const, startedAt: start + 2, durationSeconds: 3600, distanceM: 30000 },
+  ];
+  assert.equal(measure('runKm', activities, start, start + 10_000), 5);
+});

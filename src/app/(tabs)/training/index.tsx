@@ -21,7 +21,7 @@ import { useNow } from '@/hooks/use-now';
 import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
 import { feedDayLabel, strengthTitle } from '@/lib/logic/feed';
-import { ifThenSentence, sessionsForDay } from '@/lib/logic/plan';
+import { catchUpSession, ifThenSentence, sessionsForDay, WEEKDAY_NAMES } from '@/lib/logic/plan';
 import { quickestProgram } from '@/lib/logic/quick-win';
 import { repeatOptions, type RepeatOption } from '@/lib/logic/repeat';
 import { preferencesFromPlan, routineMinutes, suggestRoutine } from '@/lib/logic/routines';
@@ -45,7 +45,7 @@ type Kind = {
 
 const KINDS: Kind[] = [
   { href: '/training/strength', title: 'Kraft', description: 'Sätze, Gewichte, Rekorde', image: SCENES['hero-kraft'] },
-  { href: '/training/running', title: 'Laufen', description: 'GPS, Pace, Strecke', image: SCENES['hero-lauf'] },
+  { href: '/training/running', title: 'Laufen', description: 'Laufen und Rad mit GPS', image: SCENES['hero-lauf'] },
   { href: '/training/home', title: 'Home', description: 'Geführt, ohne Geräte', image: SCENES['hero-home'] },
 ];
 
@@ -86,6 +86,8 @@ export default function TrainingScreen() {
     return activities.some((a) => a.startedAt >= start.getTime());
   }, [activities, now]);
   const todaySession = plan && now >= plan.startsAt && !trainedToday ? sessionsForDay(plan, now)[0] : undefined;
+  // An einem freien Tag: verpasste Einheit dieser Woche als Angebot, nie als Pflicht
+  const catchUp = useMemo(() => (plan && !todaySession ? catchUpSession(plan, activities, now) : null), [plan, todaySession, activities, now]);
   const busy = activeWorkout !== null || activeRun !== null;
 
   function repeat(option: RepeatOption) {
@@ -137,6 +139,24 @@ export default function TrainingScreen() {
             </AppText>
           </View>
         </ImageCard>
+      ) : null}
+
+      {catchUp && plan && !busy ? (
+        <Card onPress={() => router.push(hrefForSession(catchUp, plan.answers))} style={styles.row}>
+          <View style={[styles.quickBadge, { backgroundColor: theme.surfaceAlt }]}>
+            <Ionicons name="refresh" size={24} color={theme.accent} />
+          </View>
+          <View style={styles.flex}>
+            <AppText variant="eyebrow" color="accent">
+              Heute nachholen?
+            </AppText>
+            <AppText variant="heading">{catchUp.title}</AppText>
+            <AppText variant="caption" color="textSecondary">
+              Am {WEEKDAY_NAMES[catchUp.day]} ausgefallen · {catchUp.minutes} Min · freiwillig
+            </AppText>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+        </Card>
       ) : null}
 
       {/* 3. Kurz & knackig: die kleinste mögliche Hürde */}
@@ -245,8 +265,8 @@ export default function TrainingScreen() {
       <View style={styles.pair}>
         <LinkTile
           icon="create-outline"
-          title="Lauf nachtragen"
-          text="Laufband oder ohne GPS"
+          title="Nachtragen"
+          text="Lauf oder Rad ohne GPS"
           onPress={() => router.push('/training/run-manual')}
         />
         <LinkTile
@@ -295,7 +315,9 @@ function describe(option: RepeatOption, units: Units): { key: string; icon: Icon
   if (option.kind === 'home') {
     return { key: `h-${option.programId}`, icon: 'body', title: getProgram(option.programId)?.name ?? 'Home-Workout', detail: 'Home' };
   }
-  return { key: 'run', icon: 'walk', title: 'Lauf', detail: `zuletzt ${formatDistance(option.distanceM, units)}` };
+  return option.ride
+    ? { key: 'ride', icon: 'bicycle', title: 'Radtour', detail: `zuletzt ${formatDistance(option.distanceM, units)}` }
+    : { key: 'run', icon: 'walk', title: 'Lauf', detail: `zuletzt ${formatDistance(option.distanceM, units)}` };
 }
 
 const styles = StyleSheet.create({

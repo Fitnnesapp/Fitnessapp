@@ -37,7 +37,7 @@ test('Wochenstatistik summiert nur die Woche und gruppiert nach Tag und Art', ()
   assert.equal(stats.workouts, 4);
   assert.equal(stats.durationSeconds, 1800 + 3000 + 1200 + 1800);
   assert.equal(stats.distanceM, 8000);
-  assert.deepEqual(stats.byType, { strength: 2, home: 1, running: 1 });
+  assert.deepEqual(stats.byType, { strength: 2, home: 1, running: 1, cycling: 0 });
   assert.deepEqual(stats.perDay, [1, 0, 2, 0, 0, 0, 1]);
 });
 
@@ -104,4 +104,40 @@ test('Zeitumstellung und Monatsgrenze brechen die Serie nicht', () => {
     streaks([act('a', at(2026, 10, 30)), act('b', at(2026, 10, 31)), act('c', at(2026, 11, 1)), act('d', at(2026, 11, 2))], at(2026, 11, 2)).current,
     4,
   );
+});
+
+test('Wochenstatistik trennt Lauf- und Radkilometer für die Wochenziele', () => {
+  const start = at(2026, 10, 12, 0);
+  const stats = weekStats(
+    [
+      act('r', at(2026, 10, 13), 'running', 1800, 5000),
+      act('b', at(2026, 10, 14), 'cycling', 3600, 25_000),
+      act('alt', at(2026, 10, 5), 'cycling', 3600, 40_000),
+    ],
+    start,
+  );
+  assert.equal(stats.runDistanceM, 5000);
+  assert.equal(stats.rideDistanceM, 25_000);
+  assert.equal(stats.distanceM, 30_000);
+});
+
+test('Plan-Pause: Pausentage unterbrechen die Serie nicht und kosten keinen Freeze', () => {
+  // Training am 1., 2. und 3.10., Pause vom 4. bis einschließlich 10.10., weiter am 11.10.
+  const activities = [act('a', at(2026, 10, 1)), act('b', at(2026, 10, 2)), act('c', at(2026, 10, 3)), act('d', at(2026, 10, 11))];
+  const pause = { from: new Date(2026, 9, 4).getTime(), until: new Date(2026, 9, 11).getTime() };
+  const withPause = streaks(activities, at(2026, 10, 11, 20), undefined, pause);
+  assert.equal(withPause.current, 4);
+  assert.deepEqual(withPause.frozenDays, []);
+  // Ohne Pause reichen zwei Freezes nicht für sieben Tage: Die Serie beginnt neu
+  assert.equal(streaks(activities, at(2026, 10, 11, 20)).current, 1);
+});
+
+test('Plan-Pause: heute pausiert heißt, die Serie ist nicht in Gefahr', () => {
+  const activities = [act('a', at(2026, 10, 1)), act('b', at(2026, 10, 2))];
+  const pause = { from: new Date(2026, 9, 3).getTime(), until: new Date(2026, 9, 6).getTime() };
+  const result = streaks(activities, at(2026, 10, 4, 20), undefined, pause);
+  assert.equal(result.current, 2);
+  assert.equal(result.atRisk, false);
+  // Nach der Pause gilt wieder die normale Regel
+  assert.equal(streaks(activities, at(2026, 10, 6, 20), undefined, pause).atRisk, true);
 });

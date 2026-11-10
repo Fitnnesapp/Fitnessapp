@@ -1,4 +1,4 @@
-export type ActivityType = 'strength' | 'home' | 'running';
+export type ActivityType = 'strength' | 'home' | 'running' | 'cycling';
 
 /** Gemeinsame Sicht auf ein Workout, unabhängig von der Trainingsart. */
 export type Activity = {
@@ -6,7 +6,7 @@ export type Activity = {
   type: ActivityType;
   startedAt: number;
   durationSeconds: number;
-  /** nur Läufe */
+  /** nur Läufe und Radfahrten */
   distanceM: number;
 };
 
@@ -27,6 +27,9 @@ export type WeekStats = {
   workouts: number;
   durationSeconds: number;
   distanceM: number;
+  /** Distanz nur aus Läufen bzw. nur aus Radfahrten, für die getrennten Wochenziele */
+  runDistanceM: number;
+  rideDistanceM: number;
   byType: Record<ActivityType, number>;
   /** Anzahl Workouts je Wochentag, Montag zuerst */
   perDay: number[];
@@ -42,7 +45,9 @@ export function weekStats(activities: Activity[], weekStartAt: number): WeekStat
     workouts: 0,
     durationSeconds: 0,
     distanceM: 0,
-    byType: { strength: 0, home: 0, running: 0 },
+    runDistanceM: 0,
+    rideDistanceM: 0,
+    byType: { strength: 0, home: 0, running: 0, cycling: 0 },
     perDay: Array(7).fill(0),
   };
 
@@ -52,6 +57,8 @@ export function weekStats(activities: Activity[], weekStartAt: number): WeekStat
     stats.workouts += 1;
     stats.durationSeconds += a.durationSeconds;
     stats.distanceM += a.distanceM;
+    if (a.type === 'running') stats.runDistanceM += a.distanceM;
+    if (a.type === 'cycling') stats.rideDistanceM += a.distanceM;
     stats.byType[a.type] += 1;
     const day = dayStarts.findIndex((s, i) => i < 7 && a.startedAt >= s && a.startedAt < dayStarts[i + 1]);
     stats.perDay[day] += 1;
@@ -99,10 +106,20 @@ const keyOfDay = (dayNumber: number): string => {
  * Ein verpasster Tag verbraucht einen Freeze des Monats, in den er fällt (pro Monat `freezesPerMonth`).
  * Ist keiner mehr übrig, reißt die Serie. Heute zählt noch nicht als verpasst: wer heute noch nicht
  * trainiert hat, behält die Serie bis zum Tagesende ("atRisk").
+ * Tage in einer Plan-Pause werden übersprungen: Sie zählen nicht mit, unterbrechen aber auch nichts.
  * Das Ergebnis wird immer aus dem gesamten Verlauf neu berechnet, es gibt keinen gespeicherten Zähler.
  */
-export function streaks(activities: Activity[], now: number, freezesPerMonth = FREEZES_PER_MONTH): StreakInfo {
+export function streaks(
+  activities: Activity[],
+  now: number,
+  freezesPerMonth = FREEZES_PER_MONTH,
+  /** Plan-Pause (Krankheit, Urlaub): Tage darin unterbrechen die Serie nicht und kosten keinen Freeze */
+  pause?: { from: number; until: number },
+): StreakInfo {
   const today = dayNumberOf(now);
+  const pauseFrom = pause ? dayNumberOf(pause.from) : 0;
+  const pauseUntil = pause ? dayNumberOf(pause.until) : 0;
+  const inPause = (day: number) => day >= pauseFrom && day < pauseUntil;
   const active = new Set(activities.map((a) => dayNumberOf(a.startedAt)));
   const trainedToday = active.has(today);
   const empty: StreakInfo = {
@@ -125,7 +142,7 @@ export function streaks(activities: Activity[], now: number, freezesPerMonth = F
     if (active.has(day)) {
       current += 1;
       longest = Math.max(longest, current);
-    } else if (day < today && current > 0) {
+    } else if (day < today && current > 0 && !inPause(day)) {
       const month = monthKeyOfDay(day);
       const used = usedPerMonth.get(month) ?? 0;
       if (used < freezesPerMonth) {
@@ -138,5 +155,5 @@ export function streaks(activities: Activity[], now: number, freezesPerMonth = F
   }
 
   const freezesLeft = freezesPerMonth - (usedPerMonth.get(monthKeyOfDay(today)) ?? 0);
-  return { ...empty, current, longest, freezesLeft, frozenDays, atRisk: current > 0 && !trainedToday };
+  return { ...empty, current, longest, freezesLeft, frozenDays, atRisk: current > 0 && !trainedToday && !inPause(today) };
 }

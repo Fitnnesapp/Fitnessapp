@@ -18,6 +18,8 @@ export type PlanPlace = 'studio' | 'zuhause' | 'draussen';
 export type PlanTime = 'morgens' | 'mittags' | 'abends';
 export type HomeEquipment = 'kurzhanteln' | 'kettlebell' | 'widerstandsband' | 'klimmzugstange';
 export type RunExperience = 'keine' | 'bis5' | 'bis10' | 'mehr';
+/** Womit die Ausdauer-Einheiten gemacht werden */
+export type PlanCardio = 'laufen' | 'rad' | 'beides';
 export type Limitation = 'knie' | 'ruecken' | 'schulter' | 'herzkreislauf';
 
 /** Nur mit ausdrücklicher Einwilligung erhoben (Gesundheitsdaten, Art. 9 DSGVO). */
@@ -33,6 +35,8 @@ export type PlanAnswers = {
   places: PlanPlace[];
   equipment: HomeEquipment[];
   runExperience: RunExperience;
+  /** Laufen, Radfahren oder beides im Wechsel. Fehlt bei älteren Plänen: dann Laufen. */
+  cardio?: PlanCardio;
   /** Trainingstage, 0 = Montag bis 6 = Sonntag */
   days: number[];
   /** An einigen Tagen eine kurze zweite Einheit */
@@ -44,7 +48,7 @@ export type PlanAnswers = {
   body: BodyProfile | null;
 };
 
-export type PlanSessionKind = 'strength' | 'program' | 'run';
+export type PlanSessionKind = 'strength' | 'program' | 'run' | 'ride';
 
 export type PlanSession = {
   /** Eindeutig innerhalb des Plans */
@@ -70,13 +74,15 @@ export type TrainingPlan = {
   createdAt: number;
   /** Ab diesem Zeitpunkt (Tagesbeginn) gilt der Plan */
   startsAt: number;
+  /** Pause, z.B. bei Krankheit oder im Urlaub: von (Tagesbeginn) bis ausschließlich `until` (Tagesbeginn danach) */
+  pause?: { from: number; until: number };
 };
 
 export const GOAL_LABELS: Record<PlanGoal, string> = {
   muskeln: 'Muskeln aufbauen',
   fitness: 'Fit und gesund bleiben',
   abnehmen: 'Abnehmen',
-  ausdauer: 'Ausdauer und Laufen',
+  ausdauer: 'Ausdauer: Laufen oder Rad',
   beweglichkeit: 'Beweglicher werden',
 };
 
@@ -129,7 +135,7 @@ export function recommendedDayCount(goal: PlanGoal, level: PlanLevel): number {
 type Slot =
   | { kind: 'strength'; focus: string }
   | { kind: 'home'; category: 'HIIT' | 'Core' | 'Mobility' | 'Ganzkörper' }
-  | { kind: 'run'; type: 'locker' | 'intervall' | 'lang' };
+  | { kind: 'run'; type: 'locker' | 'intervall' | 'lang'; ride?: boolean };
 
 function strengthFoci(count: number): string[] {
   if (count <= 3) return ['Ganzkörper A', 'Ganzkörper B'];
@@ -262,7 +268,7 @@ function adapt(slot: Slot, answers: PlanAnswers, c: Constraints): Slot {
 
   if (slot.kind === 'run') {
     if (!canRun) return { kind: 'home', category: c.noJumps ? 'Core' : 'HIIT' };
-    if (slot.type === 'intervall' && (c.noIntervals || answers.runExperience === 'keine')) return { kind: 'run', type: 'locker' };
+    if (slot.type === 'intervall' && (c.noIntervals || (!slot.ride && answers.runExperience === 'keine'))) return { ...slot, type: 'locker' };
     return slot;
   }
   if (slot.kind === 'strength') {
@@ -313,6 +319,41 @@ function runSession(answers: PlanAnswers, type: 'locker' | 'intervall' | 'lang',
   return { kind: 'run', title: 'Lockerer Lauf', detail: 'Entspanntes Tempo, du solltest dabei noch sprechen können.', minutes };
 }
 
+function rideSession(type: 'locker' | 'intervall' | 'lang', minutes: number): Omit<PlanSession, 'id' | 'day'> {
+  if (type === 'intervall') {
+    return {
+      kind: 'ride',
+      title: 'Rad-Intervalle',
+      detail: '10 Min einrollen, 6 × 2 Min kräftig treten mit je 2 Min locker, dann ausrollen.',
+      minutes,
+    };
+  }
+  if (type === 'lang') {
+    return { kind: 'ride', title: 'Lange Radtour', detail: 'Gleichmäßig und ruhig, du solltest dich dabei noch unterhalten können.', minutes };
+  }
+  return { kind: 'ride', title: 'Lockere Radrunde', detail: 'Entspannt treten, eher leichter Gang und flüssiger Tritt.', minutes };
+}
+
+/** Auf dem Rad dauert derselbe Trainingsreiz länger als beim Laufen. */
+function rideMinutes(answers: PlanAnswers, type: 'locker' | 'intervall' | 'lang'): number {
+  return type === 'lang' ? answers.minutes + 45 : type === 'locker' ? answers.minutes + 15 : answers.minutes;
+}
+
+/**
+ * Verteilt die Ausdauer-Einheiten auf Laufen und Rad. Bei "beides" wird abgewechselt, beginnend mit dem Rad
+ * für die lockere Einheit; Intervalle bleiben beim Laufen, wenn beides gewählt ist.
+ */
+export function applyCardio(slots: Slot[], cardio: PlanCardio): Slot[] {
+  if (cardio === 'laufen') return slots;
+  let index = 0;
+  return slots.map((slot) => {
+    if (slot.kind !== 'run') return slot;
+    if (cardio === 'rad') return { ...slot, ride: true };
+    const ride = slot.type !== 'intervall' && index++ % 2 === 0;
+    return ride ? { ...slot, ride: true } : slot;
+  });
+}
+
 function longRunMinutes(answers: PlanAnswers): number {
   const extra = { keine: 5, bis5: 15, bis10: 25, mehr: 40 }[answers.runExperience];
   return answers.minutes + extra;
@@ -322,6 +363,7 @@ function toSession(slot: Slot, answers: PlanAnswers, c: Constraints, options: Bu
   const nameOf = (id: string) => options.programs.find((p) => p.id === id)?.name ?? id;
   if (slot.kind === 'strength') return strengthSession(answers, c, slot.focus);
   if (slot.kind === 'run') {
+    if (slot.ride) return rideSession(slot.type, rideMinutes(answers, slot.type));
     return runSession(answers, slot.type, slot.type === 'lang' ? longRunMinutes(answers) : answers.minutes);
   }
   const programId = pickProgram(slot.category, effectiveLevel(answers, c), answers.time, options.allowedProgramIds);
@@ -350,7 +392,10 @@ function notesFor(answers: PlanAnswers, c: Constraints): string[] {
   if (lim.includes('herzkreislauf')) {
     notes.push('Bei Herz-Kreislauf-Beschwerden: Sprich vor dem Start mit deiner Ärztin oder deinem Arzt. Der Plan bleibt bewusst moderat.');
   }
-  if (lim.includes('knie')) notes.push('Knie: keine Sprünge und keine Intervalle. Bei Schmerzen die Einheit abbrechen.');
+  if (lim.includes('knie')) {
+    notes.push('Knie: keine Sprünge und keine Intervalle. Bei Schmerzen die Einheit abbrechen.');
+    if ((answers.cardio ?? 'laufen') !== 'laufen') notes.push('Radfahren belastet die Knie weniger als Laufen. Sattel eher hoch einstellen und leichte Gänge wählen.');
+  }
   if (c.back) notes.push('Rücken: Rumpftraining ist eingeplant, schwere Lasten auf der Wirbelsäule meiden.');
   if (c.shoulder) notes.push('Schulter: Drückübungen über Kopf meiden oder nur leicht ausführen.');
   if ((answers.body?.age ?? 0) >= 60) notes.push('Ab 60 setzt der Plan auf gelenkschonende Einheiten und mehr Beweglichkeit.');
@@ -368,7 +413,8 @@ export function buildPlan(answers: PlanAnswers, options: BuildOptions): Training
     days,
   };
   const c = constraintsOf(normalized);
-  const slots = combineGoals(normalized.goals, days.length).map((s) => adapt(s, normalized, c));
+  const cardio = normalized.cardio ?? 'laufen';
+  const slots = applyCardio(combineGoals(normalized.goals, days.length), cardio).map((s) => adapt(s, normalized, c));
 
   const sessions: PlanSession[] = [];
   days.forEach((day, i) => {
@@ -377,7 +423,7 @@ export function buildPlan(answers: PlanAnswers, options: BuildOptions): Training
     if (normalized.doubleSessions && i % 2 === 0 && sessions.filter((s) => s.extra).length < 3) {
       const extra = extraSlot(normalized, slots[i], c);
       if (extra) {
-        const adapted = adapt(extra, normalized, c);
+        const adapted = adapt(extra.kind === 'run' && cardio === 'rad' ? { ...extra, ride: true } : extra, normalized, c);
         sessions.push({ id: `${day}-1`, day, ...toSession(adapted, normalized, c, options), minutes: 15, extra: true });
       }
     }
@@ -411,6 +457,10 @@ export function sessionTemplates(answers: PlanAnswers, options: BuildOptions): S
       group: 'Laufen',
       session: runSession(answers, type, type === 'lang' ? longRunMinutes(answers) : answers.minutes),
     });
+  }
+
+  for (const type of runTypes) {
+    list.push({ key: `rad-${type}`, group: 'Radfahren', session: rideSession(type, rideMinutes(answers, type)) });
   }
 
   const level = effectiveLevel(answers, c);
@@ -454,6 +504,33 @@ export function nextMonday(now: number): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + daysUntil).getTime();
 }
 
+/** Liegt der Zeitpunkt in einer Pause des Plans? */
+export function isPlanPaused(plan: TrainingPlan, at: number): boolean {
+  return plan.pause !== undefined && at >= plan.pause.from && at < plan.pause.until;
+}
+
+/** Pausiert den Plan ab heute für die angegebene Zahl ganzer Tage (heute eingeschlossen). */
+export function pausePlan(plan: TrainingPlan, now: number, days: number): TrainingPlan {
+  const d = new Date(now);
+  const from = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const until = new Date(d.getFullYear(), d.getMonth(), d.getDate() + Math.max(1, Math.round(days))).getTime();
+  return { ...plan, pause: { from, until } };
+}
+
+/**
+ * Beendet die Pause ab heute. Die bereits pausierten Tage bleiben als Pause gespeichert,
+ * damit sie nicht nachträglich als verpasst gelten.
+ */
+export function resumePlan(plan: TrainingPlan, now: number): TrainingPlan {
+  if (!plan.pause) return plan;
+  const until = Math.min(plan.pause.until, startOfDay(now));
+  if (until <= plan.pause.from) {
+    const { pause: _pause, ...rest } = plan;
+    return rest;
+  }
+  return { ...plan, pause: { from: plan.pause.from, until } };
+}
+
 /** Wochentag (0 = Montag) eines Zeitpunkts. */
 export function weekdayOf(at: number): number {
   return (new Date(at).getDay() + 6) % 7;
@@ -461,7 +538,7 @@ export function weekdayOf(at: number): number {
 
 /** Alle für einen Tag geplanten Einheiten (Haupteinheit zuerst), falls der Plan schon gilt. */
 export function sessionsForDay(plan: TrainingPlan, at: number): PlanSession[] {
-  if (at < plan.startsAt) return [];
+  if (at < plan.startsAt || isPlanPaused(plan, at)) return [];
   return plan.sessions.filter((s) => s.day === weekdayOf(at));
 }
 
@@ -470,10 +547,10 @@ export function sessionForDay(plan: TrainingPlan, at: number): PlanSession | nul
   return sessionsForDay(plan, at)[0] ?? null;
 }
 
-/** Satz als Wenn-Dann-Plan, z.B. "Wenn es Montag abends ist, mache ich Kraft: Ganzkörper A." */
+/** Satz als Wenn-Dann-Plan, z.B. "Wenn es Montag abends ist, dann starte ich: Kraft: Ganzkörper A." */
 export function ifThenSentence(session: PlanSession, time: PlanTime): string {
   if (session.extra) return `Danach, ebenfalls am ${WEEKDAY_NAMES[session.day]}: ${session.title}.`;
-  return `Wenn es ${WEEKDAY_NAMES[session.day]} ${TIME_PHRASE[time]} ist, mache ich ${session.title}.`;
+  return `Wenn es ${WEEKDAY_NAMES[session.day]} ${TIME_PHRASE[time]} ist, dann starte ich: ${session.title}.`;
 }
 
 /** Anzahl verschiedener Trainingstage im Plan. */
@@ -492,6 +569,8 @@ export function missedLastPlanned(plan: TrainingPlan, activities: Activity[], no
     const d = new Date(today);
     const day = new Date(d.getFullYear(), d.getMonth(), d.getDate() - back).getTime();
     if (day < plan.startsAt) return false;
+    // Pausentage sind keine verpassten Einheiten
+    if (isPlanPaused(plan, day)) continue;
     if (plan.sessions.some((s) => s.day === weekdayOf(day))) return !trainedDays.has(dayKey(day));
   }
   return false;
@@ -504,7 +583,7 @@ export function nextSession(plan: TrainingPlan, now: number): { session: PlanSes
   for (let ahead = 1; ahead <= 14; ahead++) {
     const d = new Date(today);
     const day = new Date(d.getFullYear(), d.getMonth(), d.getDate() + ahead).getTime();
-    if (day < plan.startsAt) continue;
+    if (day < plan.startsAt || isPlanPaused(plan, day)) continue;
     const session = plan.sessions.find((s) => s.day === weekdayOf(day));
     if (session) return { session, inDays: ahead };
   }
@@ -519,10 +598,69 @@ export function plannedDaysThisWeek(plan: TrainingPlan, weekStartAt: number): nu
   const start = new Date(weekStartAt);
   const days = new Set(
     plan.sessions
-      .filter((s) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + s.day).getTime() >= plan.startsAt)
+      .filter((s) => {
+        const at = new Date(start.getFullYear(), start.getMonth(), start.getDate() + s.day).getTime();
+        return at >= plan.startsAt && !isPlanPaused(plan, at);
+      })
       .map((s) => s.day),
   );
   return days.size;
+}
+
+export type PlanWeekProgress = {
+  /** Je Wochentag (0 = Montag): geplanter Tag dieser Woche, an dem trainiert wurde */
+  doneDays: boolean[];
+  /** Geplante Trainingstage dieser Woche (ab Planstart) */
+  planned: number;
+  done: number;
+};
+
+/**
+ * Fortschritt im Plan für die laufende Woche. Ein geplanter Tag gilt als erledigt, sobald an ihm
+ * irgendein Training stattfand: Wer statt des Laufs aufs Rad steigt, hat den Tag trotzdem genutzt.
+ */
+export function planWeekProgress(plan: TrainingPlan, activities: Activity[], now: number): PlanWeekProgress {
+  const today = new Date(now);
+  const mondayOffset = (today.getDay() + 6) % 7;
+  const trainedDays = new Set(activities.map((a) => dayKey(a.startedAt)));
+  const doneDays = Array<boolean>(7).fill(false);
+  let planned = 0;
+  for (let day = 0; day < 7; day++) {
+    if (!plan.sessions.some((s) => s.day === day)) continue;
+    const at = new Date(today.getFullYear(), today.getMonth(), today.getDate() - mondayOffset + day).getTime();
+    // Tage vor dem Planstart gehören noch nicht zum Plan (startsAt ist ein Tagesbeginn)
+    if (at < startOfDay(plan.startsAt) || isPlanPaused(plan, at)) continue;
+    planned += 1;
+    doneDays[day] = day <= mondayOffset && trainedDays.has(dayKey(at));
+  }
+  return { doneDays, planned, done: doneDays.filter(Boolean).length };
+}
+
+/**
+ * Verpasste Haupteinheit dieser Woche, die sich heute nachholen lässt. Nur ein Angebot, kein Muss:
+ * Es gibt sie nur an einem Tag ohne geplante Einheit, an dem noch nicht trainiert wurde, und nur
+ * solange nicht schon an einem anderen freien Tag dieser Woche nachgeholt wurde.
+ */
+export function catchUpSession(plan: TrainingPlan, activities: Activity[], now: number): PlanSession | null {
+  if (now < plan.startsAt || isPlanPaused(plan, now)) return null;
+  const today = new Date(now);
+  const todayIndex = (today.getDay() + 6) % 7;
+  if (plan.sessions.some((s) => s.day === todayIndex)) return null;
+  const trainedDays = new Set(activities.map((a) => dayKey(a.startedAt)));
+  if (trainedDays.has(dayKey(now))) return null;
+
+  const missed: PlanSession[] = [];
+  let madeUp = 0;
+  for (let day = todayIndex - 1; day >= 0; day--) {
+    const at = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (todayIndex - day)).getTime();
+    if (at < startOfDay(plan.startsAt)) break;
+    if (isPlanPaused(plan, at)) continue;
+    const main = plan.sessions.find((s) => s.day === day && !s.extra) ?? plan.sessions.find((s) => s.day === day);
+    const trained = trainedDays.has(dayKey(at));
+    if (main && !trained) missed.push(main);
+    if (!main && trained) madeUp += 1;
+  }
+  return missed.length > madeUp ? missed[0] : null;
 }
 
 /**
@@ -566,4 +704,19 @@ export function migratePlanV1(old: PlanV1): TrainingPlan {
     createdAt: old.createdAt,
     startsAt: old.startsAt,
   };
+}
+
+/** Speicher-Version 2 → 3: Pläne ohne Angabe zur Ausdauer-Art laufen weiter wie bisher. */
+export function migratePlanV2(plan: TrainingPlan): TrainingPlan {
+  return plan.answers.cardio ? plan : { ...plan, answers: { ...plan.answers, cardio: 'laufen' } };
+}
+
+/**
+ * Welche Ausdauer-Art heute vorne steht: die heute geplante Einheit entscheidet,
+ * sonst die im Plan gewählte Art (bei "beides" das Laufen).
+ */
+export function primarySport(plan: TrainingPlan, now: number): 'run' | 'ride' {
+  const today = sessionsForDay(plan, now).find((s) => s.kind === 'run' || s.kind === 'ride');
+  if (today) return today.kind === 'ride' ? 'ride' : 'run';
+  return plan.answers.cardio === 'rad' ? 'ride' : 'run';
 }

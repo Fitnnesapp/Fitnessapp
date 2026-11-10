@@ -53,3 +53,11 @@ test('jedes Abzeichen wird nur einmal vergeben', () => {
   const more = earnedBadges(ctx({ strengthCount: 10 }));
   assert.deepEqual(newlyEarned(more, { first_workout: 123 }), ['workouts_10']);
 });
+
+test('Rad-Abzeichen: erste Radtour und 50 km, Radfahrten zählen als Workouts', () => {
+  const base = { strengthCount: 0, homeCount: 0, runCount: 0, longestRunM: 0, recordCount: 0, longestStreak: 0 };
+  assert.deepEqual(earnedBadges({ ...base, rideCount: 1, longestRideM: 20_000 }), ['first_workout', 'first_ride']);
+  assert.ok(earnedBadges({ ...base, rideCount: 3, longestRideM: 52_000 }).includes('ride_50'));
+  // Ältere Kontexte ohne Radfelder bleiben gültig
+  assert.deepEqual(earnedBadges(base), []);
+});

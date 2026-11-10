@@ -18,7 +18,12 @@ const OPTIONS = {
   accuracy: Location.Accuracy.BestForNavigation,
   timeInterval: 2000,
   distanceInterval: 5,
+  // iOS: sagt dem System, dass es um Sport geht; das verbessert die Ortung zu Fuß und auf dem Rad
+  activityType: Location.ActivityType.Fitness,
 } as const;
+
+/** Sportart der laufenden Aufzeichnung, für die Android-Benachrichtigung */
+const currentSport = () => (useRunStore.getState().active?.sport === 'ride' ? 'ride' : 'run');
 
 /** Fragt die Standortberechtigung an. Für Hintergrund-Tracking wird zusätzlich "Immer" angefragt, falls möglich. */
 export async function requestTrackingPermission(): Promise<PermissionResult> {
@@ -49,8 +54,9 @@ async function startBackground(): Promise<boolean> {
       pausesUpdatesAutomatically: false,
       // Android: Vordergrunddienst mit Benachrichtigung hält die Aufzeichnung bei gesperrtem Bildschirm am Leben
       foregroundService: {
-        notificationTitle: 'Lauf läuft',
+        notificationTitle: currentSport() === 'ride' ? 'Radfahrt läuft' : 'Lauf läuft',
         notificationBody: 'Deine Strecke wird aufgezeichnet.',
+        notificationColor: '#FF6B2C',
       },
     });
     return true;

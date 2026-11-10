@@ -29,7 +29,7 @@ export function useActivities(): Activity[] {
       })),
       ...runs.map((r): Activity => ({
         id: r.id,
-        type: 'running',
+        type: r.sport === 'ride' ? 'cycling' : 'running',
         startedAt: r.startedAt,
         durationSeconds: r.durationSeconds,
         distanceM: r.distanceM,

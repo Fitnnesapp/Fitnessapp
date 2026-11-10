@@ -9,7 +9,8 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { tapFeedback } from '@/lib/haptics';
-import { suggestWeeklyRunGoalM } from '@/lib/logic/run-insights';
+import { suggestWeeklyRideGoalM, suggestWeeklyRunGoalM } from '@/lib/logic/run-insights';
+import { isRide, onlyRuns } from '@/lib/logic/run-stats';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useSettings } from '@/lib/storage/settings-store';
 
@@ -22,14 +23,17 @@ type RunGoalCardProps = {
   weekStartAt: number;
   /** Ganze Tage bis Sonntag einschließlich heute */
   daysLeft: number;
+  /** Laufziel (Standard) oder Radziel */
+  sport?: 'run' | 'ride';
 };
 
-/** Wöchentliches Laufziel mit Fortschritt; Ziel per Schritt (5 km bzw. 5 mi) anpassbar. */
-export function RunGoalCard({ weekM, weekStartAt, daysLeft }: RunGoalCardProps) {
+/** Wöchentliches Lauf- oder Radziel mit Fortschritt; Ziel per Schritt (Lauf 5, Rad 10 km bzw. mi) anpassbar. */
+export function RunGoalCard({ weekM, weekStartAt, daysLeft, sport = 'run' }: RunGoalCardProps) {
+  const ride = sport === 'ride';
   const theme = useTheme();
   const units = useSettings((state) => state.units);
-  const goalM = useSettings((state) => state.weeklyRunGoalM);
-  const setGoal = useSettings((state) => state.setWeeklyRunGoalM);
+  const goalM = useSettings((state) => (ride ? state.weeklyRideGoalM : state.weeklyRunGoalM));
+  const setGoal = useSettings((state) => (ride ? state.setWeeklyRideGoalM : state.setWeeklyRunGoalM));
   const runs = useRunStore((state) => state.history);
   const [editing, setEditing] = useState(false);
 
@@ -43,9 +47,9 @@ export function RunGoalCard({ weekM, weekStartAt, daysLeft }: RunGoalCardProps) 
   if (goalM === null) {
     return (
       <Card style={styles.row}>
-        <Ionicons name="flag-outline" size={22} color={theme.accent} />
+        <Ionicons name={ride ? 'bicycle' : 'flag-outline'} size={22} color={theme.accent} />
         <View style={styles.flex}>
-          <AppText variant="heading">Wochenziel fürs Laufen</AppText>
+          <AppText variant="heading">{ride ? 'Wochenziel fürs Rad' : 'Wochenziel fürs Laufen'}</AppText>
           <AppText variant="caption" color="textSecondary">
             Ein fester Umfang pro Woche macht Fortschritt planbar.
           </AppText>
@@ -54,7 +58,11 @@ export function RunGoalCard({ weekM, weekStartAt, daysLeft }: RunGoalCardProps) 
           title="Setzen"
           variant="secondary"
           onPress={() => {
-            setGoal(suggestWeeklyRunGoalM(runs, weekStartAt));
+            setGoal(
+              ride
+                ? suggestWeeklyRideGoalM(runs.filter(isRide), weekStartAt)
+                : suggestWeeklyRunGoalM(onlyRuns(runs), weekStartAt),
+            );
             setEditing(true);
           }}
         />
@@ -64,12 +72,12 @@ export function RunGoalCard({ weekM, weekStartAt, daysLeft }: RunGoalCardProps) 
 
   const progress = Math.min(1, weekM / goalM);
   const remaining = Math.max(0, goalM - weekM);
-  const step = 5 * perUnit;
+  const step = (ride ? 10 : 5) * perUnit;
 
   function change(direction: 1 | -1) {
     if (goalM === null) return;
     tapFeedback();
-    // Auf volle 5er-Schritte der angezeigten Einheit runden
+    // Auf volle Schritte der angezeigten Einheit runden
     const steps = Math.round(goalM / step) + direction;
     setGoal(Math.max(1, steps) * step);
   }
@@ -78,7 +86,7 @@ export function RunGoalCard({ weekM, weekStartAt, daysLeft }: RunGoalCardProps) 
     <Card>
       <View style={styles.head}>
         <AppText variant="label" color="textSecondary">
-          WOCHENZIEL LAUFEN
+          {ride ? 'WOCHENZIEL RAD' : 'WOCHENZIEL LAUFEN'}
         </AppText>
         <Pressable
           accessibilityRole="button"

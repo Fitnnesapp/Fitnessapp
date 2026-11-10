@@ -21,7 +21,12 @@ const TREND_WEEKS = 8;
 const WEEKDAY_LONG = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 const BAR_MAX = 110;
 
-const TYPE_LABEL: Record<ActivityType, string> = { strength: 'Krafttraining', running: 'Lauf', home: 'Home-Workout' };
+const TYPE_LABEL: Record<ActivityType, string> = {
+  strength: 'Krafttraining',
+  running: 'Lauf',
+  home: 'Home-Workout',
+  cycling: 'Radfahrt',
+};
 
 function hoursParts(minutes: number): { value: string; unit: string } {
   if (minutes < 60) return { value: String(minutes), unit: 'Min' };

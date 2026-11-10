@@ -6,6 +6,8 @@ const EARTH_RADIUS_M = 6371008.8;
 export const MAX_ACCURACY_M = 35;
 /** Schneller als das (m/s, entspricht ca. 43 km/h) ist ein Sprung und kein Laufen. */
 export const MAX_SPEED_MS = 12;
+/** Radfahren: bis 90 km/h (Abfahrten), schneller ist ein GPS-Sprung */
+export const MAX_RIDE_SPEED_MS = 25;
 /** Schritte unter diesem Wert (m) gelten als GPS-Rauschen im Stand. */
 export const MIN_STEP_M = 1;
 /** Eine Lücke in den Messungen ab dieser aktiven Zeit (s) wird in der Strecke getrennt dargestellt. */
@@ -26,9 +28,37 @@ export function haversineM(a: Coordinate, b: Coordinate): number {
 }
 
 /** Aktive Laufzeit in ms zum Zeitpunkt `at`. */
-export function activeElapsedAt(run: Pick<ActiveRun, 'status' | 'elapsedBase' | 'runningSince'>, at: number): number {
+export function activeElapsedAt(
+  run: Pick<ActiveRun, 'status' | 'elapsedBase' | 'runningSince' | 'idleMs'>,
+  at: number,
+): number {
   if (run.status !== 'running' || run.runningSince === null) return run.elapsedBase;
-  return run.elapsedBase + Math.max(0, at - run.runningSince);
+  // Erkannte Standzeit (Auto-Pause) zählt nicht zur aktiven Zeit
+  return run.elapsedBase + Math.max(0, at - run.runningSince - (run.idleMs ?? 0));
+}
+
+/** Auto-Pause: Standzeiten ab 10 Sekunden zählen nicht, z.B. an der Ampel. */
+export const AUTO_PAUSE_MIN_MS = 10_000;
+/** Darunter gilt man als stehend (0,8 m/s ≈ 2,9 km/h, langsames Gehen) */
+const MIN_MOVING_SPEED_MS = 0.8;
+/** Puffer für normale Lücken zwischen GPS-Messungen */
+const GAP_GRACE_MS = 3_000;
+
+/**
+ * Standzeit zwischen zwei Punkten. Das Handy meldet im Stand kaum neue Punkte (erst nach 5 m Bewegung).
+ * Ist die Lücke viel länger, als die zurückgelegte Strecke selbst langsam gebraucht hätte, war man
+ * dazwischen stehen geblieben. Kurze Lücken bleiben aktive Zeit.
+ */
+export function idleBetween(previous: TrackPoint, next: TrackPoint, stepM: number): number {
+  const gap = next.t - previous.t;
+  const movingMs = (stepM / MIN_MOVING_SPEED_MS) * 1000;
+  const idle = gap - movingMs - GAP_GRACE_MS;
+  return idle >= AUTO_PAUSE_MIN_MS ? Math.round(idle) : 0;
+}
+
+/** Steht man gerade? Dann zeigt die Aufzeichnung "Auto-Pause" und hält die Uhr an. */
+export function isStandingStill(lastPointAt: number | undefined, now: number): boolean {
+  return lastPointAt !== undefined && now - lastPointAt >= AUTO_PAUSE_MIN_MS + GAP_GRACE_MS;
 }
 
 export type StepResult = { accepted: false } | { accepted: true; stepM: number };
@@ -37,7 +67,7 @@ export type StepResult = { accepted: false } | { accepted: true; stepM: number }
  * Prüft, ob ein neuer Punkt übernommen wird, und liefert den zurückgelegten Schritt.
  * Verworfen werden ungenaue Messungen, doppelte oder rückwärts laufende Zeitstempel und unmögliche Sprünge.
  */
-export function evaluatePoint(previous: TrackPoint | null, next: TrackPoint): StepResult {
+export function evaluatePoint(previous: TrackPoint | null, next: TrackPoint, maxSpeedMs = MAX_SPEED_MS): StepResult {
   if (next.acc !== null && next.acc > MAX_ACCURACY_M) return { accepted: false };
   if (!previous) return { accepted: true, stepM: 0 };
 
@@ -45,7 +75,7 @@ export function evaluatePoint(previous: TrackPoint | null, next: TrackPoint): St
   if (seconds <= 0) return { accepted: false };
 
   const distance = haversineM(previous, next);
-  if (distance / seconds > MAX_SPEED_MS) return { accepted: false };
+  if (distance / seconds > maxSpeedMs) return { accepted: false };
 
   return { accepted: true, stepM: distance >= MIN_STEP_M ? distance : 0 };
 }
@@ -236,4 +266,30 @@ export function downsample<T>(items: T[], max: number): T[] {
   const step = (items.length - 1) / (max - 1);
   for (let i = 0; i < max; i++) result.push(items[Math.round(i * step)]);
   return result;
+}
+
+/** Radfahrt? Einheiten ohne Sportart stammen aus der Zeit vor dem Radfahren und sind Läufe. */
+export function isRide(session: { sport?: 'run' | 'ride' }): boolean {
+  return session.sport === 'ride';
+}
+
+/** Nur die Läufe, ohne Radfahrten: für Bestzeiten, Prognose, Laufziel und Lauf-Abzeichen. */
+export function onlyRuns<T extends { sport?: 'run' | 'ride' }>(sessions: readonly T[]): T[] {
+  return sessions.filter((session) => !isRide(session));
+}
+
+/** Durchschnittsgeschwindigkeit in km/h, 0 ohne Zeit. */
+export function speedKmh(distanceM: number, durationSeconds: number): number {
+  return durationSeconds > 0 ? distanceM / 1000 / (durationSeconds / 3600) : 0;
+}
+
+/** Rad-Bestwerte: längste Fahrt und schnellster Schnitt ab 10 km (kurze Fahrten verzerren den Schnitt). */
+export function rideBests(sessions: readonly { sport?: 'run' | 'ride'; distanceM: number; durationSeconds: number }[]) {
+  const rides = sessions.filter((s) => isRide(s));
+  const longestM = Math.max(0, ...rides.map((r) => r.distanceM));
+  const fastestKmh = Math.max(
+    0,
+    ...rides.filter((r) => r.distanceM >= 10_000).map((r) => speedKmh(r.distanceM, r.durationSeconds)),
+  );
+  return { count: rides.length, longestM, fastestKmh: fastestKmh > 0 ? fastestKmh : null };
 }

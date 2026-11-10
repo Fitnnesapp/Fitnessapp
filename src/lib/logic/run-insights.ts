@@ -115,6 +115,16 @@ export function suggestWeeklyRunGoalM(runs: readonly { startedAt: number; distan
   return Math.min(100_000, Math.max(5_000, Math.ceil(target / 5_000) * 5_000));
 }
 
+/** Vorschlag fürs Rad-Wochenziel: Schnitt der letzten vier Wochen plus 10 %, auf volle 10 km gerundet. Ohne Fahrten 40 km. */
+export function suggestWeeklyRideGoalM(rides: readonly { startedAt: number; distanceM: number }[], currentWeekStart: number): number {
+  const from = currentWeekStart - 4 * 7 * DAY;
+  const total = rides
+    .filter((r) => r.startedAt >= from && r.startedAt < currentWeekStart)
+    .reduce((sum, r) => sum + r.distanceM, 0);
+  if (total === 0) return 40_000;
+  return Math.min(400_000, Math.max(20_000, Math.ceil(((total / 4) * 1.1) / 10_000) * 10_000));
+}
+
 /** Zwischenzeiten bei gleichmäßigem Tempo: alle 5 km (bei 5 km jeder Kilometer) und im Ziel. */
 export function evenSplits(meters: number, seconds: number): { meters: number; seconds: number }[] {
   if (meters <= 0 || seconds <= 0) return [];

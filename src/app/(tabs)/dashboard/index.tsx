@@ -6,9 +6,11 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ActiveSessions } from '@/components/active-sessions';
 import { ChallengeCard } from '@/components/challenge-card';
 import { EventGoalCard } from '@/components/event-goal-card';
+import { HealthBenefitCard } from '@/components/health-benefit-card';
 import { QuickGrid } from '@/components/quick-grid';
+import { UpdateBanner } from '@/components/update-banner';
+import { WhyCard } from '@/components/why-card';
 import { GoalCard } from '@/components/goal-card';
-import { RecoveryCard } from '@/components/recovery-card';
 import { WhatsNewCard } from '@/components/whats-new-card';
 import { AppText } from '@/components/ui/app-text';
 import { Button } from '@/components/ui/button';
@@ -34,7 +36,7 @@ import { closestGoal } from '@/lib/logic/goals';
 import { nextSavedEvent } from '@/lib/logic/events';
 import { compareWithLastWeek, trainingIdentity } from '@/lib/logic/identity';
 import { dayHeading, greeting, nextBadge, weeklyGoal } from '@/lib/logic/motivation';
-import { missedLastPlanned, nextSession, sessionsForDay, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
+import { catchUpSession, isPlanPaused, missedLastPlanned, nextSession, sessionsForDay, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
 import { suggestWorkout, type SuggestionTarget } from '@/lib/logic/suggestions';
 import type { Units } from '@/lib/logic/units';
 import { hrefForSession } from '@/lib/plan-href';
@@ -56,7 +58,7 @@ type Hero = {
   href: Href | null;
   cta: string;
   note: string;
-  kind: 'strength' | 'run' | 'program' | 'rest';
+  kind: 'strength' | 'run' | 'ride' | 'program' | 'rest';
 };
 
 function hrefFor(target: SuggestionTarget): Href {
@@ -97,8 +99,11 @@ export default function DashboardScreen() {
   const name = useSettings((state) => state.displayName).trim();
   const goalSetting = useSettings((state) => state.weeklyGoalDays);
   const runGoalM = useSettings((state) => state.weeklyRunGoalM);
-  const runGoalText =
-    runGoalM !== null ? formatProgress(Math.round((runGoalM / (units === 'metric' ? 1000 : 1609.344)) * 10) / 10) : '';
+  const rideGoalM = useSettings((state) => state.weeklyRideGoalM);
+  const goalText = (meters: number | null) =>
+    meters !== null ? formatProgress(Math.round((meters / (units === 'metric' ? 1000 : 1609.344)) * 10) / 10) : '';
+  const runGoalText = goalText(runGoalM);
+  const rideGoalText = goalText(rideGoalM);
   const activities = useActivities();
   const now = useNow(60_000);
   const strengthHistory = useWorkouts((state) => state.history);
@@ -129,7 +134,8 @@ export default function DashboardScreen() {
     () => weeklyGoal(week.perDay, weekGoalDays(plan, weekStart(now), goalSetting)),
     [week, plan, now, goalSetting],
   );
-  const streak = useMemo(() => streaks(activities, now), [activities, now]);
+  const planPause = usePlanStore((state) => state.plan?.pause);
+  const streak = useMemo(() => streaks(activities, now, undefined, planPause), [activities, now, planPause]);
   const identity = useMemo(() => trainingIdentity(activities, now), [activities, now]);
   const comparison = useMemo(() => compareWithLastWeek(activities, now), [activities, now]);
   const upcoming = useMemo(() => nextBadge(badgeContext, earned), [badgeContext, earned]);
@@ -141,6 +147,9 @@ export default function DashboardScreen() {
   const today = (new Date(now).getDay() + 6) % 7;
   const time = durationParts(week.durationSeconds);
   const distance = distanceParts(week.distanceM, units);
+  // Die Wochenziele zählen getrennt: Radkilometer füllen nicht das Laufziel
+  const runDistance = distanceParts(week.runDistanceM, units);
+  const rideDistance = distanceParts(week.rideDistanceM, units);
 
   // Genau eine nächste Handlung: mit Plan die heutige Einheit, sonst der regelbasierte Vorschlag
   const hero = useMemo((): Hero => {
@@ -170,7 +179,31 @@ export default function DashboardScreen() {
         kind: session.kind,
       };
     }
+    // Ruhetag mit einer verpassten Einheit in dieser Woche: Nachholen als Angebot, nicht als Pflicht
+    const catchUp = catchUpSession(plan, activities, now);
+    if (catchUp) {
+      return {
+        label: 'Ruhetag oder nachholen',
+        title: catchUp.title,
+        text: `Am ${WEEKDAY_NAMES[catchUp.day]} ausgefallen. Nachholen oder erholen: Beides passt.`,
+        href: hrefForSession(catchUp, plan?.answers),
+        cta: `Heute nachholen · ${catchUp.minutes} Min`,
+        note: 'Freiwillig, dein Plan bleibt unverändert',
+        kind: catchUp.kind,
+      };
+    }
     const upcomingSession = nextSession(plan, now);
+    if (isPlanPaused(plan, now) && plan.pause) {
+      return {
+        label: 'Plan pausiert',
+        title: 'Erhol dich gut',
+        text: `Pause bis einschließlich ${dayHeading(plan.pause.until - 1)}.`,
+        href: null,
+        cta: '',
+        note: 'Nichts gilt als verpasst.',
+        kind: 'rest',
+      };
+    }
     const when = upcomingSession ? (upcomingSession.inDays === 1 ? 'Morgen' : WEEKDAY_NAMES[upcomingSession.session.day]) : null;
     return {
       label: session ? 'Heute erledigt' : now < plan.startsAt ? 'Dein Plan startet bald' : 'Ruhetag laut Plan',
@@ -281,6 +314,10 @@ export default function DashboardScreen() {
         </ImageCard>
       </FadeIn>
 
+      <WhyCard now={now} />
+
+      <UpdateBanner />
+
       {/* Schnellzugriff: alle Bereiche an fester Stelle, statt sie über die Seite zu verteilen */}
       <QuickGrid />
 
@@ -362,20 +399,39 @@ export default function DashboardScreen() {
           {runGoalM !== null ? (
             <Pressable
               accessibilityRole="link"
-              accessibilityLabel={`Laufziel: ${distance.value} von ${runGoalText} ${distance.unit}`}
+              accessibilityLabel={`Laufziel: ${runDistance.value} von ${runGoalText} ${runDistance.unit}`}
               onPress={() => router.push('/training/running')}
               style={({ pressed }) => [styles.runGoal, pressed && { opacity: 0.6 }]}>
               <View style={styles.inline}>
                 <Ionicons
-                  name={week.distanceM >= runGoalM ? 'checkmark-circle' : 'walk-outline'}
+                  name={week.runDistanceM >= runGoalM ? 'checkmark-circle' : 'walk-outline'}
                   size={18}
                   color={theme.accent}
                 />
                 <AppText variant="caption" color="textSecondary" style={styles.flex}>
-                  Laufziel: {distance.value} von {runGoalText} {distance.unit}
+                  Laufziel: {runDistance.value} von {runGoalText} {runDistance.unit}
                 </AppText>
               </View>
-              <ProgressBar progress={Math.min(1, week.distanceM / runGoalM)} height={6} />
+              <ProgressBar progress={Math.min(1, week.runDistanceM / runGoalM)} height={6} />
+            </Pressable>
+          ) : null}
+          {rideGoalM !== null ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={`Radziel: ${rideDistance.value} von ${rideGoalText} ${rideDistance.unit}`}
+              onPress={() => router.push('/training/running')}
+              style={({ pressed }) => [styles.runGoal, pressed && { opacity: 0.6 }]}>
+              <View style={styles.inline}>
+                <Ionicons
+                  name={week.rideDistanceM >= rideGoalM ? 'checkmark-circle' : 'bicycle-outline'}
+                  size={18}
+                  color={theme.accent}
+                />
+                <AppText variant="caption" color="textSecondary" style={styles.flex}>
+                  Radziel: {rideDistance.value} von {rideGoalText} {rideDistance.unit}
+                </AppText>
+              </View>
+              <ProgressBar progress={Math.min(1, week.rideDistanceM / rideGoalM)} height={6} />
             </Pressable>
           ) : null}
 
@@ -415,10 +471,12 @@ export default function DashboardScreen() {
       </FadeIn>
 
       {/* Gemerktes Event: festes Datum vor Augen, mit der passenden Vorbereitungsphase */}
+      {/* Nutzen statt nur Zahlen: Fortschritt zur WHO-Empfehlung dieser Woche */}
+      <HealthBenefitCard now={now} />
+
       {myEvent ? <EventGoalCard event={myEvent} now={now} /> : null}
 
       {/* Erholung: was kann ich heute trainieren? */}
-      <RecoveryCard />
 
       {/* 5. Nahe Ziele: nächstes Abzeichen (Goal-Gradient), Challenge, Event */}
       {upcoming && upcomingBadge ? (

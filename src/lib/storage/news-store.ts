@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 /** Kennung der aktuellen "Neu in der App"-Karte. Bei neuen Funktionen hochzählen, dann erscheint sie erneut. */
-export const CURRENT_NEWS = '2026-11';
+export const CURRENT_NEWS = '2026-11-06';
 
 type NewsState = {
   /** Zuletzt weggeklickte Ausgabe, null = noch keine */

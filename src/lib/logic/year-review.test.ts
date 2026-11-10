@@ -44,7 +44,7 @@ test('nur Workouts des gewählten Jahres zählen', () => {
   const activities = [act('a', at(2025, 12, 31), 'strength'), act('b', at(2026, 1, 1), 'home'), act('c', at(2026, 6, 10), 'running', 2000, 5000)];
   const review = yearReview({ year: 2026, activities, strength: [], runs: [], now: NOW });
   assert.equal(review.workouts, 2);
-  assert.deepEqual(review.byType, { strength: 0, home: 1, running: 1 });
+  assert.deepEqual(review.byType, { strength: 0, home: 1, running: 1, cycling: 0 });
   assert.equal(review.durationSeconds, 1800 + 2000);
   assert.equal(review.distanceM, 5000);
 });
@@ -103,4 +103,26 @@ test('leeres Jahr', () => {
   assert.equal(review.bestMonth, null);
   assert.equal(review.busiestWeekday, null);
   assert.equal(review.topExercise, null);
+});
+
+test('Lauf- und Radstrecke getrennt, längste Radtour nur aus Radfahrten', () => {
+  const activities = [
+    act('r1', at(2026, 3, 1), 'running', 1800, 5000),
+    act('r2', at(2026, 3, 8), 'running', 3600, 12000),
+    act('c1', at(2026, 4, 1), 'cycling', 3600, 25000),
+    act('c2', at(2026, 4, 8), 'cycling', 7200, 61000),
+    act('alt', at(2025, 4, 8), 'cycling', 7200, 90000),
+  ];
+  const review = yearReview({ year: 2026, activities, strength: [], runs: [], now: NOW });
+  assert.equal(review.runDistanceM, 17000);
+  assert.equal(review.rideDistanceM, 86000);
+  assert.equal(review.distanceM, 103000);
+  assert.equal(review.longestRideM, 61000);
+  assert.equal(review.byType.cycling, 2);
+});
+
+test('ohne Radfahrten bleibt die Radstrecke bei null', () => {
+  const review = yearReview({ year: 2026, activities: [act('r', at(2026, 3, 1), 'running', 1800, 5000)], strength: [], runs: [], now: NOW });
+  assert.equal(review.rideDistanceM, 0);
+  assert.equal(review.longestRideM, 0);
 });

@@ -11,6 +11,13 @@ import {
   evaluatePoint,
   fastestSplit,
   findRunRecords,
+  idleBetween,
+  isRide,
+  isStandingStill,
+  MAX_RIDE_SPEED_MS,
+  onlyRuns,
+  rideBests,
+  speedKmh,
   haversineM,
   kmSplits,
   paceSecPerKm,
@@ -182,4 +189,52 @@ test('downsample behält Anfang, Ende und die Obergrenze', () => {
   assert.equal(reduced[0], 0);
   assert.equal(reduced.at(-1), 9999);
   assert.deepEqual(downsample([1, 2, 3], 500), [1, 2, 3]);
+});
+
+test('Radfahren: höhere Geschwindigkeit erlaubt, Läufe und Radfahrten trennbar', () => {
+  const a = { lat: 52.5, lng: 13.4, t: 0, e: 0, alt: null, acc: 5 };
+  // rund 167 m in 10 s = 60 km/h
+  const fast = { ...a, lat: 52.5015, t: 10_000, e: 10_000 };
+  assert.equal(evaluatePoint(a, fast).accepted, false);
+  assert.equal(evaluatePoint(a, fast, MAX_RIDE_SPEED_MS).accepted, true);
+  const sessions = [{ id: 'a' }, { id: 'b', sport: 'ride' as const }, { id: 'c', sport: 'run' as const }];
+  assert.deepEqual(
+    onlyRuns(sessions).map((s) => s.id),
+    ['a', 'c'],
+  );
+  assert.ok(isRide(sessions[1]));
+  assert.equal(Math.round(speedKmh(30000, 3600)), 30);
+});
+
+test('Rad-Bestwerte: längste Fahrt, schnellster Schnitt erst ab 10 km', () => {
+  const rides = [
+    { sport: 'ride' as const, distanceM: 8000, durationSeconds: 600 },
+    { sport: 'ride' as const, distanceM: 40000, durationSeconds: 5400 },
+    { distanceM: 21000, durationSeconds: 6000 },
+  ];
+  const bests = rideBests(rides);
+  assert.equal(bests.count, 2);
+  assert.equal(bests.longestM, 40000);
+  assert.equal(Math.round(bests.fastestKmh ?? 0), 27);
+  assert.equal(rideBests([]).fastestKmh, null);
+});
+
+test('Auto-Pause: Standzeit an der Ampel wird erkannt, normale Lücken nicht', () => {
+  const p = (t: number) => ({ lat: 52.5, lng: 13.4, t, e: t, alt: null, acc: 5 });
+  // 45 s Lücke, nur 6 m weiter: rund 45 - 7,5 - 3 = 34,5 s Standzeit
+  assert.equal(idleBetween(p(0), p(45_000), 6), 34_500);
+  // 4 s Lücke beim normalen Laufen: keine Standzeit
+  assert.equal(idleBetween(p(0), p(4_000), 12), 0);
+  // 20 s Lücke, aber 20 m (Tunnel, langsames Gehen): unter der Schwelle
+  assert.equal(idleBetween(p(0), p(20_000), 20), 0);
+});
+
+test('Aktive Zeit ohne Standzeit, Stillstand erkennen', () => {
+  const run = { status: 'running' as const, elapsedBase: 60_000, runningSince: 0, idleMs: 30_000 };
+  assert.equal(activeElapsedAt(run, 100_000), 130_000);
+  assert.equal(activeElapsedAt({ ...run, idleMs: undefined }, 100_000), 160_000);
+  assert.equal(isStandingStill(undefined, 100_000), false);
+  assert.equal(isStandingStill(80_000, 100_000), true);
+  assert.equal(isStandingStill(80_000, 92_999), false);
+  assert.equal(isStandingStill(80_000, 93_000), true);
 });

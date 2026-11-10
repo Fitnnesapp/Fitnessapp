@@ -32,6 +32,12 @@ export type ActiveRun = {
   runningSince: number | null;
   points: TrackPoint[];
   distanceM: number;
+  /** Sportart der Aufzeichnung, fehlt bei älteren Ständen und heißt dann Lauf */
+  sport?: Sport;
+  /** Auto-Pause an: erkannte Standzeit wird abgezogen */
+  autoPause?: boolean;
+  /** Seit dem letzten Fortsetzen erkannte Standzeit in ms */
+  idleMs?: number;
 };
 
 /** Beste Zeiten über feste Distanzen in Sekunden, null wenn der Lauf kürzer war. */
@@ -53,7 +59,12 @@ export type RunSession = {
   points: TrackPoint[];
   /** Ohne GPS nachgetragen, z.B. vom Laufband (seit Speicherversion 1, optional) */
   manual?: true;
+  /** Sportart; fehlt bei allen Einheiten vor Speicherversion 2 und heißt dann Lauf */
+  sport?: Sport;
 };
+
+/** GPS-Sportarten: Laufen und Radfahren teilen sich Aufzeichnung und Speicher */
+export type Sport = 'run' | 'ride';
 
 export type RunRecordType = 'longest_distance' | 'fastest_1k' | 'fastest_5k' | 'fastest_10k';
 

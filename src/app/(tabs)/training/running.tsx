@@ -21,11 +21,14 @@ import { useTheme } from '@/hooks/use-theme';
 import { weekStart } from '@/lib/logic/activity';
 import { formatDate } from '@/lib/logic/format';
 import { formatRaceTime, PREDICTION_WINDOW_DAYS, predictRaces, runBestsSummary } from '@/lib/logic/run-insights';
-import { paceSecPerKm } from '@/lib/logic/run-stats';
-import { formatDistance, formatPace, paceUnitLabel } from '@/lib/logic/units';
+import { isRide, onlyRuns, paceSecPerKm, speedKmh } from '@/lib/logic/run-stats';
+import { formatDistance, formatPace, formatSpeed, paceUnitLabel, speedUnitLabel } from '@/lib/logic/units';
 import { requestTrackingPermission } from '@/lib/location/tracker';
 import { useRunStore } from '@/lib/storage/run-store';
+import { primarySport } from '@/lib/logic/plan';
+import { usePlanStore } from '@/lib/storage/plan-store';
 import { useSettings } from '@/lib/storage/settings-store';
+import type { Sport } from '@/types/running';
 
 const INTENSITY_COLOR: Record<RunIdea['intensity'], 'success' | 'accent' | 'danger'> = {
   Locker: 'success',
@@ -38,10 +41,20 @@ export default function RunningScreen() {
   const theme = useTheme();
   const now = useNow(60_000);
   const units = useSettings((state) => state.units);
+  const autoPause = useSettings((state) => state.autoPause);
   const active = useRunStore((state) => state.active);
-  const history = useRunStore((state) => state.history);
+  const allSessions = useRunStore((state) => state.history);
+  // Bestzeiten, Prognose und Laufziel nur aus Läufen; Radfahrten erscheinen in der Liste darunter
+  const history = useMemo(() => onlyRuns(allSessions), [allSessions]);
   const startRun = useRunStore((state) => state.startRun);
 
+  // Steht heute eine Radfahrt im Plan oder setzt der Plan ganz aufs Rad, ist die Radtour die Hauptaktion
+  const plan = usePlanStore((state) => state.plan);
+  const primary: Sport = plan ? primarySport(plan, now) : 'run';
+  const rideFirst = primary === 'ride';
+
+  const hasRides = useMemo(() => allSessions.some(isRide), [allSessions]);
+  const rideGoalSet = useSettings((state) => state.weeklyRideGoalM !== null);
   const [denied, setDenied] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -52,11 +65,21 @@ export default function RunningScreen() {
     () => history.filter((run) => run.startedAt >= currentWeekStart).reduce((sum, run) => sum + run.distanceM, 0),
     [history, currentWeekStart],
   );
+  const weekRideM = useMemo(
+    () =>
+      allSessions
+        .filter((session) => isRide(session) && session.startedAt >= currentWeekStart)
+        .reduce((sum, session) => sum + session.distanceM, 0),
+    [allSessions, currentWeekStart],
+  );
   // Tage bis einschließlich Sonntag
   const daysLeft = 7 - ((new Date(now).getDay() + 6) % 7);
-  const recent = useMemo(() => [...history].sort((a, b) => b.startedAt - a.startedAt).slice(0, 3), [history]);
+  const recent = useMemo(
+    () => [...allSessions].sort((a, b) => b.startedAt - a.startedAt).slice(0, 3),
+    [allSessions],
+  );
 
-  async function start() {
+  async function start(sport: Sport = 'run') {
     setBusy(true);
     try {
       // Die Berechtigung wird erst jetzt angefragt, wo der Zweck klar ist
@@ -66,7 +89,7 @@ export default function RunningScreen() {
         return;
       }
       setDenied(false);
-      startRun();
+      startRun(sport, autoPause);
       router.push('/training/run');
     } finally {
       setBusy(false);
@@ -83,7 +106,7 @@ export default function RunningScreen() {
   return (
     <Screen>
       <AppText variant="display" style={styles.headline}>
-        Running
+        Laufen & Rad
       </AppText>
 
       {active ? (
@@ -93,21 +116,25 @@ export default function RunningScreen() {
           <ImageCard
             source={SCENES['hero-lauf']}
             height={300}
-            onPress={busy ? undefined : () => void start()}
-            accessibilityLabel="Lauf starten">
+            onPress={busy ? undefined : () => void start(primary)}
+            accessibilityLabel={rideFirst ? 'Radtour starten' : 'Lauf starten'}>
             <AppText variant="eyebrow" style={{ color: OnImage.accent }}>
-              {weekM > 0 ? `DIESE WOCHE ${formatDistance(weekM, units).toUpperCase()}` : 'BEREIT?'}
+              {(rideFirst ? weekRideM : weekM) > 0
+                ? `DIESE WOCHE ${formatDistance(rideFirst ? weekRideM : weekM, units).toUpperCase()}${rideFirst ? ' AUF DEM RAD' : ''}`
+                : 'BEREIT?'}
             </AppText>
             <AppText variant="display" style={styles.heroTitle}>
-              {history.length === 0 ? 'Dein erster Lauf' : 'Raus mit dir'}
+              {rideFirst ? 'Rauf aufs Rad' : history.length === 0 ? 'Dein erster Lauf' : 'Raus mit dir'}
             </AppText>
             <AppText style={styles.onImageSoft}>
-              Distanz, Tempo, Kilometerzeiten und Höhenmeter per GPS. Die Strecke bleibt auf deinem Handy.
+              {rideFirst
+                ? 'Distanz, Geschwindigkeit und Höhenmeter per GPS. Die Strecke bleibt auf deinem Handy.'
+                : 'Distanz, Tempo, Kilometerzeiten und Höhenmeter per GPS. Die Strecke bleibt auf deinem Handy.'}
             </AppText>
             <View style={[styles.cta, { backgroundColor: OnImage.accent }]}>
               <Ionicons name="play" size={20} color={OnImage.onAccent} />
               <AppText variant="heading" style={{ color: OnImage.onAccent }}>
-                {busy ? 'Einen Moment …' : 'Lauf starten'}
+                {busy ? 'Einen Moment …' : rideFirst ? 'Radtour starten' : 'Lauf starten'}
               </AppText>
             </View>
           </ImageCard>
@@ -116,13 +143,26 @@ export default function RunningScreen() {
 
       {!active ? (
         <Button
-          title="Lauf ohne GPS nachtragen"
+          title={rideFirst ? 'Lauf mit GPS starten' : 'Radtour mit GPS starten'}
+          variant="secondary"
+          disabled={busy}
+          onPress={() => void start(rideFirst ? 'run' : 'ride')}
+        />
+      ) : null}
+
+      {!active ? (
+        <Button
+          title="Lauf oder Radfahrt ohne GPS nachtragen"
           variant="ghost"
           onPress={() => router.push('/training/run-manual')}
         />
       ) : null}
 
+      {rideFirst ? <RunGoalCard sport="ride" weekM={weekRideM} weekStartAt={currentWeekStart} daysLeft={daysLeft} /> : null}
       <RunGoalCard weekM={weekM} weekStartAt={currentWeekStart} daysLeft={daysLeft} />
+      {!rideFirst && (hasRides || rideGoalSet) ? (
+        <RunGoalCard sport="ride" weekM={weekRideM} weekStartAt={currentWeekStart} daysLeft={daysLeft} />
+      ) : null}
 
       {denied ? (
         <Card>
@@ -206,14 +246,14 @@ export default function RunningScreen() {
 
       {recent.length > 0 ? (
         <>
-          <SectionHeader title="Letzte Läufe" action={{ label: 'Alle', onPress: () => router.push('/history') }} />
+          <SectionHeader title="Letzte Einheiten" action={{ label: 'Alle', onPress: () => router.push('/history') }} />
           {recent.map((run) => (
             <Card
               key={run.id}
               style={styles.runRow}
               onPress={() => router.push({ pathname: '/history/[id]', params: { id: run.id } })}
-              accessibilityLabel={`Lauf vom ${formatDate(run.startedAt)}`}>
-              <Ionicons name="walk-outline" size={22} color={theme.accent} />
+              accessibilityLabel={`${isRide(run) ? 'Radfahrt' : 'Lauf'} vom ${formatDate(run.startedAt)}`}>
+              <Ionicons name={isRide(run) ? 'bicycle-outline' : 'walk-outline'} size={22} color={theme.accent} />
               <View style={styles.flex}>
                 <AppText variant="heading">{formatDistance(run.distanceM, units)}</AppText>
                 <AppText variant="caption" color="textSecondary">
@@ -222,7 +262,9 @@ export default function RunningScreen() {
                 </AppText>
               </View>
               <AppText variant="caption" color="textSecondary">
-                {formatPace(paceSecPerKm(run.distanceM, run.durationSeconds), units)} {paceUnitLabel(units)}
+                {isRide(run)
+                  ? `${formatSpeed(speedKmh(run.distanceM, run.durationSeconds), units)} ${speedUnitLabel(units)}`
+                  : `${formatPace(paceSecPerKm(run.distanceM, run.durationSeconds), units)} ${paceUnitLabel(units)}`}
               </AppText>
             </Card>
           ))}
