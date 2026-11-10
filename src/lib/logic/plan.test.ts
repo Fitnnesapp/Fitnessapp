@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import type { Activity } from './activity.ts';
 import {
   buildPlan,
+  catchUpSession,
   combineGoals,
   ifThenSentence,
   migratePlanV1,
@@ -310,4 +311,29 @@ test('Wochenfortschritt: Tage vor dem Planstart zählen nicht', () => {
   const progress = planWeekProgress(plan, [act], NOW);
   assert.equal(progress.planned, 2);
   assert.equal(progress.done, 0);
+});
+
+test('Nachholen: verpasste Einheit nur an einem freien, noch trainingsfreien Tag anbieten', () => {
+  // NOW ist Samstag, der 24.10.2026. Geplant: Montag, Mittwoch, Freitag.
+  const plan = { ...build({ days: [0, 2, 4] }), startsAt: new Date(2026, 9, 1).getTime() };
+  const act = (d: number): Activity => ({ id: String(d), type: 'home', startedAt: new Date(2026, 9, d, 18).getTime(), durationSeconds: 600, distanceM: 0 });
+  // Alles erledigt: nichts nachzuholen
+  assert.equal(catchUpSession(plan, [act(19), act(21), act(23)], NOW), null);
+  // Freitag verpasst: die Freitags-Einheit wird angeboten
+  assert.equal(catchUpSession(plan, [act(19), act(21)], NOW)?.day, 4);
+  // Mittwoch verpasst, aber am Donnerstag (frei) schon nachgeholt
+  assert.equal(catchUpSession(plan, [act(19), act(22), act(23)], NOW), null);
+  // Heute schon trainiert: kein Angebot mehr
+  assert.equal(catchUpSession(plan, [act(19), act(21), act(24)], NOW), null);
+  // Mehrere verpasst: die jüngste zuerst
+  assert.equal(catchUpSession(plan, [], NOW)?.day, 4);
+});
+
+test('Nachholen: nicht an geplanten Tagen und nicht für Tage vor dem Planstart', () => {
+  const today = { ...build({ days: [0, 5] }), startsAt: new Date(2026, 9, 1).getTime() };
+  assert.equal(catchUpSession(today, [], NOW), null);
+  const fresh = { ...build({ days: [0, 2] }), startsAt: new Date(2026, 9, 22).getTime() };
+  assert.equal(catchUpSession(fresh, [], NOW), null);
+  const later = { ...build({ days: [0, 2] }), startsAt: new Date(2026, 9, 26).getTime() };
+  assert.equal(catchUpSession(later, [], NOW), null);
 });

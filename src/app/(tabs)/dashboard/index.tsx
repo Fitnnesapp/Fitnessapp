@@ -36,7 +36,7 @@ import { closestGoal } from '@/lib/logic/goals';
 import { nextSavedEvent } from '@/lib/logic/events';
 import { compareWithLastWeek, trainingIdentity } from '@/lib/logic/identity';
 import { dayHeading, greeting, nextBadge, weeklyGoal } from '@/lib/logic/motivation';
-import { missedLastPlanned, nextSession, sessionsForDay, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
+import { catchUpSession, missedLastPlanned, nextSession, sessionsForDay, WEEKDAY_NAMES, weekGoalDays } from '@/lib/logic/plan';
 import { suggestWorkout, type SuggestionTarget } from '@/lib/logic/suggestions';
 import type { Units } from '@/lib/logic/units';
 import { hrefForSession } from '@/lib/plan-href';
@@ -176,6 +176,19 @@ export default function DashboardScreen() {
         cta: `Los geht's · ${session.minutes} Min`,
         note: extra ? `Danach: ${extra.minutes} Min ${extra.title}` : 'Dein Plan, deine Zeit',
         kind: session.kind,
+      };
+    }
+    // Ruhetag mit einer verpassten Einheit in dieser Woche: Nachholen als Angebot, nicht als Pflicht
+    const catchUp = catchUpSession(plan, activities, now);
+    if (catchUp) {
+      return {
+        label: 'Ruhetag oder nachholen',
+        title: catchUp.title,
+        text: `Am ${WEEKDAY_NAMES[catchUp.day]} ausgefallen. Nachholen oder erholen: Beides passt.`,
+        href: hrefForSession(catchUp, plan?.answers),
+        cta: `Heute nachholen · ${catchUp.minutes} Min`,
+        note: 'Freiwillig, dein Plan bleibt unverändert',
+        kind: catchUp.kind,
       };
     }
     const upcomingSession = nextSession(plan, now);

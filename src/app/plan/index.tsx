@@ -18,6 +18,7 @@ import { getProgram } from '@/data/programs';
 import { planWeeklyBenefit, WHO_AEROBIC_MINUTES, WHO_STRENGTH_DAYS } from '@/lib/logic/health-benefit';
 import { dayHeading } from '@/lib/logic/motivation';
 import {
+  catchUpSession,
   GOAL_LABELS,
   ifThenSentence,
   planDayCount,
@@ -80,6 +81,7 @@ export default function PlanScreen() {
   const today = weekdayOf(now);
   const totalMinutes = plan.sessions.reduce((sum, s) => sum + s.minutes, 0);
   const week = planWeekProgress(plan, activities, now);
+  const catchUp = catchUpSession(plan, activities, now);
   const openDay = (day: number) => router.push({ pathname: '/plan/day', params: { d: String(day) } });
 
   return (
@@ -127,6 +129,26 @@ export default function PlanScreen() {
                 ? 'Ein Tag zählt, sobald du an ihm trainiert hast, egal welche Einheit.'
                 : 'Jeder erledigte Tag zählt. Der nächste steht unten.'}
           </AppText>
+        </Card>
+      ) : null}
+
+      {catchUp ? (
+        <Card style={{ borderColor: theme.accent }}>
+          <View style={styles.row}>
+            <Ionicons name="refresh" size={20} color={theme.accent} />
+            <AppText variant="heading" style={styles.flex}>
+              Heute nachholen?
+            </AppText>
+          </View>
+          <AppText color="textSecondary">
+            {catchUp.title} ist am {WEEKDAY_NAMES[catchUp.day]} ausgefallen. Heute ist frei: Wenn du magst, holst du die
+            Einheit nach. Dein Plan bleibt, wie er ist.
+          </AppText>
+          <Button
+            title={`Nachholen · ${catchUp.minutes} Min`}
+            variant="secondary"
+            onPress={() => router.push(hrefForSession(catchUp, plan.answers))}
+          />
         </Card>
       ) : null}
 

@@ -603,6 +603,32 @@ export function planWeekProgress(plan: TrainingPlan, activities: Activity[], now
 }
 
 /**
+ * Verpasste Haupteinheit dieser Woche, die sich heute nachholen lässt. Nur ein Angebot, kein Muss:
+ * Es gibt sie nur an einem Tag ohne geplante Einheit, an dem noch nicht trainiert wurde, und nur
+ * solange nicht schon an einem anderen freien Tag dieser Woche nachgeholt wurde.
+ */
+export function catchUpSession(plan: TrainingPlan, activities: Activity[], now: number): PlanSession | null {
+  if (now < plan.startsAt) return null;
+  const today = new Date(now);
+  const todayIndex = (today.getDay() + 6) % 7;
+  if (plan.sessions.some((s) => s.day === todayIndex)) return null;
+  const trainedDays = new Set(activities.map((a) => dayKey(a.startedAt)));
+  if (trainedDays.has(dayKey(now))) return null;
+
+  const missed: PlanSession[] = [];
+  let madeUp = 0;
+  for (let day = todayIndex - 1; day >= 0; day--) {
+    const at = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (todayIndex - day)).getTime();
+    if (at < startOfDay(plan.startsAt)) break;
+    const main = plan.sessions.find((s) => s.day === day && !s.extra) ?? plan.sessions.find((s) => s.day === day);
+    const trained = trainedDays.has(dayKey(at));
+    if (main && !trained) missed.push(main);
+    if (!main && trained) madeUp += 1;
+  }
+  return missed.length > madeUp ? missed[0] : null;
+}
+
+/**
  * Wochenziel in Trainingstagen: die geplanten Tage dieser Woche, sonst der Standard.
  * Liegt die Woche vor dem Planstart (0 geplante Tage), gilt der Standard statt eines Ziels von 0 oder 1.
  */
