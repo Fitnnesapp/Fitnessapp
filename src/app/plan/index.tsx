@@ -136,8 +136,8 @@ export default function PlanScreen() {
             </AppText>
           </View>
           <AppText color="textSecondary">
-            Bis einschließlich {dayHeading(plan.pause.until - 1)}. In der Pause gibt es keine Erinnerungen, und nichts gilt
-            als verpasst. Erhol dich gut.
+            Bis einschließlich {dayHeading(plan.pause.until - 1)}. In der Pause gibt es keine Erinnerungen, nichts gilt als
+            verpasst, und deine Serie bleibt erhalten. Erhol dich gut.
           </AppText>
           <Button title="Pause beenden" variant="secondary" onPress={() => setPlan(resumePlan(plan, now))} />
         </Card>

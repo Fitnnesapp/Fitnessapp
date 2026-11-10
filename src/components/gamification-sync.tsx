@@ -37,7 +37,9 @@ export function GamificationSync() {
   const plan = usePlanStore((state) => state.plan);
   const now = useNow(60_000);
 
-  const streak = useMemo(() => streaks(activities, now), [activities, now]);
+  const planPause = usePlanStore((state) => state.plan?.pause);
+
+  const streak = useMemo(() => streaks(activities, now, undefined, planPause), [activities, now, planPause]);
   const { current: currentStreak, trainedToday } = streak;
 
   useEffect(() => {

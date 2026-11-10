@@ -134,7 +134,8 @@ export default function DashboardScreen() {
     () => weeklyGoal(week.perDay, weekGoalDays(plan, weekStart(now), goalSetting)),
     [week, plan, now, goalSetting],
   );
-  const streak = useMemo(() => streaks(activities, now), [activities, now]);
+  const planPause = usePlanStore((state) => state.plan?.pause);
+  const streak = useMemo(() => streaks(activities, now, undefined, planPause), [activities, now, planPause]);
   const identity = useMemo(() => trainingIdentity(activities, now), [activities, now]);
   const comparison = useMemo(() => compareWithLastWeek(activities, now), [activities, now]);
   const upcoming = useMemo(() => nextBadge(badgeContext, earned), [badgeContext, earned]);

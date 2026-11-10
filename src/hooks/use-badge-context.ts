@@ -9,6 +9,7 @@ import { findRunRecords, isRide, onlyRuns } from '@/lib/logic/run-stats';
 import { useHomeSessions } from '@/lib/storage/home-store';
 import { useRunStore } from '@/lib/storage/run-store';
 import { useWorkouts } from '@/lib/storage/workout-store';
+import { usePlanStore } from '@/lib/storage/plan-store';
 
 /** Alle Kennzahlen, nach denen Abzeichen vergeben werden, aus dem lokalen Verlauf. */
 export function useBadgeContext(): BadgeContext {
@@ -22,7 +23,9 @@ export function useBadgeContext(): BadgeContext {
   const longestRideM = useMemo(() => Math.max(0, ...rides.map((r) => r.distanceM)), [rides]);
   const now = useNow(60_000);
 
-  const longestStreak = useMemo(() => streaks(activities, now).longest, [activities, now]);
+  const planPause = usePlanStore((state) => state.plan?.pause);
+
+  const longestStreak = useMemo(() => streaks(activities, now, undefined, planPause).longest, [activities, now, planPause]);
   const longestRunM = useMemo(() => Math.max(0, ...runs.map((r) => r.distanceM)), [runs]);
   const recordCount = useMemo(
     () =>

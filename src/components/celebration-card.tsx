@@ -41,7 +41,8 @@ export function CelebrationCard({ sessionId, headline, records = [] }: Celebrati
   const goalSetting = useSettings((state) => state.weeklyGoalDays);
   const goalDays = session ? weekGoalDays(plan, weekStart(session.startedAt), goalSetting) : goalSetting;
   const result = useMemo(() => celebrate(activities, sessionId, goalDays), [activities, sessionId, goalDays]);
-  const streak = useMemo(() => streaks(activities, now), [activities, now]);
+  const planPause = usePlanStore((state) => state.plan?.pause);
+  const streak = useMemo(() => streaks(activities, now, undefined, planPause), [activities, now, planPause]);
   const upcoming = plan ? nextSession(plan, now) : null;
   // Nutzen sichtbar machen: was diese Einheit zur WHO-Empfehlung der Woche beigetragen hat
   const benefit = useWeeklyBenefit(session?.startedAt ?? now);

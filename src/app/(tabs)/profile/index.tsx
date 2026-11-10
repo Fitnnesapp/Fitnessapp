@@ -107,7 +107,8 @@ export default function ProfileScreen() {
 
   const identity = useMemo(() => trainingIdentity(activities, now), [activities, now]);
   const lifetime = useMemo(() => lifetimeTotals(activities), [activities]);
-  const streak = useMemo(() => streaks(activities, now), [activities, now]);
+  const planPause = usePlanStore((state) => state.plan?.pause);
+  const streak = useMemo(() => streaks(activities, now, undefined, planPause), [activities, now, planPause]);
   const since = useMemo(() => memberSince(activities), [activities]);
   const bests = useMemo(() => personalBests(strengthHistory, onlyRuns(runHistory)), [strengthHistory, runHistory]);
   const name = displayName.trim();
