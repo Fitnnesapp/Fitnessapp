@@ -113,7 +113,7 @@ export default function ManualRunScreen() {
       </AppText>
       <AppText color="textSecondary">
         {ride
-          ? 'Indoor-Cycling, Spinning oder ohne Handy geradelt? Trag Distanz und Zeit ein. Die Radfahrt zählt für Verlauf, Wochenstatistik und deinen Gesundheits-Nutzen.'
+          ? 'Indoor-Cycling, Spinning oder ohne Handy geradelt? Trag Distanz und Zeit ein. Die Radfahrt zählt für Verlauf, dein Wochenziel fürs Rad, deine Rad-Bestwerte und deinen Gesundheits-Nutzen.'
           : 'Laufband, Handy vergessen oder mit einer Uhr gelaufen? Trag Distanz und Zeit ein. Der Lauf zählt für Verlauf, Wochenziel, Challenges und deine Prognose.'}
       </AppText>
 
@@ -196,8 +196,9 @@ export default function ManualRunScreen() {
 
       <Button title={editing ? 'Änderungen speichern' : ride ? 'Radfahrt speichern' : 'Lauf speichern'} onPress={save} />
       <AppText variant="caption" color="textSecondary">
-        Ohne GPS gibt es keine Strecke und keine Kilometerzeiten. Bestzeiten über 1, 5 und 10 km kommen deshalb nur aus
-        aufgezeichneten Läufen.
+        {ride
+          ? 'Ohne GPS gibt es keine Strecke auf der Karte und keine Höhenmeter. Distanz und Schnitt zählen trotzdem.'
+          : 'Ohne GPS gibt es keine Strecke und keine Kilometerzeiten. Bestzeiten über 1, 5 und 10 km kommen deshalb nur aus aufgezeichneten Läufen.'}
       </AppText>
     </Screen>
   );
