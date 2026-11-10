@@ -87,7 +87,7 @@ Entwicklungsplan: [claude-code-plan.md](claude-code-plan.md) · Projektregeln: [
   - Speicher-Migrationen: Einstellungen v9, Läufe v2, neu: Health-Abgleich v1
 - **Ausbau 10. November 2026 (Plan im Alltag):**
   - **Wochenfortschritt im Plan**: Karte „Diese Woche: x von y geplanten Tagen“, erledigte Tage mit Haken. Ein Tag zählt, sobald an ihm trainiert wurde, egal welche Einheit
-  - **Nachholen**: Ist in dieser Woche eine Einheit ausgefallen und heute frei, bieten Start und Plan-Seite an, sie nachzuholen. Freiwillig, der Plan bleibt unverändert
+  - **Nachholen**: Ist in dieser Woche eine Einheit ausgefallen und heute frei, bieten Start, Training-Tab und Plan-Seite an, sie nachzuholen. Freiwillig, der Plan bleibt unverändert
   - **Jahresrückblick**: Lauf- und Radstrecke getrennt, dazu die längste Radtour
   - **Plan pausieren** (3 Tage, 1 oder 2 Wochen, jederzeit beendbar): für Krankheit oder Urlaub. In der Pause gibt es keine Erinnerungen, nichts gilt als verpasst, und die Serie bleibt erhalten, ohne Freezes zu verbrauchen
   - Nachtragen: Hinweistexte für Radfahrten angepasst

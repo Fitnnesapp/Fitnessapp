@@ -21,7 +21,7 @@ import { useNow } from '@/hooks/use-now';
 import { useSubscription } from '@/hooks/use-subscription';
 import { useTheme } from '@/hooks/use-theme';
 import { feedDayLabel, strengthTitle } from '@/lib/logic/feed';
-import { ifThenSentence, sessionsForDay } from '@/lib/logic/plan';
+import { catchUpSession, ifThenSentence, sessionsForDay, WEEKDAY_NAMES } from '@/lib/logic/plan';
 import { quickestProgram } from '@/lib/logic/quick-win';
 import { repeatOptions, type RepeatOption } from '@/lib/logic/repeat';
 import { preferencesFromPlan, routineMinutes, suggestRoutine } from '@/lib/logic/routines';
@@ -86,6 +86,8 @@ export default function TrainingScreen() {
     return activities.some((a) => a.startedAt >= start.getTime());
   }, [activities, now]);
   const todaySession = plan && now >= plan.startsAt && !trainedToday ? sessionsForDay(plan, now)[0] : undefined;
+  // An einem freien Tag: verpasste Einheit dieser Woche als Angebot, nie als Pflicht
+  const catchUp = useMemo(() => (plan && !todaySession ? catchUpSession(plan, activities, now) : null), [plan, todaySession, activities, now]);
   const busy = activeWorkout !== null || activeRun !== null;
 
   function repeat(option: RepeatOption) {
@@ -137,6 +139,24 @@ export default function TrainingScreen() {
             </AppText>
           </View>
         </ImageCard>
+      ) : null}
+
+      {catchUp && plan && !busy ? (
+        <Card onPress={() => router.push(hrefForSession(catchUp, plan.answers))} style={styles.row}>
+          <View style={[styles.quickBadge, { backgroundColor: theme.surfaceAlt }]}>
+            <Ionicons name="refresh" size={24} color={theme.accent} />
+          </View>
+          <View style={styles.flex}>
+            <AppText variant="eyebrow" color="accent">
+              Heute nachholen?
+            </AppText>
+            <AppText variant="heading">{catchUp.title}</AppText>
+            <AppText variant="caption" color="textSecondary">
+              Am {WEEKDAY_NAMES[catchUp.day]} ausgefallen · {catchUp.minutes} Min · freiwillig
+            </AppText>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
+        </Card>
       ) : null}
 
       {/* 3. Kurz & knackig: die kleinste mögliche Hürde */}
