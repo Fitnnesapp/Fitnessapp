@@ -10,6 +10,11 @@ export type YearReview = {
   byType: { strength: number; home: number; running: number; cycling: number };
   durationSeconds: number;
   distanceM: number;
+  /** Davon gelaufen bzw. mit dem Rad gefahren */
+  runDistanceM: number;
+  rideDistanceM: number;
+  /** Weiteste Radfahrt des Jahres in Metern */
+  longestRideM: number;
   /** Gesamtvolumen im Krafttraining in kg, ohne Aufwärmsätze */
   volumeKg: number;
   /** Tage mit mindestens einem Workout */
@@ -49,11 +54,19 @@ export function yearReview({ year, activities, strength, runs, now }: Input): Ye
   const days = new Set<string>();
   let durationSeconds = 0;
   let distanceM = 0;
+  let runDistanceM = 0;
+  let rideDistanceM = 0;
+  let longestRideM = 0;
 
   for (const a of inYear) {
     byType[a.type] += 1;
     durationSeconds += a.durationSeconds;
     distanceM += a.distanceM;
+    if (a.type === 'running') runDistanceM += a.distanceM;
+    if (a.type === 'cycling') {
+      rideDistanceM += a.distanceM;
+      longestRideM = Math.max(longestRideM, a.distanceM);
+    }
     const d = new Date(a.startedAt);
     perMonth[d.getMonth()] += 1;
     perWeekday[(d.getDay() + 6) % 7] += 1;
@@ -102,6 +115,9 @@ export function yearReview({ year, activities, strength, runs, now }: Input): Ye
     byType,
     durationSeconds,
     distanceM,
+    runDistanceM,
+    rideDistanceM,
+    longestRideM,
     volumeKg: Math.round(volumeKg),
     activeDays: days.size,
     bestMonth: inYear.length > 0 ? { month: perMonth.indexOf(maxMonth), count: maxMonth } : null,

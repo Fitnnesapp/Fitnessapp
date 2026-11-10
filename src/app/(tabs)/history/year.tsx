@@ -100,11 +100,19 @@ export default function YearReviewScreen() {
       <StatGrid
         items={[
           { label: 'Trainingszeit', value: formatDuration(review.durationSeconds * 1000) },
-          { label: 'Strecke', value: formatDistance(review.distanceM, units) },
+          ...(review.rideDistanceM > 0
+            ? [
+                { label: 'Gelaufen', value: formatDistance(review.runDistanceM, units) },
+                { label: 'Geradelt', value: formatDistance(review.rideDistanceM, units) },
+              ]
+            : [{ label: 'Strecke', value: formatDistance(review.distanceM, units) }]),
           { label: 'Gehoben', value: formatWeight(review.volumeKg, units) },
           { label: 'Rekorde', value: String(review.recordCount) },
           { label: 'Längste Serie', value: `${review.longestStreak} ${review.longestStreak === 1 ? 'Tag' : 'Tage'}` },
           { label: 'Längster Lauf', value: review.longestRunM > 0 ? formatDistance(review.longestRunM, units) : '–' },
+          ...(review.longestRideM > 0
+            ? [{ label: 'Längste Radtour', value: formatDistance(review.longestRideM, units) }]
+            : []),
         ]}
       />
 
